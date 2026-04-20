@@ -1,0 +1,462 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1776705005519,
+  "projectRoot": "C:\\users\\chill\\projects\\kpi-tracker",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "react",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "6.0.7",
+        "category": "build"
+      },
+      {
+        "name": "vitest",
+        "version": "4.1.4",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc && vite build",
+      "test": "vitest",
+      "test:ui": "vitest --ui",
+      "lint": "tsc --noEmit",
+      "preview": "vite preview",
+      "migrate": "tsx src/scripts/migrate.ts"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "public",
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 2,
+      "lastAccessed": 1776705005496,
+      "keyFiles": [
+        "index.html",
+        "investigator-kpi-tracker.html"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 0,
+      "lastAccessed": 1776705005497,
+      "keyFiles": []
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 1,
+      "lastAccessed": 1776705005502,
+      "keyFiles": [
+        "investigator-kpi-tracker.html"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 5,
+      "lastAccessed": 1776705005502,
+      "keyFiles": [
+        "App.test.tsx",
+        "App.tsx",
+        "index.css",
+        "main.tsx",
+        "test-setup.ts"
+      ]
+    },
+    "dist\\assets": {
+      "path": "dist\\assets",
+      "purpose": "Static assets",
+      "fileCount": 2,
+      "lastAccessed": 1776705005503,
+      "keyFiles": [
+        "index-7q3O4pZr.js",
+        "index-DFUyNHl8.css"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 0,
+      "lastAccessed": 1776705005505,
+      "keyFiles": []
+    },
+    "src\\lib": {
+      "path": "src\\lib",
+      "purpose": "Library code",
+      "fileCount": 4,
+      "lastAccessed": 1776705005505,
+      "keyFiles": [
+        "auth.ts",
+        "firebase.ts",
+        "firestore.ts"
+      ]
+    },
+    "src\\pages": {
+      "path": "src\\pages",
+      "purpose": "Page components",
+      "fileCount": 1,
+      "lastAccessed": 1776705005505,
+      "keyFiles": [
+        "Login.tsx"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "docs\\superpowers\\plans\\2026-04-20-phase2-study-management-workload.md",
+      "accessCount": 22,
+      "lastAccessed": 1776709012183,
+      "type": "file"
+    },
+    {
+      "path": "src\\types\\index.ts",
+      "accessCount": 18,
+      "lastAccessed": 1776710884254,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\__tests__\\studies.test.ts",
+      "accessCount": 10,
+      "lastAccessed": 1776707407397,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\assessments.ts",
+      "accessCount": 7,
+      "lastAccessed": 1776709858751,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\visits.ts",
+      "accessCount": 7,
+      "lastAccessed": 1776709858753,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\studies\\StudyTable.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1776706582938,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\studies.ts",
+      "accessCount": 5,
+      "lastAccessed": 1776706770863,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\shared\\StatusBadge.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1776706770611,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\study-detail\\StudyDetailHeader.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1776707473332,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\protocolParser.ts",
+      "accessCount": 4,
+      "lastAccessed": 1776708139590,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\protocol-parser\\ProtocolReviewTable.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1776708295175,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\study-detail\\DelegationLogTab.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1776708926517,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\useSite.ts",
+      "accessCount": 3,
+      "lastAccessed": 1776706222256,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\__tests__\\useStudies.test.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776706222372,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\useStudies.ts",
+      "accessCount": 3,
+      "lastAccessed": 1776706228216,
+      "type": "file"
+    },
+    {
+      "path": "src\\router\\index.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776707312119,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\study-detail\\VisitScheduleTab.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776707601842,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\study-detail\\AssessmentBatteryTab.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776707612526,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\study-detail\\InvestigatorsTab.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776707685123,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\study-detail\\EnrollmentTab.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776707695212,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 3,
+      "lastAccessed": 1776708138837,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\protocol-parser\\ProtocolUpload.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776708262538,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\studies\\StudyComparison.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776708959772,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 3,
+      "lastAccessed": 1776709858279,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\investigators.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776706136473,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\delegationLog.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776706225500,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\shared\\__tests__\\StatusBadge.test.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776706420969,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\studies\\StudyFilters.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776706523822,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\studies\\__tests__\\StudyTable.test.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776706665189,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\studies\\StudyForm.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776706719272,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\shared\\ConfirmDialog.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776706770427,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\studies\\StudyStatusToggle.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776707198692,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\studies\\StudyCloneButton.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776707198797,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\management\\Studies.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776707241022,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\scaleDefaults.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776708742695,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\useVisits.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776708835789,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\useInvestigators.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776710888247,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\__tests__\\visits.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776705935879,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\useStudy.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776706086628,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\__tests__\\useInvestigators.test.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776706145164,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\__tests__\\useVisits.test.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776706237023,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\useAssessments.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776706251960,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\useDelegationLog.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776706256546,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\shared\\__tests__\\ConfirmDialog.test.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776706354964,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\ui\\input.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776706417467,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\ui\\label.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776706420548,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\studies\\__tests__\\StudyFilters.test.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776706429069,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\ui\\dialog.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776706665584,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\studies\\__tests__\\StudyForm.test.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776706676314,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\management\\StudyDetail.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776707324239,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
