@@ -1,9 +1,14 @@
 import { render, screen } from '@testing-library/react'
+import { vi } from 'vitest'
 import App from './App'
 
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: vi.fn(() => ({ user: null, role: null, loading: false })),
+}))
+
 describe('App', () => {
-  it('renders without crashing', () => {
+  it('renders login page when unauthenticated', () => {
     render(<App />)
-    expect(screen.getByText('KPI Tracker')).toBeInTheDocument()
+    expect(screen.getByText('K2 Medical Research')).toBeInTheDocument()
   })
 })
