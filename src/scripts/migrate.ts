@@ -64,7 +64,7 @@ const SITE_ID = 'tampa'
 
 // The legacy prototype stored everything in one document under this path.
 const LEGACY_COLLECTION = 'kpi_data'
-const LEGACY_DOC_ID = 'data' // adjust if the prototype used a different doc id
+const LEGACY_DOC_ID = 'shared_data'
 
 async function migrateSite() {
   console.log('Ensuring Tampa site record exists...')
