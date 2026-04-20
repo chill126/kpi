@@ -1,9 +1,10 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom'
 import { PrivateRoute } from './PrivateRoute'
 import { RoleRoute } from './RoleRoute'
 import { AppShell } from '@/components/layout/AppShell'
 import { PageLoader } from '@/components/shared/PageLoader'
+import { ChunkErrorBoundary } from '@/components/shared/ChunkErrorBoundary'
 
 const Login = lazy(() => import('@/pages/Login').then(m => ({ default: m.Login })))
 const Overview = lazy(() => import('@/pages/management/Overview').then(m => ({ default: m.Overview })))
@@ -21,15 +22,28 @@ const DataEntry = lazy(() => import('@/pages/staff/DataEntry').then(m => ({ defa
 const MyStudies = lazy(() => import('@/pages/staff/MyStudies').then(m => ({ default: m.MyStudies })))
 const MyProfile = lazy(() => import('@/pages/staff/MyProfile').then(m => ({ default: m.MyProfile })))
 
+// Keeps AppShell mounted while page chunks load; catches failed chunk loads
+const AuthenticatedOutlet = () => (
+  <ChunkErrorBoundary>
+    <Suspense fallback={<PageLoader />}>
+      <Outlet />
+    </Suspense>
+  </ChunkErrorBoundary>
+)
+
 export function AppRouter() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+      <Routes>
+        <Route path="/login" element={
+          <Suspense fallback={<PageLoader />}>
+            <Login />
+          </Suspense>
+        } />
 
-          <Route element={<PrivateRoute />}>
-            <Route element={<AppShell />}>
+        <Route element={<PrivateRoute />}>
+          <Route element={<AppShell />}>
+            <Route element={<AuthenticatedOutlet />}>
               <Route element={<RoleRoute allowedRole="management" />}>
                 <Route path="/" element={<Overview />} />
                 <Route path="/investigators" element={<Investigators />} />
@@ -51,8 +65,8 @@ export function AppRouter() {
               </Route>
             </Route>
           </Route>
-        </Routes>
-      </Suspense>
+        </Route>
+      </Routes>
     </BrowserRouter>
   )
 }
