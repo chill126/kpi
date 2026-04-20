@@ -158,8 +158,8 @@ export function Overview() {
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis unit="%" domain={[0, 100]} tick={{ fontSize: 12 }} />
                 <Tooltip
-                  formatter={(value: number, _name: string, props: { payload?: { totalHours: number; capacityHours: number } }) => [
-                    `${value}% (${props.payload?.totalHours ?? 0}h / ${props.payload?.capacityHours ?? 0}h)`,
+                  formatter={(value, _name, props: { payload?: { totalHours: number; capacityHours: number } }) => [
+                    `${value ?? 0}% (${props.payload?.totalHours ?? 0}h / ${props.payload?.capacityHours ?? 0}h)`,
                     'Utilization',
                   ]}
                 />
