@@ -146,3 +146,41 @@ export interface CapacityConfig {
   weeklyCapacityHours: number
   siteBaselinePct: number
 }
+
+export interface HypotheticalStudy {
+  name: string
+  assignedInvestigatorIds: string[]
+  targetEnrollment: number
+  enrollmentRamp: Record<number, number>  // week-from-start → cumulative participants
+  avgInvestigatorMinutesPerVisit: number
+  avgAssessmentMinutesPerVisit: number
+  visitsPerParticipantPerMonth: number
+  estimatedContractValue: number
+  durationWeeks: number
+  startDate: string                        // ISO date string
+}
+
+export type FeasibilityVerdict = 'feasible' | 'caution' | 'infeasible'
+
+export interface InvestigatorSimResult {
+  weeklyUtilizationPct: number[]   // length = SIMULATOR_WEEKS
+  peakWeek: number
+  peakPct: number
+  feasibilityVerdict: FeasibilityVerdict
+  cautionWeek: number | null
+  criticalWeek: number | null
+}
+
+export interface SimulationResult {
+  byInvestigator: Record<string, InvestigatorSimResult>
+  estimatedRevenue: number
+  overallVerdict: FeasibilityVerdict
+}
+
+export interface WhatIfScenario {
+  id: string
+  siteId: string
+  createdAt: string
+  study: HypotheticalStudy
+  result: SimulationResult
+}
