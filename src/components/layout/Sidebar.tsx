@@ -11,6 +11,8 @@ import {
   ClipboardList,
   BookMarked,
   User,
+  Activity,
+  FlaskConical,
 } from 'lucide-react'
 import { NavItem } from './NavItem'
 import { useAuth } from '@/hooks/useAuth'
@@ -23,6 +25,8 @@ const MANAGEMENT_NAV = [
   { to: '/workload', icon: Calendar, label: 'Workload Planner' },
   { to: '/financial', icon: DollarSign, label: 'Financial' },
   { to: '/reports', icon: FileBarChart, label: 'Reports' },
+  { to: '/forecast', icon: Activity, label: 'Forecast' },
+  { to: '/what-if', icon: FlaskConical, label: 'What-If' },
   { to: '/import', icon: Upload, label: 'Import' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
