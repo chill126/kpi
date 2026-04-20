@@ -8,6 +8,7 @@ import { useSiteVisits } from '@/hooks/useSiteVisits'
 import { useSiteAssessments } from '@/hooks/useSiteAssessments'
 import { getWeekStart, computeWeekMetrics, utilizationColor, utilizationBarColor } from '@/lib/capacity'
 import { Skeleton } from '@/components/ui/skeleton'
+import { CapacityAlertSummary } from '@/components/management/CapacityAlertSummary'
 
 export function Overview() {
   const { studies, loading: studiesLoading } = useStudies()
@@ -132,6 +133,13 @@ export function Overview() {
           ))}
         </div>
       )}
+
+      {/* Projected Capacity Alerts */}
+      <CapacityAlertSummary
+        investigators={investigators}
+        visits={visits}
+        assessments={assessments}
+      />
 
       {/* Investigator Utilization Chart */}
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
