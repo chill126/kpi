@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:pmc.ncbi.nlm.nih.gov)",
+      "WebFetch(domain:florencestudyorganizer.zendesk.com)",
+      "WebFetch(domain:k2med.com)",
+      "Read(//c/Users/chill/.claude/skills/ui-ux-pro-max/**)",
+      "Bash(python scripts/search.py \"clinical research SaaS dashboard data-dense professional medical\" --design-system -p \"K2 KPI Tracker\" -f markdown)",
+      "Bash(py --version)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
