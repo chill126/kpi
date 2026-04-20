@@ -2,10 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   subscribeStudies,
   createStudy,
-  updateStudy,
   updateStudyStatus,
   cloneStudy,
-  updateEnrollmentData,
 } from '@/lib/studies'
 
 vi.mock('firebase/firestore', () => ({
