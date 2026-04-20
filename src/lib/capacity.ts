@@ -1,4 +1,4 @@
-import type { Visit, Assessment, Study } from '@/types'
+import type { Visit, Assessment, Study, Investigator, HypotheticalStudy, SimulationResult, FeasibilityVerdict, InvestigatorSimResult } from '@/types'
 import { FORECAST_CONFIG } from './forecast-config'
 
 export interface WeekMetrics {
@@ -109,6 +109,105 @@ export function futureWeekStart(weeksAhead: number): string {
   thisMonday.setUTCDate(thisMonday.getUTCDate() + weeksAhead * 7)
   thisMonday.setUTCHours(0, 0, 0, 0)
   return thisMonday.toISOString().split('T')[0]
+}
+
+/** Linearly interpolates enrollment ramp between checkpoints. */
+function interpolateRamp(ramp: Record<number, number>, weekFromStart: number): number {
+  const checkpoints = [1, 2, 4, 8]
+  if (weekFromStart <= 1) return ramp[1] ?? 0
+  if (weekFromStart >= 8) return ramp[8] ?? 0
+  const lower = [...checkpoints].reverse().find((c) => c <= weekFromStart) ?? 1
+  const upper = checkpoints.find((c) => c > weekFromStart) ?? 8
+  const t = (weekFromStart - lower) / (upper - lower)
+  return Math.round((ramp[lower] ?? 0) + t * ((ramp[upper] ?? 0) - (ramp[lower] ?? 0)))
+}
+
+/** Projects added weekly minutes from the hypothetical study at a given week offset from study start. */
+function hypotheticalWeekMinutes(study: HypotheticalStudy, weekFromStart: number): number {
+  if (weekFromStart < 1 || weekFromStart > study.durationWeeks) return 0
+  const participants = Math.min(
+    interpolateRamp(study.enrollmentRamp, weekFromStart),
+    study.targetEnrollment,
+  )
+  const visitsPerWeek = (study.visitsPerParticipantPerMonth / 4) * participants
+  return Math.round(
+    visitsPerWeek * (study.avgInvestigatorMinutesPerVisit + study.avgAssessmentMinutesPerVisit),
+  )
+}
+
+function verdictForPct(pct: number): FeasibilityVerdict {
+  if (pct >= FORECAST_CONFIG.CRITICAL_THRESHOLD_PCT) return 'infeasible'
+  if (pct >= FORECAST_CONFIG.WARNING_THRESHOLD_PCT) return 'caution'
+  return 'feasible'
+}
+
+/**
+ * Simulates the capacity impact of adding a hypothetical study.
+ * Returns per-investigator projected utilization for SIMULATOR_WEEKS weeks.
+ */
+export function simulateStudyImpact(
+  study: HypotheticalStudy,
+  investigators: Investigator[],
+  existingStudies: Study[],
+  visits: Visit[],
+  assessments: Assessment[],
+): SimulationResult {
+  const startDate = new Date(study.startDate + 'T00:00:00Z')
+  const byInvestigator: Record<string, InvestigatorSimResult> = {}
+
+  for (const inv of investigators) {
+    if (!study.assignedInvestigatorIds.includes(inv.id)) continue
+
+    const capacityMinutes = inv.weeklyCapacityHours * 60
+    const weeklyUtilizationPct: number[] = []
+    let cautionWeek: number | null = null
+    let criticalWeek: number | null = null
+
+    for (let w = 0; w < FORECAST_CONFIG.SIMULATOR_WEEKS; w++) {
+      const weekDate = new Date(startDate)
+      weekDate.setUTCDate(startDate.getUTCDate() + w * 7)
+      const weekIso = getWeekStart(weekDate)
+
+      const baseline = projectWeekMetrics(inv.id, capacityMinutes, weekIso, existingStudies, visits, assessments)
+      const addedMinutes = hypotheticalWeekMinutes(study, w + 1)
+      const totalMinutes = baseline.totalMinutes + addedMinutes
+      const pct = capacityMinutes > 0 ? Math.round((totalMinutes / capacityMinutes) * 100) : 0
+
+      weeklyUtilizationPct.push(pct)
+
+      if (cautionWeek === null && pct >= FORECAST_CONFIG.WARNING_THRESHOLD_PCT) cautionWeek = w + 1
+      if (criticalWeek === null && pct >= FORECAST_CONFIG.CRITICAL_THRESHOLD_PCT) criticalWeek = w + 1
+    }
+
+    const peakPct = Math.max(...weeklyUtilizationPct)
+    const peakWeek = weeklyUtilizationPct.indexOf(peakPct) + 1
+
+    byInvestigator[inv.id] = {
+      weeklyUtilizationPct,
+      peakWeek,
+      peakPct,
+      feasibilityVerdict: verdictForPct(peakPct),
+      cautionWeek,
+      criticalWeek,
+    }
+  }
+
+  const verdicts = Object.values(byInvestigator).map((r) => r.feasibilityVerdict)
+  const overallVerdict: FeasibilityVerdict = verdicts.includes('infeasible')
+    ? 'infeasible'
+    : verdicts.includes('caution')
+    ? 'caution'
+    : 'feasible'
+
+  const peakEnrollment = Math.min(
+    interpolateRamp(study.enrollmentRamp, 8),
+    study.targetEnrollment,
+  )
+  const estimatedRevenue = Math.round(
+    study.estimatedContractValue * (peakEnrollment / Math.max(study.targetEnrollment, 1)),
+  )
+
+  return { byInvestigator, estimatedRevenue, overallVerdict }
 }
 
 /**

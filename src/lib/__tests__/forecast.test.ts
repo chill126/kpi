@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { projectWeekMetrics } from '../capacity'
-import type { Visit, Assessment } from '@/types'
+import { projectWeekMetrics, simulateStudyImpact } from '../capacity'
+import { FORECAST_CONFIG } from '../forecast-config'
+import type { Visit, HypotheticalStudy, Investigator } from '@/types'
 
 const CAPACITY_MINUTES = 480 // 8 hours/week
 
@@ -59,5 +60,73 @@ describe('projectWeekMetrics', () => {
     const result = projectWeekMetrics('inv1', CAPACITY_MINUTES, futureWeek, [], [], [])
     expect(result.totalMinutes).toBe(0)
     expect(result.utilizationPct).toBe(0)
+  })
+})
+
+function makeInvestigator(id: string, capacityHours = 8): Investigator {
+  return {
+    id,
+    name: 'Dr. Test',
+    credentials: 'MD',
+    role: 'PI',
+    siteId: 'tampa',
+    weeklyCapacityHours: capacityHours,
+    siteBaselinePct: 0,
+    assignedStudies: [],
+  }
+}
+
+function makeHypothetical(overrides: Partial<HypotheticalStudy> = {}): HypotheticalStudy {
+  return {
+    name: 'Test Study',
+    assignedInvestigatorIds: ['inv1'],
+    targetEnrollment: 10,
+    enrollmentRamp: { 1: 2, 2: 4, 4: 6, 8: 10 },
+    avgInvestigatorMinutesPerVisit: 30,
+    avgAssessmentMinutesPerVisit: 15,
+    visitsPerParticipantPerMonth: 2,
+    estimatedContractValue: 100000,
+    durationWeeks: 26,
+    startDate: new Date().toISOString().split('T')[0],
+    ...overrides,
+  }
+}
+
+describe('simulateStudyImpact', () => {
+  it('returns result for each assigned investigator', () => {
+    const inv = makeInvestigator('inv1')
+    const study = makeHypothetical()
+    const result = simulateStudyImpact(study, [inv], [], [], [])
+    expect(result.byInvestigator['inv1']).toBeDefined()
+  })
+
+  it('returns SIMULATOR_WEEKS utilization entries per investigator', () => {
+    const inv = makeInvestigator('inv1')
+    const study = makeHypothetical()
+    const result = simulateStudyImpact(study, [inv], [], [], [])
+    expect(result.byInvestigator['inv1'].weeklyUtilizationPct).toHaveLength(
+      FORECAST_CONFIG.SIMULATOR_WEEKS,
+    )
+  })
+
+  it('returns infeasible verdict when projected utilization exceeds critical threshold', () => {
+    const inv = makeInvestigator('inv1', 1) // 1h capacity — will be overwhelmed
+    const study = makeHypothetical({ avgInvestigatorMinutesPerVisit: 120 })
+    const result = simulateStudyImpact(study, [inv], [], [], [])
+    expect(result.overallVerdict).toBe('infeasible')
+  })
+
+  it('calculates estimated revenue from contract value and enrollment', () => {
+    const inv = makeInvestigator('inv1')
+    const study = makeHypothetical({ estimatedContractValue: 100000, targetEnrollment: 10 })
+    const result = simulateStudyImpact(study, [inv], [], [], [])
+    expect(result.estimatedRevenue).toBeGreaterThanOrEqual(0)
+  })
+
+  it('overall verdict is infeasible if any investigator is infeasible', () => {
+    const inv = makeInvestigator('inv1', 1) // 1h capacity — will be overwhelmed
+    const study = makeHypothetical({ avgInvestigatorMinutesPerVisit: 120 })
+    const result = simulateStudyImpact(study, [inv], [], [], [])
+    expect(result.overallVerdict).toBe('infeasible')
   })
 })
