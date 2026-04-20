@@ -53,6 +53,21 @@ export interface AdminOverride {
   perParticipantOverheadPct: number
 }
 
+export interface EnrollmentData {
+  prescreens: number
+  screens: number
+  randomizations: number
+  active: number
+  completions: number
+}
+
+export interface StudyStatusHistoryEntry {
+  status: StudyStatus
+  changedBy: string
+  changedAt: string
+  note?: string
+}
+
 export interface Study {
   id: string
   name: string
@@ -71,6 +86,8 @@ export interface Study {
   assessmentBattery: Record<string, string[]>
   adminOverride: AdminOverride
   parsedFromProtocol: boolean
+  enrollmentData: EnrollmentData
+  statusHistory: StudyStatusHistoryEntry[]
 }
 
 export type VisitStatus = 'scheduled' | 'completed' | 'missed' | 'no_show'

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { vi } from 'vitest'
 import App from './App'
 
@@ -7,8 +7,10 @@ vi.mock('@/hooks/useAuth', () => ({
 }))
 
 describe('App', () => {
-  it('renders login page when unauthenticated', () => {
+  it('renders login page when unauthenticated', async () => {
     render(<App />)
-    expect(screen.getByText('K2 Medical Research')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('K2 Medical Research')).toBeInTheDocument()
+    })
   })
 })

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"npm test -- Reports.test --reporter=verbose 2>&1\",\"timeout\":60000,\"description\":\"Run Reports tests with verbose output\"}",
+  "error": "Exit code 1\n\n> kpi-tracker@0.0.0 test\n> vitest Reports.test --reporter=verbose\n\n\n RUN  v4.1.4 C:/Users/chill/Projects/kpi-tracker\n\n ✓ src/pages/management/__tests__/Reports.test.tsx > Reports > renders the page heading 77ms\n ✓ src/pages/management/__tests__/Reports.test.tsx > Reports > renders investigator names in the table 7ms\n ✓ src/pages/management/__tests__/Reports.test.tsx > Reports > renders a Download CSV button 10ms\n × src/pages/management/__tests__/Reports.test.tsx > Reports > clicking...",
+  "timestamp": "2026-04-20T18:54:04.179Z",
+  "retry_count": 1
+}
