@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isManagement() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'management';
+    }
+
+    function isSameSite(siteId) {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.siteId == siteId;
+    }
+
+    match /users/{uid} {
+      allow read: if request.auth.uid == uid || isManagement();
+      allow write: if isManagement();
+    }
+
+    match /sites/{siteId} {
+      allow read: if isAuthenticated();
+      allow write: if isManagement();
+    }
+
+    match /investigators/{docId} {
+      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow write: if isManagement();
+    }
+
+    match /studies/{docId} {
+      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow write: if isManagement();
+    }
+
+    match /visits/{docId} {
+      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow create: if isAuthenticated() && isSameSite(request.resource.data.siteId);
+      allow update, delete: if isManagement();
+    }
+
+    match /assessments/{docId} {
+      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow create: if isAuthenticated() && isSameSite(request.resource.data.siteId);
+      allow update, delete: if isManagement();
+    }
+
+    match /delegationLog/{docId} {
+      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow write: if isManagement();
+    }
+
+    match /imports/{docId} {
+      allow read, write: if isManagement();
+    }
+
+    match /contracts/{docId} {
+      allow read, write: if isManagement();
+    }
+
+    match /capacityConfig/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isManagement();
+    }
+  }
+}
