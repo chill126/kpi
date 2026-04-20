@@ -1,4 +1,5 @@
-import type { Visit, Assessment } from '@/types'
+import type { Visit, Assessment, Study } from '@/types'
+import { FORECAST_CONFIG } from './forecast-config'
 
 export interface WeekMetrics {
   weekStart: string
@@ -96,4 +97,63 @@ export function utilizationCellColor(pct: number): string {
   if (pct < 75) return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
   if (pct < 90) return 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
   return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+}
+
+/** Returns ISO date (YYYY-MM-DD) of Monday N weeks from the Monday of the current week. */
+export function futureWeekStart(weeksAhead: number): string {
+  const now = new Date()
+  const thisMonday = new Date(now)
+  const day = now.getUTCDay()
+  const diff = day === 0 ? -6 : 1 - day
+  thisMonday.setUTCDate(now.getUTCDate() + diff)
+  thisMonday.setUTCDate(thisMonday.getUTCDate() + weeksAhead * 7)
+  thisMonday.setUTCHours(0, 0, 0, 0)
+  return thisMonday.toISOString().split('T')[0]
+}
+
+/**
+ * Returns WeekMetrics for the given week.
+ * - Past/current weeks: actual logged data (delegates to computeWeekMetrics).
+ * - Future weeks: rolling average of the last ROLLING_AVERAGE_WEEKS weeks of actual data.
+ */
+export function projectWeekMetrics(
+  investigatorId: string,
+  capacityMinutes: number,
+  weekStartIso: string,
+  _studies: Study[],
+  visits: Visit[],
+  assessments: Assessment[],
+): WeekMetrics {
+  const currentWeek = getWeekStart(new Date())
+
+  if (weekStartIso <= currentWeek) {
+    return computeWeekMetrics(investigatorId, capacityMinutes, visits, assessments, weekStartIso)
+  }
+
+  // Future: rolling average of last ROLLING_AVERAGE_WEEKS weeks
+  const pastWeeks = Array.from({ length: FORECAST_CONFIG.ROLLING_AVERAGE_WEEKS }, (_, i) => {
+    const d = new Date(currentWeek + 'T00:00:00Z')
+    d.setUTCDate(d.getUTCDate() - (i + 1) * 7)
+    return d.toISOString().split('T')[0]
+  })
+
+  const pastMetrics = pastWeeks.map((w) =>
+    computeWeekMetrics(investigatorId, capacityMinutes, visits, assessments, w),
+  )
+  const avgMinutes =
+    pastMetrics.reduce((sum, m) => sum + m.totalMinutes, 0) /
+    Math.max(pastMetrics.length, 1)
+
+  const rounded = Math.round(avgMinutes)
+  const utilizationPct =
+    capacityMinutes > 0 ? Math.round((rounded / capacityMinutes) * 100) : 0
+
+  return {
+    weekStart: weekStartIso,
+    visitMinutes: rounded,
+    assessmentMinutes: 0,
+    totalMinutes: rounded,
+    capacityMinutes,
+    utilizationPct,
+  }
 }
