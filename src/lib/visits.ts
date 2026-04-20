@@ -66,3 +66,20 @@ export async function createVisitBatch(visits: Omit<Visit, 'id'>[]): Promise<voi
   })
   await batch.commit()
 }
+
+export function subscribeSiteVisits(
+  siteId: string,
+  onData: (visits: Visit[]) => void,
+  onError: (err: Error) => void,
+): () => void {
+  const q = query(
+    collection(db, 'visits'),
+    where('siteId', '==', siteId),
+    orderBy('scheduledDate', 'desc'),
+  )
+  return onSnapshot(
+    q,
+    (snap) => onData(snap.docs.map((d) => toVisit(d.id, d.data()))),
+    onError,
+  )
+}

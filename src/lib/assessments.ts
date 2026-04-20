@@ -36,3 +36,20 @@ export async function createAssessment(data: Omit<Assessment, 'id'>): Promise<st
   const ref = await addDoc(collection(db, 'assessments'), data)
   return ref.id
 }
+
+export function subscribeSiteAssessments(
+  siteId: string,
+  onData: (assessments: Assessment[]) => void,
+  onError: (err: Error) => void,
+): () => void {
+  const q = query(
+    collection(db, 'assessments'),
+    where('siteId', '==', siteId),
+    orderBy('date', 'desc'),
+  )
+  return onSnapshot(
+    q,
+    (snap) => onData(snap.docs.map((d) => toAssessment(d.id, d.data()))),
+    onError,
+  )
+}
