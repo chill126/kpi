@@ -138,7 +138,7 @@ export function Forecast() {
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="week" tick={{ fontSize: 11 }} />
             <YAxis unit="%" domain={[0, 110]} tick={{ fontSize: 12 }} />
-            <Tooltip formatter={(v: number) => [`${v}%`, '']} />
+            <Tooltip formatter={(v) => [`${Number(v)}%`, '']} />
             <Legend />
             <ReferenceLine y={FORECAST_CONFIG.WARNING_THRESHOLD_PCT} stroke="#f59e0b" strokeDasharray="4 2" label={{ value: '75%', fontSize: 10 }} />
             <ReferenceLine y={FORECAST_CONFIG.CRITICAL_THRESHOLD_PCT} stroke="#dc2626" strokeDasharray="4 2" label={{ value: '90%', fontSize: 10 }} />

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { CapacityAlertSummary } from '../CapacityAlertSummary'
-import type { Investigator, Visit, Assessment } from '@/types'
+import type { Investigator, Visit } from '@/types'
 
 function makeInv(id: string, name: string): Investigator {
   return {
