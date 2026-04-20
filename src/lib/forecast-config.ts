@@ -1,0 +1,10 @@
+export const FORECAST_CONFIG = {
+  WARNING_THRESHOLD_PCT: 75,
+  CRITICAL_THRESHOLD_PCT: 90,
+  ALERT_LOOKAHEAD_WEEKS: 4,
+  FORECAST_WEEKS: 8,
+  SIMULATOR_WEEKS: 26,
+  RAMP_CHECKPOINTS: [1, 2, 4, 8] as const,
+  ROLLING_AVERAGE_WEEKS: 4,
+  CONTRACT_VALUE_LABEL: 'Estimated contract value (placeholder — update in Phase 4B)',
+} as const
