@@ -12,6 +12,7 @@ import { Financial } from '@/pages/management/Financial'
 import { Reports } from '@/pages/management/Reports'
 import { Import } from '@/pages/management/Import'
 import { Settings } from '@/pages/management/Settings'
+import { StudyDetail } from '@/pages/management/StudyDetail'
 import { MyDashboard } from '@/pages/staff/MyDashboard'
 import { DataEntry } from '@/pages/staff/DataEntry'
 import { MyStudies } from '@/pages/staff/MyStudies'
@@ -35,6 +36,7 @@ export function AppRouter() {
               <Route path="/reports" element={<Reports />} />
               <Route path="/import" element={<Import />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/studies/:id" element={<StudyDetail />} />
             </Route>
 
             <Route element={<RoleRoute allowedRole="staff" />}>
