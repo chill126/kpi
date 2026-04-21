@@ -209,3 +209,20 @@
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+@layer components {
+  [cmdk-group-heading] {
+    padding: 10px 14px 6px;
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--text-label); font-weight: 500;
+  }
+  [cmdk-item] {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 10px; cursor: pointer;
+    color: var(--text-secondary); font-size: 13.5px;
+  }
+  [cmdk-item][data-selected="true"] {
+    background: rgba(255 255 255 / 0.06);
+    color: var(--text-primary);
+  }
+}
