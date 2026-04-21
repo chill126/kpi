@@ -203,11 +203,10 @@
     outline-offset: 2px;
     box-shadow: var(--glow-primary);
   }
-}
-
-@keyframes hud-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  @keyframes hud-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 }
 
 @layer components {
