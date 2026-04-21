@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 interface Props {
   title: string
   action?: React.ReactNode
@@ -7,8 +9,10 @@ interface Props {
 }
 
 export function Panel({ title, action, variant = 'default', children, className }: Props) {
+  const headingId = useId()
   return (
     <section
+      aria-labelledby={headingId}
       className={[
         variant === 'strong' ? 'glass-strong' : 'glass',
         className,
@@ -19,7 +23,7 @@ export function Panel({ title, action, variant = 'default', children, className 
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 12,
       }}>
-        <h3 style={{
+        <h3 id={headingId} style={{
           margin: 0, fontFamily: 'Inter, system-ui', fontSize: 10.5,
           fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase',
           color: 'var(--text-label)',
