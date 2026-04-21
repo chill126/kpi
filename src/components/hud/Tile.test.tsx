@@ -38,4 +38,21 @@ describe('Tile', () => {
       'Capacity: 67%, avg utilization',
     )
   })
+  it('prepends ⚠ glyph in the label when signal is alert', () => {
+    render(<Tile label="Capacity" value={94} signal="alert" />)
+    expect(screen.getByText(/⚠\s+Capacity/)).toBeInTheDocument()
+  })
+  it('prepends ▲ glyph in the label when signal is warn', () => {
+    render(<Tile label="Capacity" value={80} signal="warn" />)
+    expect(screen.getByText(/▲\s+Capacity/)).toBeInTheDocument()
+  })
+  it('renders string values literally without count-up animation', () => {
+    render(<Tile label="Status" value="—" />)
+    expect(screen.getByText('—')).toBeInTheDocument()
+  })
+  it('tints the trend chip as alert when direction is down', () => {
+    render(<Tile label="Cap" value={1} trend={{ delta: '-3%', direction: 'down' }} />)
+    expect(screen.getByText('-3%').closest('[data-signal]'))
+      .toHaveAttribute('data-signal', 'alert')
+  })
 })
