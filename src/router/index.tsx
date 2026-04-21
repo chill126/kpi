@@ -2,9 +2,10 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom'
 import { PrivateRoute } from './PrivateRoute'
 import { RoleRoute } from './RoleRoute'
-import { AppShell } from '@/components/layout/AppShell'
 import { PageLoader } from '@/components/shared/PageLoader'
 import { ChunkErrorBoundary } from '@/components/shared/ChunkErrorBoundary'
+import { HudShell } from '@/components/hud/nav/HudShell'
+import { useHudUser } from '@/components/hud/nav/useHudUser'
 
 const Login = lazy(() => import('@/pages/Login').then(m => ({ default: m.Login })))
 const Overview = lazy(() => import('@/pages/management/Overview').then(m => ({ default: m.Overview })))
@@ -34,6 +35,18 @@ const AuthenticatedOutlet = () => (
   </ChunkErrorBoundary>
 )
 
+// HUD shell layout — replaces AppShell as the authenticated layout route.
+// Must be rendered inside BrowserRouter (useNavigate requirement).
+function HudShellLayout() {
+  const hud = useHudUser()
+  if (!hud) return <Outlet />
+  return (
+    <HudShell role={hud.role} user={hud.user}>
+      <Outlet />
+    </HudShell>
+  )
+}
+
 export function AppRouter() {
   return (
     <BrowserRouter>
@@ -45,7 +58,7 @@ export function AppRouter() {
         } />
 
         <Route element={<PrivateRoute />}>
-          <Route element={<AppShell />}>
+          <Route element={<HudShellLayout />}>
             <Route element={<AuthenticatedOutlet />}>
               <Route element={<RoleRoute allowedRole="management" />}>
                 <Route path="/" element={<Overview />} />
