@@ -13,6 +13,7 @@ import {
   User,
   Activity,
   FlaskConical,
+  AlertTriangle,
 } from 'lucide-react'
 import { NavItem } from './NavItem'
 import { useAuth } from '@/hooks/useAuth'
@@ -27,6 +28,7 @@ const MANAGEMENT_NAV = [
   { to: '/reports', icon: FileBarChart, label: 'Reports' },
   { to: '/forecast', icon: Activity, label: 'Forecast' },
   { to: '/what-if', icon: FlaskConical, label: 'What-If' },
+  { to: '/deviations', icon: AlertTriangle, label: 'Deviations' },
   { to: '/import', icon: Upload, label: 'Import' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]

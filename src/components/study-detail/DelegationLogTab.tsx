@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDelegationLog } from '@/hooks/useDelegationLog'
 import { createDelegationEntry, deleteDelegationEntry } from '@/lib/delegationLog'
+import { useSite } from '@/hooks/useSite'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,6 +25,7 @@ interface NewEntryForm {
 const EMPTY_FORM: NewEntryForm = { investigatorId: '', delegatedTasks: '', effectiveDate: '' }
 
 export function DelegationLogTab({ studyId, investigators, canEdit }: Props) {
+  const { siteId } = useSite()
   const { entries, loading } = useDelegationLog(studyId)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<NewEntryForm>(EMPTY_FORM)
@@ -48,6 +50,7 @@ export function DelegationLogTab({ studyId, investigators, canEdit }: Props) {
     setSaving(true)
     try {
       await createDelegationEntry({
+        siteId,
         investigatorId: form.investigatorId,
         studyId,
         delegatedTasks: form.delegatedTasks.split(',').map((t) => t.trim()).filter(Boolean),

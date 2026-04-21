@@ -61,6 +61,66 @@ export interface EnrollmentData {
   completions: number
 }
 
+export const SCREEN_FAILURE_CATEGORIES = [
+  'inclusion_criteria',
+  'exclusion_criteria',
+  'lab_values',
+  'scales',
+  'prohibited_con_meds',
+  'consent',
+  'logistical',
+  'lost_to_follow_up',
+  'investigator_decision',
+] as const
+
+export type ScreenFailureCategory = typeof SCREEN_FAILURE_CATEGORIES[number]
+
+export interface ScreenFailureReason {
+  category: ScreenFailureCategory | string
+  detail?: string
+}
+
+export interface ScreenFailure {
+  id: string
+  studyId: string
+  siteId: string
+  source?: string
+  date: string
+  reasons: ScreenFailureReason[]
+  notes?: string
+}
+
+export interface EnrollmentSnapshot {
+  id: string
+  studyId: string
+  siteId: string
+  date: string
+  prescreens: number
+  screens: number
+  randomizations: number
+  active: number
+  completions: number
+}
+
+export interface ContractMilestone {
+  name: string
+  amount: number
+  expectedDate: string
+  achieved: boolean
+  achievedDate?: string
+}
+
+export interface PaidScreenFails {
+  ratio?: number
+  maxPaid?: number
+}
+
+export interface StudyContract {
+  totalValue?: number
+  milestones?: ContractMilestone[]
+  paidScreenFails?: PaidScreenFails
+}
+
 export interface StudyStatusHistoryEntry {
   status: StudyStatus
   changedBy: string
@@ -88,6 +148,8 @@ export interface Study {
   parsedFromProtocol: boolean
   enrollmentData: EnrollmentData
   statusHistory: StudyStatusHistoryEntry[]
+  contract?: StudyContract
+  customScreenFailureReasons?: string[]
 }
 
 export type VisitStatus = 'scheduled' | 'completed' | 'missed' | 'no_show'
@@ -123,6 +185,7 @@ export type DelegationSource = 'advarra_import' | 'manual'
 
 export interface DelegationLog {
   id: string
+  siteId: string
   investigatorId: string
   studyId: string
   delegatedTasks: string[]
@@ -132,13 +195,44 @@ export interface DelegationLog {
 
 export interface Import {
   id: string
-  type: 'clinical_conductor' | 'advarra_ereg' | 'protocol_pdf'
+  siteId: string
+  type: 'clinical_conductor' | 'advarra_ereg' | 'enrollment_snapshot' | 'protocol_pdf'
   uploadedBy: string
   uploadedAt: string
   rowCount: number
   status: 'pending' | 'complete' | 'error'
   mappingUsed: Record<string, string>
   errors: string[]
+}
+
+export const DEVIATION_CATEGORIES = [
+  'procedural',
+  'inclusion_exclusion',
+  'consent',
+  'prohibited_con_med',
+  'missed_visit',
+  'assessment',
+  'other',
+] as const
+
+export type DeviationCategory = typeof DEVIATION_CATEGORIES[number]
+
+export type DeviationStatus = 'open' | 'pi_reviewed' | 'closed'
+
+export interface ProtocolDeviation {
+  id: string
+  siteId: string
+  studyId: string
+  subjectId: string
+  date: string
+  category: DeviationCategory
+  description: string
+  correctiveAction: string
+  piReviewed: boolean
+  piReviewDate?: string
+  status: DeviationStatus
+  reportedBy: string
+  createdAt: string
 }
 
 export interface CapacityConfig {
