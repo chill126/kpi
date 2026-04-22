@@ -216,19 +216,17 @@ export function MyDashboard() {
       </div>
 
       {/* Stat tiles */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-        <div
-          role="button"
-          tabIndex={0}
+      <div className="grid grid-cols-1 sm:grid-cols-3" style={{ gap: 12 }}>
+        <button
+          type="button"
           onClick={() => navigate('/my-studies')}
-          onKeyDown={(e) => e.key === 'Enter' && navigate('/my-studies')}
           className="glass"
-          style={{ padding: '16px 18px 18px', cursor: 'pointer', userSelect: 'none' }}
+          style={{ padding: '16px 18px 18px', cursor: 'pointer', textAlign: 'left', width: '100%' }}
         >
           <div style={TILE_LABEL}>Assigned Studies</div>
           <div style={TILE_VALUE}>{assignedStudyIds.length}</div>
           <div style={TILE_SUB}>View all →</div>
-        </div>
+        </button>
 
         <div className="glass" style={{ padding: '16px 18px 18px' }}>
           <div style={TILE_LABEL}>Upcoming Visits (14 days)</div>
@@ -339,7 +337,7 @@ export function MyDashboard() {
             {myStudies.length === 0 ? (
               <EmptyState title="No assigned studies." />
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
                 {myStudies.map((study) => {
                   const enrolled = study.enrollmentData?.randomizations ?? 0
                   const pct =

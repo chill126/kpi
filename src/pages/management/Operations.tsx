@@ -42,7 +42,7 @@ function fmtDuration(min: number | null): string {
 }
 
 export function Operations() {
-  const { sessions, loading: sessionsLoading, error: sessionsError } = useBoardSessions()
+  const { sessions, loading: sessionsLoading, error: sessionsError, circuitOpen: sessionsCircuitOpen } = useBoardSessions()
   const { entries, loading: boardLoading, error: boardError, circuitOpen: boardCircuitOpen } = useK2BoardToday()
 
   // ── Historical derived data ──────────────────────────────────────────────
@@ -84,7 +84,7 @@ export function Operations() {
   const byStudyData = useMemo(() => {
     const map: Record<string, number> = {}
     for (const s of sessions) {
-      for (const [study, m] of Object.entries(s.metrics.byStudy)) {
+      for (const [study, m] of Object.entries(s.metrics.byStudy ?? {})) {
         map[study] = (map[study] ?? 0) + m.arrivals
       }
     }
@@ -97,7 +97,7 @@ export function Operations() {
   const byInvestigatorData = useMemo(() => {
     const map: Record<string, number> = {}
     for (const s of sessions) {
-      for (const [name, m] of Object.entries(s.metrics.byInvestigator)) {
+      for (const [name, m] of Object.entries(s.metrics.byInvestigator ?? {})) {
         map[name] = (map[name] ?? 0) + m.visits
       }
     }
@@ -142,6 +142,17 @@ export function Operations() {
               <div key={i} className="glass" style={{ height: 100 }} />
             ))}
           </div>
+        ) : sessionsCircuitOpen ? (
+          <Panel title="Board Sessions">
+            <div style={{
+              background: 'rgba(245 158 11 / 0.12)',
+              border: '1px solid rgba(245 158 11 / 0.35)',
+              borderRadius: 8, padding: '10px 14px',
+              fontSize: 13, color: 'var(--signal-warn)',
+            }}>
+              ▲ Subscription paused — snapshot rate exceeded. Auto-retrying in ~1 min.
+            </div>
+          </Panel>
         ) : sessionsError ? (
           <Panel title="Board Sessions">
             <ErrorState message={sessionsError.message} />
