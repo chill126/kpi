@@ -30,6 +30,8 @@ export interface Investigator {
   weeklyCapacityHours: number
   siteBaselinePct: number
   assignedStudies: string[]
+  /** Display name as it appears in k2-board (e.g. 'Wilson'). Used for board session cross-referencing. */
+  boardName?: string
 }
 
 export type StudyStatus = 'enrolling' | 'paused' | 'maintenance' | 'completed' | 'on_hold'
