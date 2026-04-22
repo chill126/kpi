@@ -59,8 +59,8 @@ function isAuthenticated() {
       allow read, write: if isManagement();
     }
 
-    match /whatIfScenarios/{docId} {
-      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+    match /whatIfScenarios/{siteId}/scenarios/{scenarioId} {
+      allow read: if isAuthenticated() && isSameSite(siteId);
       allow write: if isManagement();
     }
 
