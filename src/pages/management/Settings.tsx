@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSite } from '@/hooks/useSite'
-import { useSiteData } from '@/hooks/useSiteData'
+import { useSites } from '@/hooks/useSites'
 import { useSiteUsers } from '@/hooks/useSiteUsers'
 import { useStudies } from '@/hooks/useStudies'
 import { createSite, updateSite } from '@/lib/sites'
@@ -62,15 +62,115 @@ function formsEqual(a: SiteForm, b: SiteForm): boolean {
   )
 }
 
-function SiteConfigurationTab() {
-  const { siteId } = useSite()
-  const { site, loading } = useSiteData()
-  const [form, setForm] = useState<SiteForm | null>(null)
+interface SiteEditDialogProps {
+  site: Site
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+function SiteEditDialog({ site, open, onOpenChange }: SiteEditDialogProps) {
+  const [form, setForm] = useState<SiteForm>(siteToForm(site))
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (site) setForm(siteToForm(site))
-  }, [site])
+    if (open) setForm(siteToForm(site))
+  }, [open, site])
+
+  const original = siteToForm(site)
+  const dirty = !formsEqual(form, original)
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      await updateSite(site.id, {
+        name: form.name,
+        location: form.location,
+        timezone: form.timezone,
+        active: form.active,
+      })
+      onOpenChange(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit Site</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Label htmlFor="edit-site-name">Site Name</Label>
+            <Input
+              id="edit-site-name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="edit-site-location">Location</Label>
+            <Input
+              id="edit-site-location"
+              value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="edit-site-timezone">Timezone</Label>
+            <select
+              id="edit-site-timezone"
+              value={form.timezone}
+              onChange={(e) => setForm({ ...form, timezone: e.target.value })}
+              className={SELECT_CLASS}
+            >
+              {TIMEZONES.map((tz) => (
+                <option key={tz} value={tz}>
+                  {tz}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              id="edit-site-active"
+              type="checkbox"
+              checked={form.active}
+              onChange={(e) => setForm({ ...form, active: e.target.checked })}
+              className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+            />
+            <Label htmlFor="edit-site-active" className="cursor-pointer">
+              Active
+            </Label>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={!dirty || saving}
+            className="bg-teal-600 hover:bg-teal-700 text-white"
+          >
+            {saving ? 'Saving…' : 'Save Changes'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function SiteConfigurationTab() {
+  const { sites, loading } = useSites()
+  const { siteId: activeSiteId } = useSite()
+  const [editSite, setEditSite] = useState<Site | null>(null)
 
   if (loading) {
     return (
@@ -82,94 +182,88 @@ function SiteConfigurationTab() {
     )
   }
 
-  if (!site || !form) {
-    return (
-      <p className="text-sm text-slate-500 dark:text-slate-400 pt-4">
-        Site document not found.
-      </p>
-    )
-  }
-
-  const original = siteToForm(site)
-  const dirty = !formsEqual(form, original)
-
-  async function handleSave() {
-    if (!form) return
-    setSaving(true)
-    try {
-      await updateSite(siteId, {
-        name: form.name,
-        location: form.location,
-        timezone: form.timezone,
-        active: form.active,
-      })
-    } finally {
-      setSaving(false)
-    }
-  }
-
   return (
-    <div className="pt-4">
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 space-y-4">
-        <div className="space-y-1">
-          <Label htmlFor="site-name">Site Name</Label>
-          <Input
-            id="site-name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
+    <div className="pt-4 space-y-4">
+      {sites.length === 0 ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          No sites found.
+        </p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+          <table className="w-full text-sm">
+            <thead className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                  Name
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                  Location
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+              {sites.map((site) => (
+                <tr
+                  key={site.id}
+                  className="hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                >
+                  <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span>{site.name}</span>
+                      {site.id === activeSiteId && (
+                        <span className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+                          current
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                    {site.location}
+                  </td>
+                  <td className="px-4 py-3">
+                    {site.active ? (
+                      <span className="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                        inactive
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditSite(site)}
+                    >
+                      Edit
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="site-location">Location</Label>
-          <Input
-            id="site-location"
-            value={form.location}
-            onChange={(e) => setForm({ ...form, location: e.target.value })}
-          />
-        </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="site-timezone">Timezone</Label>
-          <select
-            id="site-timezone"
-            value={form.timezone}
-            onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-            className={SELECT_CLASS}
-          >
-            {TIMEZONES.map((tz) => (
-              <option key={tz} value={tz}>
-                {tz}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <input
-            id="site-active"
-            type="checkbox"
-            checked={form.active}
-            onChange={(e) => setForm({ ...form, active: e.target.checked })}
-            className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
-          />
-          <Label htmlFor="site-active" className="cursor-pointer">
-            Active
-          </Label>
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSave}
-            disabled={!dirty || saving}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
-          >
-            {saving ? 'Saving…' : 'Save Changes'}
-          </Button>
-        </div>
-      </div>
+      )}
 
       <AddSiteCard />
+
+      {editSite && (
+        <SiteEditDialog
+          site={editSite}
+          open={editSite !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditSite(null)
+          }}
+        />
+      )}
     </div>
   )
 }

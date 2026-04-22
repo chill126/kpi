@@ -17,11 +17,15 @@ vi.mock('@/hooks/useInvestigators', () => ({ useInvestigators: vi.fn() }))
 vi.mock('@/hooks/useSiteVisits', () => ({ useSiteVisits: vi.fn() }))
 vi.mock('@/hooks/useSiteAssessments', () => ({ useSiteAssessments: vi.fn() }))
 vi.mock('@/hooks/useStudies', () => ({ useStudies: vi.fn() }))
+vi.mock('@/hooks/useAuth', () => ({ useAuth: vi.fn() }))
+vi.mock('@/hooks/useSite', () => ({ useSite: vi.fn() }))
 
 import * as investigatorsModule from '@/hooks/useInvestigators'
 import * as siteVisitsModule from '@/hooks/useSiteVisits'
 import * as siteAssessmentsModule from '@/hooks/useSiteAssessments'
 import * as studiesModule from '@/hooks/useStudies'
+import * as authHook from '@/hooks/useAuth'
+import * as siteHook from '@/hooks/useSite'
 import type { Investigator } from '@/types'
 
 const mockInvestigator: Investigator = {
@@ -35,6 +39,8 @@ beforeEach(() => {
   vi.mocked(siteVisitsModule.useSiteVisits).mockReturnValue({ visits: [], loading: false, error: null })
   vi.mocked(siteAssessmentsModule.useSiteAssessments).mockReturnValue({ assessments: [], loading: false, error: null })
   vi.mocked(studiesModule.useStudies).mockReturnValue({ studies: [], loading: false, error: null })
+  vi.mocked(authHook.useAuth).mockReturnValue({ user: null, role: 'management', loading: false })
+  vi.mocked(siteHook.useSite).mockReturnValue({ siteId: 'tampa', setActiveSite: vi.fn() })
 })
 
 describe('Investigators', () => {
