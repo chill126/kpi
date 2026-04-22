@@ -62,7 +62,6 @@ export function Login() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') void doSignIn() }}
               className={errors.email ? 'border-red-500' : ''}
             />
             {errors.email && (

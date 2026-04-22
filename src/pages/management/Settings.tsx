@@ -3,7 +3,7 @@ import { useSite } from '@/hooks/useSite'
 import { useSiteData } from '@/hooks/useSiteData'
 import { useSiteUsers } from '@/hooks/useSiteUsers'
 import { useStudies } from '@/hooks/useStudies'
-import { updateSite } from '@/lib/sites'
+import { createSite, updateSite } from '@/lib/sites'
 import { updateUser } from '@/lib/users'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -168,6 +168,62 @@ function SiteConfigurationTab() {
           </Button>
         </div>
       </div>
+
+      <AddSiteCard />
+    </div>
+  )
+}
+
+const BLANK_SITE_FORM: SiteForm = { name: '', location: '', timezone: 'America/New_York', active: true }
+
+function AddSiteCard() {
+  const [open, setOpen] = useState(false)
+  const [form, setForm] = useState<SiteForm>(BLANK_SITE_FORM)
+  const [saving, setSaving] = useState(false)
+
+  async function handleCreate() {
+    if (!form.name.trim()) return
+    setSaving(true)
+    try {
+      await createSite(form)
+      setForm(BLANK_SITE_FORM)
+      setOpen(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="mt-4">
+      {!open ? (
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+          + Add Site to Network
+        </Button>
+      ) : (
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 space-y-4">
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">New Site</p>
+          <div className="space-y-1">
+            <Label htmlFor="new-site-name">Site Name</Label>
+            <Input id="new-site-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="new-site-location">Location</Label>
+            <Input id="new-site-location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="new-site-timezone">Timezone</Label>
+            <select id="new-site-timezone" value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })} className={SELECT_CLASS}>
+              {TIMEZONES.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
+            </select>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => { setOpen(false); setForm(BLANK_SITE_FORM) }}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={!form.name.trim() || saving} className="bg-teal-600 hover:bg-teal-700 text-white">
+              {saving ? 'Creating…' : 'Create Site'}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

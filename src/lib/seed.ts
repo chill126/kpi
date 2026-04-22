@@ -145,20 +145,21 @@ const defaultStatusHistory: StudyStatusHistoryEntry[] = []
 export async function seedTampaData(
   siteId: string,
 ): Promise<{ investigators: number; studies: number }> {
-  // Idempotency: skip if investigators already exist for this site
-  const existing = await getDocs(
-    query(
-      collection(db, 'investigators'),
-      where('siteId', '==', siteId),
-      limit(1),
-    ),
-  )
-  if (!existing.empty) {
-    return { investigators: 0, studies: 0 }
-  }
-
   const investigatorIds: string[] = []
+  let newInvestigators = 0
   for (const inv of investigators) {
+    const existing = await getDocs(
+      query(
+        collection(db, 'investigators'),
+        where('siteId', '==', siteId),
+        where('boardName', '==', inv.boardName),
+        limit(1),
+      ),
+    )
+    if (!existing.empty) {
+      investigatorIds.push(existing.docs[0].id)
+      continue
+    }
     const id = await createInvestigator({
       name: inv.name,
       credentials: inv.credentials,
@@ -170,12 +171,22 @@ export async function seedTampaData(
       boardName: inv.boardName,
     })
     investigatorIds.push(id)
+    newInvestigators++
   }
 
   const piId = investigatorIds[0] ?? ''
 
-  let studyCount = 0
+  let newStudies = 0
   for (const s of studies) {
+    const existing = await getDocs(
+      query(
+        collection(db, 'studies'),
+        where('siteId', '==', siteId),
+        where('sponsorProtocolId', '==', s.sponsorProtocolId),
+        limit(1),
+      ),
+    )
+    if (!existing.empty) continue
     const study: Omit<Study, 'id'> = {
       name: s.name,
       sponsor: s.sponsor,
@@ -197,8 +208,8 @@ export async function seedTampaData(
       statusHistory: defaultStatusHistory,
     }
     await createStudy(study)
-    studyCount += 1
+    newStudies++
   }
 
-  return { investigators: investigatorIds.length, studies: studyCount }
+  return { investigators: newInvestigators, studies: newStudies }
 }
