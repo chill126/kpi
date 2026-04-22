@@ -41,7 +41,7 @@ function HudShellLayout() {
   const hud = useHudUser()
   if (!hud) return <Outlet />
   return (
-    <HudShell role={hud.role} user={hud.user}>
+    <HudShell role={hud.role} user={hud.user} onSignOut={hud.signOut}>
       <Outlet />
     </HudShell>
   )

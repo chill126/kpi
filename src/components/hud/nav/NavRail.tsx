@@ -6,7 +6,8 @@ import { managementPages, staffPages, type Role, type CommandItem } from './comm
 
 interface Props {
   role: Role
-  user: { displayName: string; role: string }
+  user: { displayName: string; email: string; role: string }
+  onSignOut: () => void | Promise<void>
 }
 
 const managementGroups: Array<{ label: string; ids: string[] }> = [
@@ -35,7 +36,7 @@ function renderItem(item: CommandItem): React.ReactNode {
   )
 }
 
-export function NavRail({ role, user }: Props) {
+export function NavRail({ role, user, onSignOut }: Props) {
   const pages = role === 'management' ? managementPages : staffPages
   const groups = role === 'management' ? managementGroups : staffGroups
   const byId = new Map(pages.map(p => [p.id, p] as const))
@@ -63,7 +64,12 @@ export function NavRail({ role, user }: Props) {
         ))}
       </div>
       <div style={{ borderTop: '1px solid rgba(255 255 255 / 0.06)', padding: '8px 6px 0' }}>
-        <UserChip displayName={user.displayName} role={user.role} />
+        <UserChip
+          displayName={user.displayName}
+          email={user.email}
+          role={user.role}
+          onSignOut={onSignOut}
+        />
       </div>
     </aside>
   )

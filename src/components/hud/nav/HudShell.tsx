@@ -7,12 +7,13 @@ import type { Role } from './commandRegistry'
 
 interface Props {
   role: Role
-  user: { displayName: string; role: string }
+  user: { displayName: string; email: string; role: string }
+  onSignOut: () => void | Promise<void>
   onAction?: (actionId: string) => void
   children: React.ReactNode
 }
 
-export function HudShell({ role, user, onAction, children }: Props) {
+export function HudShell({ role, user, onSignOut, onAction, children }: Props) {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const nav = useNavigate()
 
@@ -26,9 +27,8 @@ export function HudShell({ role, user, onAction, children }: Props) {
 
   return (
     <>
-      <NavRail role={role} user={user} />
+      <NavRail role={role} user={user} onSignOut={onSignOut} />
       <main
-        role="main"
         style={{
           marginLeft: 264, padding: '20px 32px 40px',
           minHeight: '100vh',
