@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-function isAuthenticated() {
+    function isAuthenticated() {
       return request.auth != null;
     }
 
@@ -29,29 +29,29 @@ function isAuthenticated() {
     }
 
     match /investigators/{docId} {
-      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow read: if isAuthenticated() && (isManagement() || isSameSite(resource.data.siteId));
       allow write: if isManagement();
     }
 
     match /studies/{docId} {
-      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow read: if isAuthenticated() && (isManagement() || isSameSite(resource.data.siteId));
       allow write: if isManagement();
     }
 
     match /visits/{docId} {
-      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
-      allow create: if isAuthenticated() && isSameSite(request.resource.data.siteId);
+      allow read: if isAuthenticated() && (isManagement() || isSameSite(resource.data.siteId));
+      allow create: if isAuthenticated() && (isManagement() || isSameSite(request.resource.data.siteId));
       allow update, delete: if isManagement();
     }
 
     match /assessments/{docId} {
-      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
-      allow create: if isAuthenticated() && isSameSite(request.resource.data.siteId);
+      allow read: if isAuthenticated() && (isManagement() || isSameSite(resource.data.siteId));
+      allow create: if isAuthenticated() && (isManagement() || isSameSite(request.resource.data.siteId));
       allow update, delete: if isManagement();
     }
 
     match /delegationLog/{docId} {
-      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow read: if isAuthenticated() && (isManagement() || isSameSite(resource.data.siteId));
       allow write: if isManagement();
     }
 
@@ -60,25 +60,25 @@ function isAuthenticated() {
     }
 
     match /whatIfScenarios/{siteId}/scenarios/{scenarioId} {
-      allow read: if isAuthenticated() && isSameSite(siteId);
+      allow read: if isAuthenticated() && (isManagement() || isSameSite(siteId));
       allow write: if isManagement();
     }
 
     match /screenFailures/{docId} {
-      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
-      allow create: if isAuthenticated() && isSameSite(request.resource.data.siteId);
+      allow read: if isAuthenticated() && (isManagement() || isSameSite(resource.data.siteId));
+      allow create: if isAuthenticated() && (isManagement() || isSameSite(request.resource.data.siteId));
       allow update, delete: if isManagement();
     }
 
     match /enrollmentSnapshots/{docId} {
-      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
-      allow create: if isAuthenticated() && isSameSite(request.resource.data.siteId);
+      allow read: if isAuthenticated() && (isManagement() || isSameSite(resource.data.siteId));
+      allow create: if isAuthenticated() && (isManagement() || isSameSite(request.resource.data.siteId));
       allow update, delete: if isManagement();
     }
 
     match /protocolDeviations/{docId} {
-      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
-      allow create: if isAuthenticated() && isSameSite(request.resource.data.siteId);
+      allow read: if isAuthenticated() && (isManagement() || isSameSite(resource.data.siteId));
+      allow create: if isAuthenticated() && (isManagement() || isSameSite(request.resource.data.siteId));
       allow update, delete: if isManagement();
     }
 
@@ -88,7 +88,7 @@ function isAuthenticated() {
     }
 
     match /boardSessions/{docId} {
-      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow read: if isAuthenticated() && (isManagement() || isSameSite(resource.data.siteId));
       allow write: if isManagement();
     }
   }

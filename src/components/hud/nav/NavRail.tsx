@@ -57,7 +57,7 @@ export function NavRail({ role, user, onSignOut }: Props) {
       <div style={{ padding: '0 10px 10px' }}>
         <SiteSwitcher role={role} />
       </div>
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div className="nav-scroll" style={{ flex: 1, overflowY: 'auto' }}>
         {groups.map(g => (
           <NavGroup key={g.label} label={g.label}>
             {g.ids.map(id => {

@@ -30,7 +30,19 @@ export function subscribeBoardSessions(
   )
 }
 
+function stripUndefined(val: unknown): unknown {
+  if (Array.isArray(val)) return val.map(stripUndefined)
+  if (val !== null && typeof val === 'object') {
+    return Object.fromEntries(
+      Object.entries(val as Record<string, unknown>)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [k, stripUndefined(v)]),
+    )
+  }
+  return val
+}
+
 export async function createBoardSession(data: Omit<BoardSession, 'id'>): Promise<string> {
-  const ref = await addDoc(collection(db, 'boardSessions'), data)
+  const ref = await addDoc(collection(db, 'boardSessions'), stripUndefined(data) as Omit<BoardSession, 'id'>)
   return ref.id
 }

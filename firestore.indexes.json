@@ -117,6 +117,22 @@
         { "fieldPath": "siteId", "order": "ASCENDING" },
         { "fieldPath": "sessionDate", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "investigators",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "siteId", "order": "ASCENDING" },
+        { "fieldPath": "boardName", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "studies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "siteId", "order": "ASCENDING" },
+        { "fieldPath": "sponsorProtocolId", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

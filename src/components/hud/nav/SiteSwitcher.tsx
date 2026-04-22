@@ -1,8 +1,19 @@
-import { useState } from 'react'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import { Building2, ChevronDown, Check } from 'lucide-react'
 import { useSites } from '@/hooks/useSites'
 import { useSite } from '@/hooks/useSite'
-import { Building2, ChevronDown } from 'lucide-react'
 import type { Role } from '@/components/hud/nav/commandRegistry'
+
+const MENU_CONTENT_STYLE: React.CSSProperties = {
+  minWidth: 220,
+  padding: 6,
+  zIndex: 60,
+  background: 'oklch(0.13 0.020 275)',
+  border: '1px solid rgba(255 255 255 / 0.12)',
+  borderRadius: 14,
+  boxShadow: '0 12px 40px rgba(0 0 0 / 0.55)',
+  color: 'var(--text-primary)',
+}
 
 interface Props {
   role: Role
@@ -11,92 +22,77 @@ interface Props {
 export function SiteSwitcher({ role }: Props) {
   const { siteId, setActiveSite } = useSite()
   const { sites } = useSites()
-  const [open, setOpen] = useState(false)
 
   const current = sites.find((s) => s.id === siteId)
   const canSwitch = role === 'management' && sites.length > 1
 
-  return (
-    <div style={{ position: 'relative' }}>
-      <button
-        type="button"
-        onClick={() => canSwitch && setOpen((o) => !o)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          width: '100%',
-          padding: '8px 10px',
-          borderRadius: 8,
-          border: 'none',
-          background: 'rgba(255 255 255 / 0.04)',
-          cursor: canSwitch ? 'pointer' : 'default',
-          color: 'var(--text-primary)',
-          fontFamily: 'Inter, system-ui',
-          fontSize: 12,
-          fontWeight: 500,
-        }}
-      >
-        <Building2 size={14} style={{ color: 'var(--text-label)', flexShrink: 0 }} />
-        <span
-          style={{
-            flex: 1,
-            textAlign: 'left',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {current?.name ?? siteId}
-        </span>
-        {canSwitch && (
-          <ChevronDown size={12} style={{ color: 'var(--text-label)', flexShrink: 0 }} />
-        )}
-      </button>
+  const trigger = (
+    <button
+      type="button"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+        padding: '8px 10px', borderRadius: 8, border: 'none',
+        background: 'rgba(255 255 255 / 0.04)',
+        cursor: canSwitch ? 'pointer' : 'default',
+        color: 'var(--text-primary)',
+        fontFamily: 'Inter, system-ui', fontSize: 12, fontWeight: 500,
+      }}
+    >
+      <Building2 size={14} style={{ color: 'var(--text-label)', flexShrink: 0 }} />
+      <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {current?.name ?? siteId}
+      </span>
+      {canSwitch && <ChevronDown size={12} style={{ color: 'var(--text-label)', flexShrink: 0 }} />}
+    </button>
+  )
 
-      {open && canSwitch && (
-        <div
-          className="glass"
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            marginTop: 4,
-            borderRadius: 8,
-            padding: 4,
-            zIndex: 50,
-          }}
+  if (!canSwitch) return <div>{trigger}</div>
+
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        {trigger}
+      </DropdownMenu.Trigger>
+
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="start"
+          side="bottom"
+          sideOffset={6}
+          style={MENU_CONTENT_STYLE}
         >
+          <div style={{
+            padding: '6px 10px 8px',
+            borderBottom: '1px solid rgba(255 255 255 / 0.06)',
+            marginBottom: 4,
+            fontSize: 10.5, fontWeight: 500, letterSpacing: '0.12em',
+            textTransform: 'uppercase', color: 'var(--text-label)',
+          }}>
+            Site Network
+          </div>
+
           {sites.map((site) => (
-            <button
+            <DropdownMenu.Item
               key={site.id}
-              type="button"
-              onClick={() => {
-                setActiveSite(site.id)
-                setOpen(false)
-              }}
+              onSelect={() => setActiveSite(site.id)}
               style={{
-                display: 'block',
-                width: '100%',
-                padding: '6px 10px',
-                borderRadius: 6,
-                border: 'none',
-                background:
-                  site.id === siteId ? 'rgba(255 255 255 / 0.08)' : 'none',
-                color:
-                  site.id === siteId ? 'var(--text-primary)' : 'var(--text-secondary)',
-                fontFamily: 'Inter, system-ui',
-                fontSize: 12,
-                cursor: 'pointer',
-                textAlign: 'left',
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 10px', borderRadius: 8,
+                fontSize: 13, color: site.id === siteId ? 'var(--text-primary)' : 'var(--text-secondary)',
+                cursor: 'pointer', outline: 'none',
+                background: site.id === siteId ? 'rgba(255 255 255 / 0.06)' : 'transparent',
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255 255 255 / 0.06)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = site.id === siteId ? 'rgba(255 255 255 / 0.06)' : 'transparent' }}
             >
-              {site.name}
-            </button>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {site.name}
+              </span>
+              {site.id === siteId && <Check size={13} style={{ color: 'var(--signal-good)', flexShrink: 0 }} />}
+            </DropdownMenu.Item>
           ))}
-        </div>
-      )}
-    </div>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   )
 }
