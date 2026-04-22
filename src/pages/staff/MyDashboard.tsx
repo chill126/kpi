@@ -6,19 +6,31 @@ import { useInvestigators } from '@/hooks/useInvestigators'
 import { useSiteVisits } from '@/hooks/useSiteVisits'
 import { useDelegationLog } from '@/hooks/useDelegationLog'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { BookMarked, Calendar, ClipboardList } from 'lucide-react'
+import { EmptyState } from '@/components/hud/EmptyState'
+import { Calendar } from 'lucide-react'
 import type { DelegationLog, Investigator, Study, Visit, VisitStatus } from '@/types'
 
-const CARD_CLASS =
-  'bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4'
+const TILE_LABEL: React.CSSProperties = {
+  fontFamily: 'Inter, system-ui', fontSize: 10.5, fontWeight: 500,
+  letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-label)',
+}
 
-const VISIT_STATUS_STYLES: Record<VisitStatus, string> = {
-  scheduled: 'bg-teal-50 text-teal-700 border border-teal-200',
-  completed: 'bg-green-50 text-green-700 border border-green-200',
-  missed: 'bg-red-50 text-red-700 border border-red-200',
-  no_show: 'bg-red-50 text-red-700 border border-red-200',
+const TILE_VALUE: React.CSSProperties = {
+  fontFamily: 'Geist, Inter, system-ui', fontSize: 32, fontWeight: 300,
+  letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--text-primary)',
+  fontFeatureSettings: '"tnum"', marginTop: 2,
+}
+
+const TILE_SUB: React.CSSProperties = {
+  marginTop: 6, fontSize: 11.5, color: 'var(--text-muted)',
+}
+
+const VISIT_STATUS_HUD: Record<VisitStatus, React.CSSProperties> = {
+  scheduled: { color: 'var(--text-primary)', background: 'rgba(255 255 255 / 0.08)' },
+  completed: { color: 'var(--signal-good)', background: 'rgba(52 211 153 / 0.12)' },
+  missed: { color: 'var(--signal-alert)', background: 'rgba(248 113 113 / 0.12)' },
+  no_show: { color: 'var(--signal-alert)', background: 'rgba(248 113 113 / 0.12)' },
 }
 
 const VISIT_STATUS_LABEL: Record<VisitStatus, string> = {
@@ -27,6 +39,9 @@ const VISIT_STATUS_LABEL: Record<VisitStatus, string> = {
   missed: 'Missed',
   no_show: 'No Show',
 }
+
+const TAB_TRIGGER_CLASS =
+  'rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none pb-3 px-4 text-sm font-medium'
 
 function todayIso(): string {
   return new Date().toISOString().split('T')[0]
@@ -40,12 +55,7 @@ function addDaysIso(isoDate: string, days: number): string {
 
 function formatDate(iso: string): string {
   const d = new Date(iso + 'T00:00:00Z')
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-    timeZone: 'UTC',
-  })
+  return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric', timeZone: 'UTC' })
 }
 
 function isUpcomingVisit(visit: Visit, start: string, end: string): boolean {
@@ -62,15 +72,12 @@ interface DelegationCounterProps {
   onCount: (studyId: string, count: number) => void
 }
 
-// Renders nothing; subscribes to one study's delegation log and reports its task count up.
 function DelegationCounter({ studyId, onCount }: DelegationCounterProps) {
   const { entries } = useDelegationLog(studyId)
-
   useEffect(() => {
     const total = entries.reduce((sum, entry) => sum + entry.delegatedTasks.length, 0)
     onCount(studyId, total)
   }, [studyId, entries, onCount])
-
   return null
 }
 
@@ -88,32 +95,37 @@ function DelegationSummaryForStudy({ study, investigators }: DelegationSummaryFo
   )
 
   return (
-    <div className={`${CARD_CLASS} space-y-3`}>
-      <div>
-        <p className="font-semibold text-slate-800 dark:text-slate-100">{study.name}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+    <div className="glass" style={{ padding: 16 }}>
+      <div style={{ marginBottom: 10 }}>
+        <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>{study.name}</p>
+        <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
           {study.sponsor} · {study.phase}
         </p>
       </div>
 
       {loading ? (
-        <Skeleton className="h-10 w-full" />
+        <div className="glass" style={{ height: 40 }} />
       ) : entries.length === 0 ? (
-        <p className="text-sm text-slate-400 italic">No delegation entries for this study.</p>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+          No delegation entries for this study.
+        </p>
       ) : (
-        <ul className="divide-y divide-slate-100 dark:divide-slate-700">
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {entries.map((entry: DelegationLog) => (
-            <li key={entry.id} className="py-2.5 text-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-medium text-slate-800 dark:text-slate-100">
+            <li
+              key={entry.id}
+              style={{ padding: '10px 0', borderTop: '1px solid rgba(255 255 255 / 0.06)', fontSize: 13 }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 500, color: 'var(--text-primary)' }}>
                     {invMap[entry.investigatorId]?.name ?? entry.investigatorId}
                   </p>
-                  <p className="text-slate-600 dark:text-slate-300 mt-0.5">
+                  <p style={{ margin: '2px 0 0', color: 'var(--text-secondary)' }}>
                     {entry.delegatedTasks.join(', ')}
                   </p>
                 </div>
-                <p className="text-xs text-slate-400 font-mono whitespace-nowrap">
+                <p style={{ margin: 0, fontSize: 11, fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                   {entry.effectiveDate}
                 </p>
               </div>
@@ -145,9 +157,7 @@ export function MyDashboard() {
   const upcomingVisits = useMemo(
     () =>
       visits
-        .filter(
-          (v) => assignedStudyIds.includes(v.studyId) && isUpcomingVisit(v, today, horizonEnd),
-        )
+        .filter((v) => assignedStudyIds.includes(v.studyId) && isUpcomingVisit(v, today, horizonEnd))
         .slice()
         .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate)),
     [visits, assignedStudyIds, today, horizonEnd],
@@ -168,8 +178,7 @@ export function MyDashboard() {
   )
 
   const totalDelegatedTasks = useMemo(
-    () =>
-      assignedStudyIds.reduce((sum, id) => sum + (delegationCounts[id] ?? 0), 0),
+    () => assignedStudyIds.reduce((sum, id) => sum + (delegationCounts[id] ?? 0), 0),
     [assignedStudyIds, delegationCounts],
   )
 
@@ -177,133 +186,127 @@ export function MyDashboard() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-3 gap-4">
-          {[1, 2, 3].map((n) => (
-            <Skeleton key={n} className="h-24 w-full" />
-          ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="glass" style={{ height: 32, width: 200 }} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          {[0, 1, 2].map(i => <div key={i} className="glass" style={{ height: 100 }} />)}
         </div>
-        <Skeleton className="h-64 w-full" />
+        <div className="glass" style={{ height: 280 }} />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Hidden counters — each subscribes to one study's delegation log */}
-      <div aria-hidden="true" className="hidden">
+      <div aria-hidden="true" style={{ display: 'none' }}>
         {assignedStudyIds.map((id) => (
           <DelegationCounter key={id} studyId={id} onCount={handleDelegationCount} />
         ))}
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">My Dashboard</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        <h1 style={{
+          margin: 0, fontFamily: 'Geist, Inter, system-ui', fontSize: 24,
+          fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--text-primary)',
+        }}>My Dashboard</h1>
+        <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
           Your workload, schedule, and study assignments.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <button
-          type="button"
+      {/* Stat tiles */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => navigate('/my-studies')}
-          className={`${CARD_CLASS} text-left hover:border-teal-400 hover:shadow-sm transition-colors`}
+          onKeyDown={(e) => e.key === 'Enter' && navigate('/my-studies')}
+          className="glass"
+          style={{ padding: '16px 18px 18px', cursor: 'pointer', userSelect: 'none' }}
         >
-          <div className="flex items-center gap-2">
-            <BookMarked size={14} className="text-teal-600" aria-hidden="true" />
-            <p className="text-xs font-medium text-slate-400 uppercase">Assigned Studies</p>
-          </div>
-          <p className="text-3xl font-bold tabular-nums mt-2 text-slate-800 dark:text-slate-100">
-            {assignedStudyIds.length}
-          </p>
-          <p className="text-xs text-teal-600 mt-1">View all &rarr;</p>
-        </button>
-
-        <div className={CARD_CLASS}>
-          <div className="flex items-center gap-2">
-            <Calendar size={14} className="text-teal-600" aria-hidden="true" />
-            <p className="text-xs font-medium text-slate-400 uppercase">Upcoming Visits (14 days)</p>
-          </div>
-          <p className="text-3xl font-bold tabular-nums mt-2 text-slate-800 dark:text-slate-100">
-            {upcomingVisits.length}
-          </p>
-          <p className="text-xs text-slate-400 mt-1">
-            Scheduled across your assigned studies
-          </p>
+          <div style={TILE_LABEL}>Assigned Studies</div>
+          <div style={TILE_VALUE}>{assignedStudyIds.length}</div>
+          <div style={TILE_SUB}>View all →</div>
         </div>
 
-        <div className={CARD_CLASS}>
-          <div className="flex items-center gap-2">
-            <ClipboardList size={14} className="text-teal-600" aria-hidden="true" />
-            <p className="text-xs font-medium text-slate-400 uppercase">My Delegated Tasks</p>
-          </div>
-          <p className="text-3xl font-bold tabular-nums mt-2 text-slate-800 dark:text-slate-100">
-            {totalDelegatedTasks}
-          </p>
-          <p className="text-xs text-slate-400 mt-1">Across all assigned studies</p>
+        <div className="glass" style={{ padding: '16px 18px 18px' }}>
+          <div style={TILE_LABEL}>Upcoming Visits (14 days)</div>
+          <div style={TILE_VALUE}>{upcomingVisits.length}</div>
+          <div style={TILE_SUB}>Across your assigned studies</div>
+        </div>
+
+        <div className="glass" style={{ padding: '16px 18px 18px' }}>
+          <div style={TILE_LABEL}>Delegated Tasks</div>
+          <div style={TILE_VALUE}>{totalDelegatedTasks}</div>
+          <div style={TILE_SUB}>Across all assigned studies</div>
         </div>
       </div>
 
+      {/* Tabs */}
       <Tabs defaultValue="upcoming">
-        <TabsList>
-          <TabsTrigger value="upcoming">Upcoming Visits</TabsTrigger>
-          <TabsTrigger value="delegation">Delegation Authority</TabsTrigger>
-          <TabsTrigger value="studies">My Studies Summary</TabsTrigger>
+        <TabsList
+          className="border-b w-full justify-start rounded-none bg-transparent h-auto p-0 gap-0"
+          style={{ borderColor: 'rgba(255 255 255 / 0.08)' }}
+        >
+          <TabsTrigger value="upcoming" className={TAB_TRIGGER_CLASS}
+            style={{ color: 'var(--text-secondary)' }}>
+            Upcoming Visits
+          </TabsTrigger>
+          <TabsTrigger value="delegation" className={TAB_TRIGGER_CLASS}
+            style={{ color: 'var(--text-secondary)' }}>
+            Delegation Authority
+          </TabsTrigger>
+          <TabsTrigger value="studies" className={TAB_TRIGGER_CLASS}
+            style={{ color: 'var(--text-secondary)' }}>
+            My Studies Summary
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="upcoming">
-          <div className="pt-4">
+          <div style={{ paddingTop: 16 }}>
             {upcomingVisits.length === 0 ? (
-              <p className="text-sm text-slate-400 py-8 text-center">
-                No upcoming visits in the next 14 days.
-              </p>
+              <EmptyState
+                icon={<Calendar size={28} />}
+                title="No upcoming visits in the next 14 days."
+              />
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-                <table className="w-full text-sm">
-                  <thead className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+              <div className="glass" style={{ overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>
+                  <thead>
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                        Study
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                        Visit Type
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                        Scheduled Date
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">
-                        Duration
-                      </th>
+                      {['Study', 'Visit Type', 'Scheduled Date', 'Status', 'Duration'].map(h => (
+                        <th key={h} style={{
+                          padding: '10px 12px',
+                          textAlign: h === 'Duration' ? 'right' : 'left',
+                          fontSize: 10.5, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase',
+                          color: 'var(--text-label)',
+                          borderBottom: '1px solid rgba(255 255 255 / 0.08)',
+                        }}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                    {upcomingVisits.map((visit) => (
+                  <tbody>
+                    {upcomingVisits.map((visit: Visit, i: number) => (
                       <tr
                         key={visit.id}
-                        className="hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                        style={{ background: i % 2 === 1 ? 'rgba(255 255 255 / 0.02)' : undefined }}
                       >
-                        <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">
+                        <td style={{ padding: '9px 12px', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui', fontSize: 13, fontWeight: 500 }}>
                           {studyNameById[visit.studyId] ?? visit.studyId}
                         </td>
-                        <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                          {visit.visitType}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600 dark:text-slate-300 font-mono text-xs">
-                          {formatDate(visit.scheduledDate)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${VISIT_STATUS_STYLES[visit.status]}`}
-                          >
+                        <td style={{ padding: '9px 12px', color: 'var(--text-secondary)' }}>{visit.visitType}</td>
+                        <td style={{ padding: '9px 12px', color: 'var(--text-secondary)' }}>{formatDate(visit.scheduledDate)}</td>
+                        <td style={{ padding: '9px 12px' }}>
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center',
+                            padding: '2px 10px', borderRadius: 9999, fontSize: 11, fontWeight: 500,
+                            ...VISIT_STATUS_HUD[visit.status],
+                          }}>
                             {VISIT_STATUS_LABEL[visit.status]}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                        <td style={{ padding: '9px 12px', textAlign: 'right', color: 'var(--text-secondary)' }}>
                           {visit.durationMinutes}m
                         </td>
                       </tr>
@@ -316,11 +319,9 @@ export function MyDashboard() {
         </TabsContent>
 
         <TabsContent value="delegation">
-          <div className="pt-4 space-y-4">
+          <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {myStudies.length === 0 ? (
-              <p className="text-sm text-slate-400 py-8 text-center">
-                You have no assigned studies.
-              </p>
+              <EmptyState title="No assigned studies." />
             ) : (
               myStudies.map((study) => (
                 <DelegationSummaryForStudy
@@ -334,13 +335,11 @@ export function MyDashboard() {
         </TabsContent>
 
         <TabsContent value="studies">
-          <div className="pt-4">
+          <div style={{ paddingTop: 16 }}>
             {myStudies.length === 0 ? (
-              <p className="text-sm text-slate-400 py-8 text-center">
-                You have no assigned studies.
-              </p>
+              <EmptyState title="No assigned studies." />
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
                 {myStudies.map((study) => {
                   const enrolled = study.enrollmentData?.randomizations ?? 0
                   const pct =
@@ -348,44 +347,43 @@ export function MyDashboard() {
                       ? Math.min(100, Math.round((enrolled / study.targetEnrollment) * 100))
                       : 0
                   return (
-                    <div key={study.id} className={`${CARD_CLASS} space-y-3`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="font-semibold text-slate-800 dark:text-slate-100 leading-tight truncate">
+                    <div key={study.id} className="glass" style={{ padding: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {study.name}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
                             {study.sponsor} · {study.phase}
                           </p>
                         </div>
                         <StatusBadge status={study.status} />
                       </div>
 
-                      <div>
-                        <div className="flex items-center justify-between text-xs">
-                          <p className="text-slate-400 uppercase font-medium">Enrollment</p>
-                          <p className="tabular-nums text-slate-600 dark:text-slate-300">
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ fontSize: 10.5, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-label)' }}>
+                            Enrollment
+                          </span>
+                          <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-secondary)' }}>
                             {enrolled} / {study.targetEnrollment}
-                          </p>
+                          </span>
                         </div>
-                        <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-700">
-                          <div
-                            className="h-1.5 rounded-full bg-teal-500"
-                            style={{ width: `${pct}%` }}
-                          />
+                        <div style={{ height: 4, borderRadius: 4, background: 'rgba(255 255 255 / 0.08)' }}>
+                          <div style={{ height: 4, borderRadius: 4, background: 'var(--signal-good)', width: `${pct}%` }} />
                         </div>
                       </div>
 
-                      <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                      <div style={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-muted)', marginBottom: 10 }}>
                         {study.startDate} → {study.expectedEndDate}
                       </div>
 
                       <button
                         type="button"
                         onClick={() => navigate(`/studies/${study.id}`)}
-                        className="text-xs font-medium text-teal-600 hover:text-teal-700"
+                        style={{ fontSize: 12, fontWeight: 500, color: 'var(--signal-good)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                       >
-                        View details &rarr;
+                        View details →
                       </button>
                     </div>
                   )

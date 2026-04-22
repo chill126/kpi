@@ -2,7 +2,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useStudy } from '@/hooks/useStudy'
 import { useInvestigators } from '@/hooks/useInvestigators'
 import { useAuth } from '@/hooks/useAuth'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StudyDetailHeader } from '@/components/study-detail/StudyDetailHeader'
@@ -26,20 +25,26 @@ export function StudyDetail() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-32 w-full" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="glass" style={{ height: 32, width: 256 }} />
+        <div className="glass" style={{ height: 128 }} />
       </div>
     )
   }
 
   if (!study) {
     return (
-      <div className="text-center py-12 text-slate-500">
-        Study not found.{' '}
-        <button onClick={() => navigate('/studies')} className="underline text-teal-600">
-          Back to studies
-        </button>
+      <div style={{ textAlign: 'center', padding: '48px 24px' }}>
+        <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
+          Study not found.{' '}
+          <button
+            type="button"
+            onClick={() => navigate('/studies')}
+            style={{ color: 'var(--signal-good)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            Back to studies
+          </button>
+        </p>
       </div>
     )
   }
@@ -59,7 +64,10 @@ export function StudyDetail() {
       <StudyDetailHeader study={study} investigators={investigators} />
 
       <Tabs defaultValue="visit-schedule">
-        <TabsList className="border-b border-slate-200 dark:border-slate-700 w-full justify-start rounded-none bg-transparent h-auto p-0 gap-0">
+        <TabsList
+          className="border-b w-full justify-start rounded-none bg-transparent h-auto p-0 gap-0"
+          style={{ borderColor: 'rgba(255 255 255 / 0.08)' }}
+        >
           {[
             'visit-schedule',
             'assessment-battery',
@@ -72,7 +80,8 @@ export function StudyDetail() {
             <TabsTrigger
               key={tab}
               value={tab}
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:text-teal-600 pb-3 px-4 text-sm font-medium capitalize"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none pb-3 px-4 text-sm font-medium capitalize"
+              style={{ color: 'var(--text-secondary)' }}
             >
               {tab.replace(/-/g, ' ')}
             </TabsTrigger>
