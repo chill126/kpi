@@ -1,6 +1,30 @@
 {
   "indexes": [
     {
+      "collectionGroup": "studies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "siteId", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "investigators",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "siteId", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "visits",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "siteId", "order": "ASCENDING" },
+        { "fieldPath": "scheduledDate", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "visits",
       "queryScope": "COLLECTION",
       "fields": [
@@ -16,6 +40,14 @@
         { "fieldPath": "siteId", "order": "ASCENDING" },
         { "fieldPath": "studyId", "order": "ASCENDING" },
         { "fieldPath": "scheduledDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "assessments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "siteId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
       ]
     },
     {

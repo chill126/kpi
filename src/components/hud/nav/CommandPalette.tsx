@@ -22,6 +22,18 @@ export function CommandPalette({ open, onOpenChange, role, onAction }: Props) {
     if (open) setRecentIds(readRecent())
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onOpenChange(false)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [open, onOpenChange])
+
   const pages = role === 'management' ? managementPages : staffPages
   const actions = actionsForRole(role)
 

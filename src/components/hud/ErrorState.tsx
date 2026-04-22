@@ -5,6 +5,32 @@ interface Props {
   onRetry?: () => void
 }
 
+const urlRegex = /(https?:\/\/[^\s)]+)/g
+
+function renderMessage(message: string): React.ReactNode {
+  const parts = message.split(urlRegex)
+  return parts.map((part, i) => {
+    if (urlRegex.test(part)) {
+      urlRegex.lastIndex = 0
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noreferrer noopener"
+          style={{
+            color: 'var(--accent-info)',
+            textDecoration: 'underline',
+            textUnderlineOffset: 3,
+            overflowWrap: 'anywhere',
+          }}
+        >{part}</a>
+      )
+    }
+    return <span key={i}>{part}</span>
+  })
+}
+
 export function ErrorState({ message, onRetry }: Props) {
   return (
     <div role="alert" style={{
@@ -17,9 +43,10 @@ export function ErrorState({ message, onRetry }: Props) {
         fontSize: 18, fontWeight: 500, color: 'var(--text-primary)',
       }}>Something went wrong</h3>
       <p style={{
-        margin: 0, maxWidth: 360, fontSize: 13,
+        margin: 0, maxWidth: 520, fontSize: 13,
         color: 'var(--text-secondary)', lineHeight: 1.55,
-      }}>{message}</p>
+        overflowWrap: 'anywhere',
+      }}>{renderMessage(message)}</p>
       {onRetry && (
         <button
           type="button"

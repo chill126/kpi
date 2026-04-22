@@ -53,11 +53,15 @@ export function UserChip({ displayName, role, email, onSignOut }: Props) {
           align="start"
           side="top"
           sideOffset={8}
-          className="glass-strong"
           style={{
             minWidth: 220,
             padding: 6,
             zIndex: 60,
+            background: 'oklch(0.13 0.020 275)',
+            border: '1px solid rgba(255 255 255 / 0.12)',
+            borderRadius: 14,
+            boxShadow: '0 12px 40px rgba(0 0 0 / 0.55)',
+            color: 'var(--text-primary)',
           }}
         >
           <div style={{
