@@ -1,6 +1,7 @@
 import { BrandLockup } from './BrandLockup'
 import { NavGroup } from './NavGroup'
 import { NavItem } from './NavItem'
+import { SiteSwitcher } from './SiteSwitcher'
 import { UserChip } from './UserChip'
 import { managementPages, staffPages, type Role, type CommandItem } from './commandRegistry'
 
@@ -52,6 +53,9 @@ export function NavRail({ role, user, onSignOut }: Props) {
     >
       <div style={{ padding: '0 18px 6px' }}>
         <BrandLockup mode="sidebar" />
+      </div>
+      <div style={{ padding: '0 10px 10px' }}>
+        <SiteSwitcher role={role} />
       </div>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {groups.map(g => (

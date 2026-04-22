@@ -407,6 +407,47 @@ function UserManagementTab() {
   )
 }
 
+function SeedDataTab() {
+  const { siteId } = useSite()
+  const [running, setRunning] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
+
+  async function handleSeed() {
+    setRunning(true)
+    setResult(null)
+    try {
+      const { seedTampaData } = await import('@/lib/seed')
+      const counts = await seedTampaData(siteId)
+      setResult(
+        `Seeded ${counts.investigators} investigators and ${counts.studies} studies.`,
+      )
+    } catch (err) {
+      setResult(`Error: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  return (
+    <div className="pt-4 space-y-4">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-3 text-xs text-amber-700 dark:text-amber-200">
+        Seeds initial investigators and studies for the active site. Safe to run
+        multiple times — skips if data already exists.
+      </div>
+      <Button
+        onClick={handleSeed}
+        disabled={running}
+        className="bg-teal-600 hover:bg-teal-700 text-white"
+      >
+        {running ? 'Seeding…' : 'Seed Site Data'}
+      </Button>
+      {result && (
+        <p className="text-sm text-slate-700 dark:text-slate-200">{result}</p>
+      )}
+    </div>
+  )
+}
+
 export function Settings() {
   return (
     <div className="space-y-6">
@@ -423,6 +464,7 @@ export function Settings() {
         <TabsList>
           <TabsTrigger value="site">Site Configuration</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="seed">Seed Data</TabsTrigger>
         </TabsList>
 
         <TabsContent value="site">
@@ -431,6 +473,10 @@ export function Settings() {
 
         <TabsContent value="users">
           <UserManagementTab />
+        </TabsContent>
+
+        <TabsContent value="seed">
+          <SeedDataTab />
         </TabsContent>
       </Tabs>
     </div>

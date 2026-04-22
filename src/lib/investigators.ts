@@ -1,4 +1,5 @@
 import {
+  addDoc,
   collection,
   onSnapshot,
   query,
@@ -27,4 +28,11 @@ export function subscribeInvestigators(
     (snap) => onData(snap.docs.map((d) => toInvestigator(d.id, d.data()))),
     onError,
   )
+}
+
+export async function createInvestigator(
+  data: Omit<Investigator, 'id'>,
+): Promise<string> {
+  const ref = await addDoc(collection(db, 'investigators'), data)
+  return ref.id
 }
