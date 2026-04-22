@@ -60,7 +60,7 @@ export function Overview() {
   )
 
   const totalParticipants = useMemo(
-    () => activeStudies.reduce((s, st) => s + (st.enrollmentData?.randomizations ?? 0), 0),
+    () => activeStudies.reduce((s, st) => s + (st.enrollmentData?.active ?? 0), 0),
     [activeStudies],
   )
 

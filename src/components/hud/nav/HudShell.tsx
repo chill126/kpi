@@ -54,7 +54,7 @@ export function HudShell({ role, user, onSignOut, onAction, children }: Props) {
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
         role={role}
-        onAction={onAction ?? (() => {})}
+        onAction={onAction}
       />
     </>
   )

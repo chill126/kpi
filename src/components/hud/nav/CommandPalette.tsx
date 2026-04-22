@@ -10,7 +10,12 @@ interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   role: Role
-  onAction: (actionId: string) => void
+  /**
+   * Invoked when the user selects an "Actions" item (e.g. New Study, Log Visit).
+   * When undefined, the Actions group is hidden entirely — advertising actions
+   * that resolve to a no-op is worse than not surfacing them at all.
+   */
+  onAction?: (actionId: string) => void
 }
 
 export function CommandPalette({ open, onOpenChange, role, onAction }: Props) {
@@ -46,7 +51,11 @@ export function CommandPalette({ open, onOpenChange, role, onAction }: Props) {
     setRecentIds(readRecent())
     nav(route); onOpenChange(false); setQuery('')
   }
-  const act = (actionId: string) => { onAction(actionId); onOpenChange(false); setQuery('') }
+  const act = (actionId: string) => {
+    onAction?.(actionId)
+    onOpenChange(false)
+    setQuery('')
+  }
 
   if (!open) return null
 
@@ -104,13 +113,15 @@ export function CommandPalette({ open, onOpenChange, role, onAction }: Props) {
             ))}
           </Command.Group>
 
-          <Command.Group heading="Actions">
-            {actionsFiltered.map((a) => (
-              <Command.Item key={a.id} onSelect={() => a.action && act(a.action)} value={`action-${a.id}`}>
-                {a.title}
-              </Command.Item>
-            ))}
-          </Command.Group>
+          {onAction && (
+            <Command.Group heading="Actions">
+              {actionsFiltered.map((a) => (
+                <Command.Item key={a.id} onSelect={() => a.action && act(a.action)} value={`action-${a.id}`}>
+                  {a.title}
+                </Command.Item>
+              ))}
+            </Command.Group>
+          )}
         </Command.List>
       </Command>
     </div>

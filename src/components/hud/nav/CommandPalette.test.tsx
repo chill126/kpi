@@ -34,4 +34,20 @@ describe('CommandPalette', () => {
     renderIt({ role: 'staff' })
     expect(screen.queryByText(/new study/i)).not.toBeInTheDocument()
   })
+  it('hides the Actions group entirely when no onAction handler is provided', () => {
+    render(
+      <MemoryRouter>
+        <CommandPalette
+          open
+          onOpenChange={() => {}}
+          role="management"
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByText(/^new study$/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/^log visit$/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/^import csv$/i)).not.toBeInTheDocument()
+    // Pages still render
+    expect(screen.getByText(/^overview$/i)).toBeInTheDocument()
+  })
 })
