@@ -109,6 +109,14 @@
         { "fieldPath": "siteId", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "boardSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "siteId", "order": "ASCENDING" },
+        { "fieldPath": "sessionDate", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

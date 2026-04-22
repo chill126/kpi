@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileSpreadsheet, FileText } from 'lucide-react'
+import { FileSpreadsheet, FileText, LayoutGrid } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useImports } from '@/hooks/useImports'
@@ -7,6 +7,7 @@ import { ClinicalConductorImportDialog } from '@/components/imports/ClinicalCond
 import { AdvarraImportDialog } from '@/components/imports/AdvarraImportDialog'
 import { EnrollmentSnapshotImportDialog } from '@/components/imports/EnrollmentSnapshotImportDialog'
 import { ProtocolPdfImportDialog } from '@/components/imports/ProtocolPdfImportDialog'
+import { K2BoardImportDialog } from '@/components/imports/K2BoardImportDialog'
 import type { Import as ImportRecord } from '@/types'
 
 type DialogKey =
@@ -14,6 +15,7 @@ type DialogKey =
   | 'advarra_ereg'
   | 'enrollment_snapshot'
   | 'protocol_pdf'
+  | 'k2_board_export'
   | null
 
 interface CardConfig {
@@ -48,6 +50,12 @@ const CARDS: CardConfig[] = [
     description: 'Parse a protocol PDF into a visit schedule and assessment battery.',
     icon: FileText,
   },
+  {
+    key: 'k2_board_export',
+    title: 'k2 Board Session',
+    description: 'Import a daily participant-flow session exported from the k2 clinic board.',
+    icon: LayoutGrid,
+  },
 ]
 
 const TYPE_LABELS: Record<ImportRecord['type'], string> = {
@@ -55,6 +63,7 @@ const TYPE_LABELS: Record<ImportRecord['type'], string> = {
   advarra_ereg: 'Advarra e-Reg',
   enrollment_snapshot: 'Enrollment Snapshots',
   protocol_pdf: 'Protocol PDF',
+  k2_board_export: 'k2 Board Session',
 }
 
 function statusBadgeClass(status: ImportRecord['status']): string {
@@ -197,6 +206,10 @@ export function Import() {
       <ProtocolPdfImportDialog
         open={openDialog === 'protocol_pdf'}
         onOpenChange={(next) => setOpenDialog(next ? 'protocol_pdf' : null)}
+      />
+      <K2BoardImportDialog
+        open={openDialog === 'k2_board_export'}
+        onOpenChange={(next) => setOpenDialog(next ? 'k2_board_export' : null)}
       />
     </div>
   )

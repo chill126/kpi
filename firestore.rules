@@ -86,5 +86,10 @@ function isAuthenticated() {
       allow read: if isAuthenticated();
       allow write: if isManagement();
     }
+
+    match /boardSessions/{docId} {
+      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow write: if isManagement();
+    }
   }
 }

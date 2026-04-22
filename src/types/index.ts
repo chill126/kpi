@@ -198,7 +198,7 @@ export interface DelegationLog {
 export interface Import {
   id: string
   siteId: string
-  type: 'clinical_conductor' | 'advarra_ereg' | 'enrollment_snapshot' | 'protocol_pdf'
+  type: 'clinical_conductor' | 'advarra_ereg' | 'enrollment_snapshot' | 'protocol_pdf' | 'k2_board_export'
   uploadedBy: string
   uploadedAt: string
   rowCount: number
@@ -271,6 +271,42 @@ export interface SimulationResult {
   byInvestigator: Record<string, InvestigatorSimResult>
   estimatedRevenue: number
   overallVerdict: FeasibilityVerdict
+}
+
+// ─── Board Session (k2-board daily import) ───────────────────────────────────
+
+export interface BoardSessionEntry {
+  subjectId: string
+  crioId?: string
+  study: string
+  investigatorNames: string[]
+  status: string
+  arrivalTime?: string
+  leftTime?: string
+  visitDurationMin: number | null
+  wasNoShow: boolean
+  wasCompleted: boolean
+}
+
+export interface BoardSessionMetrics {
+  totalScheduled: number
+  arrivals: number
+  completedVisits: number
+  noShows: number
+  avgVisitDurationMin: number | null
+  byStudy: Record<string, { scheduled: number; arrivals: number; noShows: number; avgDurationMin: number | null }>
+  byInvestigator: Record<string, { visits: number }>
+}
+
+export interface BoardSession {
+  id: string
+  siteId: string
+  sessionDate: string
+  importedAt: string
+  importedBy: string
+  entryCount: number
+  metrics: BoardSessionMetrics
+  entries: BoardSessionEntry[]
 }
 
 export interface WhatIfScenario {
