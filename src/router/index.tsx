@@ -2,9 +2,10 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom'
 import { PrivateRoute } from './PrivateRoute'
 import { RoleRoute } from './RoleRoute'
-import { AppShell } from '@/components/layout/AppShell'
 import { PageLoader } from '@/components/shared/PageLoader'
 import { ChunkErrorBoundary } from '@/components/shared/ChunkErrorBoundary'
+import { HudShell } from '@/components/hud/nav/HudShell'
+import { useHudUser } from '@/components/hud/nav/useHudUser'
 
 const Login = lazy(() => import('@/pages/Login').then(m => ({ default: m.Login })))
 const Overview = lazy(() => import('@/pages/management/Overview').then(m => ({ default: m.Overview })))
@@ -23,6 +24,7 @@ const MyStudies = lazy(() => import('@/pages/staff/MyStudies').then(m => ({ defa
 const MyProfile = lazy(() => import('@/pages/staff/MyProfile').then(m => ({ default: m.MyProfile })))
 const Forecast = lazy(() => import('@/pages/management/Forecast').then(m => ({ default: m.Forecast })))
 const WhatIf = lazy(() => import('@/pages/management/WhatIf').then(m => ({ default: m.WhatIf })))
+const Deviations = lazy(() => import('@/pages/management/Deviations').then(m => ({ default: m.Deviations })))
 
 // Keeps AppShell mounted while page chunks load; catches failed chunk loads
 const AuthenticatedOutlet = () => (
@@ -32,6 +34,18 @@ const AuthenticatedOutlet = () => (
     </Suspense>
   </ChunkErrorBoundary>
 )
+
+// HUD shell layout — replaces AppShell as the authenticated layout route.
+// Must be rendered inside BrowserRouter (useNavigate requirement).
+function HudShellLayout() {
+  const hud = useHudUser()
+  if (!hud) return <Outlet />
+  return (
+    <HudShell role={hud.role} user={hud.user} onSignOut={hud.signOut}>
+      <Outlet />
+    </HudShell>
+  )
+}
 
 export function AppRouter() {
   return (
@@ -44,7 +58,7 @@ export function AppRouter() {
         } />
 
         <Route element={<PrivateRoute />}>
-          <Route element={<AppShell />}>
+          <Route element={<HudShellLayout />}>
             <Route element={<AuthenticatedOutlet />}>
               <Route element={<RoleRoute allowedRole="management" />}>
                 <Route path="/" element={<Overview />} />
@@ -58,6 +72,7 @@ export function AppRouter() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/forecast" element={<Forecast />} />
                 <Route path="/what-if" element={<WhatIf />} />
+                <Route path="/deviations" element={<Deviations />} />
                 <Route path="/studies/:id" element={<StudyDetail />} />
               </Route>
 

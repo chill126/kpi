@@ -37,6 +37,9 @@ interface FormState {
   expectedEndDate: string
   perStudyWeeklyHours: string
   perParticipantOverheadPct: string
+  contractTotalValue: string
+  paidScreenFailRatio: string
+  paidScreenFailMax: string
 }
 
 const EMPTY: FormState = {
@@ -52,6 +55,9 @@ const EMPTY: FormState = {
   expectedEndDate: '',
   perStudyWeeklyHours: '2',
   perParticipantOverheadPct: '10',
+  contractTotalValue: '',
+  paidScreenFailRatio: '',
+  paidScreenFailMax: '',
 }
 
 function studyToForm(s: Study): FormState {
@@ -68,8 +74,18 @@ function studyToForm(s: Study): FormState {
     expectedEndDate: s.expectedEndDate,
     perStudyWeeklyHours: String(s.adminOverride.perStudyWeeklyHours),
     perParticipantOverheadPct: String(s.adminOverride.perParticipantOverheadPct),
+    contractTotalValue: s.contract?.totalValue != null ? String(s.contract.totalValue) : '',
+    paidScreenFailRatio: s.contract?.paidScreenFails?.ratio != null
+      ? String(s.contract.paidScreenFails.ratio)
+      : '',
+    paidScreenFailMax: s.contract?.paidScreenFails?.maxPaid != null
+      ? String(s.contract.paidScreenFails.maxPaid)
+      : '',
   }
 }
+
+const selectClass =
+  'w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100'
 
 export function StudyForm({ open, onOpenChange, study, investigators, siteId, onSave }: Props) {
   const [form, setForm] = useState<FormState>(
@@ -77,14 +93,32 @@ export function StudyForm({ open, onOpenChange, study, investigators, siteId, on
   )
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
   const [loading, setLoading] = useState(false)
+  const [customReasons, setCustomReasons] = useState<string[]>([])
+  const [newReason, setNewReason] = useState('')
 
   useEffect(() => {
-    if (open) setForm(study ? studyToForm(study) : { ...EMPTY, piId: investigators[0]?.id ?? '' })
+    if (open) {
+      setForm(study ? studyToForm(study) : { ...EMPTY, piId: investigators[0]?.id ?? '' })
+      setCustomReasons(study?.customScreenFailureReasons ?? [])
+      setNewReason('')
+    }
   }, [open, study, investigators])
 
   function set(field: keyof FormState, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
     setErrors((e) => ({ ...e, [field]: undefined }))
+  }
+
+  function addReason() {
+    const trimmed = newReason.trim()
+    if (trimmed && !customReasons.includes(trimmed)) {
+      setCustomReasons((r) => [...r, trimmed])
+    }
+    setNewReason('')
+  }
+
+  function removeReason(reason: string) {
+    setCustomReasons((r) => r.filter((x) => x !== reason))
   }
 
   async function handleSave() {
@@ -97,6 +131,20 @@ export function StudyForm({ open, onOpenChange, study, investigators, siteId, on
       setErrors(next)
       return
     }
+
+    const hasContract =
+      form.contractTotalValue || form.paidScreenFailRatio || form.paidScreenFailMax
+
+    const contract = hasContract
+      ? {
+          ...(study?.contract ?? {}),
+          ...(form.contractTotalValue ? { totalValue: Number(form.contractTotalValue) } : {}),
+          paidScreenFails: {
+            ...(form.paidScreenFailRatio ? { ratio: Number(form.paidScreenFailRatio) } : {}),
+            ...(form.paidScreenFailMax ? { maxPaid: Number(form.paidScreenFailMax) } : {}),
+          },
+        }
+      : study?.contract
 
     setLoading(true)
     try {
@@ -128,6 +176,8 @@ export function StudyForm({ open, onOpenChange, study, investigators, siteId, on
           completions: 0,
         },
         statusHistory: study?.statusHistory ?? [],
+        ...(contract !== undefined ? { contract } : {}),
+        customScreenFailureReasons: customReasons,
       }
 
       let id: string
@@ -195,7 +245,7 @@ export function StudyForm({ open, onOpenChange, study, investigators, siteId, on
               id="sf-phase"
               value={form.phase}
               onChange={(e) => set('phase', e.target.value)}
-              className="w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
+              className={selectClass}
             >
               {PHASES.map((p) => (
                 <option key={p} value={p}>
@@ -211,7 +261,7 @@ export function StudyForm({ open, onOpenChange, study, investigators, siteId, on
               id="sf-status"
               value={form.status}
               onChange={(e) => set('status', e.target.value)}
-              className="w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
+              className={selectClass}
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
@@ -227,7 +277,7 @@ export function StudyForm({ open, onOpenChange, study, investigators, siteId, on
               id="sf-pi"
               value={form.piId}
               onChange={(e) => set('piId', e.target.value)}
-              className="w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
+              className={selectClass}
             >
               <option value="">Select PI…</option>
               {investigators.map((inv) => (
@@ -292,6 +342,92 @@ export function StudyForm({ open, onOpenChange, study, investigators, siteId, on
               value={form.perParticipantOverheadPct}
               onChange={(e) => set('perParticipantOverheadPct', e.target.value)}
             />
+          </div>
+
+          {/* Contract */}
+          <div className="col-span-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+              Contract <span className="text-slate-400 font-normal">(optional — can be filled in later)</span>
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="sf-contract-value">Total Contract Value ($)</Label>
+                <Input
+                  id="sf-contract-value"
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 250000"
+                  value={form.contractTotalValue}
+                  onChange={(e) => set('contractTotalValue', e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="sf-fail-ratio">
+                  Paid Screen Fail Ratio{' '}
+                  <span className="text-slate-400 font-normal text-xs">(fails per enrolled)</span>
+                </Label>
+                <Input
+                  id="sf-fail-ratio"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 0.25 = 1 per 4"
+                  value={form.paidScreenFailRatio}
+                  onChange={(e) => set('paidScreenFailRatio', e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="sf-fail-max">Max Paid Screen Fails</Label>
+                <Input
+                  id="sf-fail-max"
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 5"
+                  value={form.paidScreenFailMax}
+                  onChange={(e) => set('paidScreenFailMax', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Custom screen failure reasons */}
+          <div className="col-span-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+              Custom Screen Failure Reasons{' '}
+              <span className="text-slate-400 font-normal">(study-specific, optional)</span>
+            </p>
+            <div className="flex gap-2 mb-2">
+              <Input
+                placeholder="e.g. Specific exclusion criterion…"
+                value={newReason}
+                onChange={(e) => setNewReason(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addReason())}
+              />
+              <Button type="button" variant="outline" onClick={addReason} disabled={!newReason.trim()}>
+                Add
+              </Button>
+            </div>
+            {customReasons.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {customReasons.map((r) => (
+                  <span
+                    key={r}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-teal-50 text-teal-800 text-xs dark:bg-teal-900/30 dark:text-teal-300"
+                  >
+                    {r}
+                    <button
+                      type="button"
+                      onClick={() => removeReason(r)}
+                      className="ml-1 text-teal-500 hover:text-teal-800 dark:hover:text-teal-100"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

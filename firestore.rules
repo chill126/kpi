@@ -19,6 +19,8 @@ function isAuthenticated() {
     match /users/{uid} {
       allow read: if request.auth.uid == uid || isManagement();
       allow write: if isManagement();
+      allow update: if request.auth.uid == uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName']);
     }
 
     match /sites/{siteId} {
@@ -57,8 +59,27 @@ function isAuthenticated() {
       allow read, write: if isManagement();
     }
 
-    match /contracts/{docId} {
-      allow read, write: if isManagement();
+    match /whatIfScenarios/{docId} {
+      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow write: if isManagement();
+    }
+
+    match /screenFailures/{docId} {
+      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow create: if isAuthenticated() && isSameSite(request.resource.data.siteId);
+      allow update, delete: if isManagement();
+    }
+
+    match /enrollmentSnapshots/{docId} {
+      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow create: if isAuthenticated() && isSameSite(request.resource.data.siteId);
+      allow update, delete: if isManagement();
+    }
+
+    match /protocolDeviations/{docId} {
+      allow read: if isAuthenticated() && isSameSite(resource.data.siteId);
+      allow create: if isAuthenticated() && isSameSite(request.resource.data.siteId);
+      allow update, delete: if isManagement();
     }
 
     match /capacityConfig/{docId} {

@@ -11,6 +11,8 @@ import { AssessmentBatteryTab } from '@/components/study-detail/AssessmentBatter
 import { InvestigatorsTab } from '@/components/study-detail/InvestigatorsTab'
 import { EnrollmentTab } from '@/components/study-detail/EnrollmentTab'
 import { DelegationLogTab } from '@/components/study-detail/DelegationLogTab'
+import { ContractTab } from '@/components/study-detail/ContractTab'
+import { DeviationsTab } from '@/components/study-detail/DeviationsTab'
 import { ChevronLeft } from 'lucide-react'
 
 export function StudyDetail() {
@@ -58,17 +60,23 @@ export function StudyDetail() {
 
       <Tabs defaultValue="visit-schedule">
         <TabsList className="border-b border-slate-200 dark:border-slate-700 w-full justify-start rounded-none bg-transparent h-auto p-0 gap-0">
-          {['visit-schedule', 'assessment-battery', 'investigators', 'enrollment', 'delegation-log'].map(
-            (tab) => (
-              <TabsTrigger
-                key={tab}
-                value={tab}
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:text-teal-600 pb-3 px-4 text-sm font-medium capitalize"
-              >
-                {tab.replace(/-/g, ' ')}
-              </TabsTrigger>
-            ),
-          )}
+          {[
+            'visit-schedule',
+            'assessment-battery',
+            'investigators',
+            'enrollment',
+            'delegation-log',
+            'deviations',
+            ...(canEdit ? ['contract'] : []),
+          ].map((tab) => (
+            <TabsTrigger
+              key={tab}
+              value={tab}
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:text-teal-600 pb-3 px-4 text-sm font-medium capitalize"
+            >
+              {tab.replace(/-/g, ' ')}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <div className="pt-6">
@@ -87,6 +95,14 @@ export function StudyDetail() {
           <TabsContent value="delegation-log">
             <DelegationLogTab studyId={study.id} investigators={investigators} canEdit={canEdit} />
           </TabsContent>
+          <TabsContent value="deviations">
+            <DeviationsTab studyId={study.id} canManage={canEdit} />
+          </TabsContent>
+          {canEdit && (
+            <TabsContent value="contract">
+              <ContractTab study={study} canEdit={canEdit} />
+            </TabsContent>
+          )}
         </div>
       </Tabs>
     </div>

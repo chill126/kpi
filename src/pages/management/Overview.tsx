@@ -1,207 +1,218 @@
 import { useMemo } from 'react'
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
-} from 'recharts'
 import { useStudies } from '@/hooks/useStudies'
 import { useInvestigators } from '@/hooks/useInvestigators'
 import { useSiteVisits } from '@/hooks/useSiteVisits'
 import { useSiteAssessments } from '@/hooks/useSiteAssessments'
-import { getWeekStart, computeWeekMetrics, utilizationColor, utilizationBarColor } from '@/lib/capacity'
-import { Skeleton } from '@/components/ui/skeleton'
-import { CapacityAlertSummary } from '@/components/management/CapacityAlertSummary'
+import { useAuthContext } from '@/context/AuthContext'
+import { getWeekStart, computeWeekMetrics } from '@/lib/capacity'
+import { computeCapacityForecast } from '@/lib/capacityForecast'
+
+import { Tile } from '@/components/hud/Tile'
+import { Panel } from '@/components/hud/Panel'
+import { Skeleton } from '@/components/hud/Skeleton'
+import { ErrorState } from '@/components/hud/ErrorState'
+import { EmptyState } from '@/components/hud/EmptyState'
+import { HeroSentence } from '@/components/hud/HeroSentence'
+import { HUDBarChart } from '@/components/hud/charts/HUDBarChart'
+import { HUDAreaChart } from '@/components/hud/charts/HUDAreaChart'
+import { NearCapacityList } from '@/components/hud/panels/NearCapacityList'
+import { ActiveParticipantsPanel } from '@/components/hud/panels/ActiveParticipantsPanel'
 
 export function Overview() {
-  const { studies, loading: studiesLoading } = useStudies()
-  const { investigators, loading: invLoading } = useInvestigators()
+  const { user } = useAuthContext()
+  const firstName = (user?.displayName ?? user?.email ?? 'there').split(/[\s@]/)[0]
+
+  const { studies, loading: studiesLoading, error: studiesError } = useStudies()
+  const { investigators, loading: invLoading, error: invError } = useInvestigators()
   const { visits } = useSiteVisits()
   const { assessments } = useSiteAssessments()
 
   const loading = studiesLoading || invLoading
-
-  const currentWeekStart = getWeekStart(new Date())
+  const weekStart = getWeekStart(new Date())
 
   const activeStudies = useMemo(
-    () => studies.filter((s) => s.status === 'enrolling' || s.status === 'maintenance'),
+    () => studies.filter(s => s.status === 'enrolling' || s.status === 'maintenance'),
     [studies],
   )
 
   const utilizationData = useMemo(
-    () =>
-      investigators.map((inv) => {
-        const m = computeWeekMetrics(
-          inv.id,
-          inv.weeklyCapacityHours * 60,
-          visits,
-          assessments,
-          currentWeekStart,
-        )
-        return {
-          name: inv.name,
-          utilization: m.utilizationPct,
-          fill: utilizationBarColor(m.utilizationPct),
-          totalHours: +(m.totalMinutes / 60).toFixed(1),
-          capacityHours: inv.weeklyCapacityHours,
-        }
-      }),
-    [investigators, visits, assessments, currentWeekStart],
+    () => investigators.map(inv => {
+      const m = computeWeekMetrics(inv.id, inv.weeklyCapacityHours * 60, visits, assessments, weekStart)
+      return {
+        name: inv.name,
+        utilization: m.utilizationPct,
+        totalHours: +(m.totalMinutes / 60).toFixed(1),
+        capacityHours: inv.weeklyCapacityHours,
+      }
+    }),
+    [investigators, visits, assessments, weekStart],
   )
 
   const siteCapacityPct = useMemo(() => {
     if (utilizationData.length === 0) return 0
-    const avg = utilizationData.reduce((sum, d) => sum + d.utilization, 0) / utilizationData.length
+    const avg = utilizationData.reduce((s, d) => s + d.utilization, 0) / utilizationData.length
     return Math.round(avg)
   }, [utilizationData])
 
-  const enrollmentData = useMemo(
-    () =>
-      activeStudies.map((s) => ({
-        name: s.name.length > 20 ? s.name.slice(0, 18) + '…' : s.name,
-        enrolled: s.enrollmentData?.randomizations ?? 0,
-        target: s.targetEnrollment,
-      })),
+  const alertCount = useMemo(
+    () => utilizationData.filter(d => d.utilization >= 75).length,
+    [utilizationData],
+  )
+
+  const totalParticipants = useMemo(
+    () => activeStudies.reduce((s, st) => s + (st.enrollmentData?.active ?? 0), 0),
     [activeStudies],
   )
 
-  const alerts = useMemo(() => {
-    const result: string[] = []
-    utilizationData.forEach((d) => {
-      if (d.utilization >= 90) result.push(`${d.name} is at ${d.utilization}% capacity this week`)
-      else if (d.utilization >= 75) result.push(`${d.name} is approaching capacity (${d.utilization}%)`)
-    })
-    return result
-  }, [utilizationData])
+  const totalTarget = useMemo(
+    () => activeStudies.reduce((s, st) => s + (st.targetEnrollment ?? 0), 0),
+    [activeStudies],
+  )
+
+  const enrollPct = totalTarget === 0 ? 0 : Math.round((totalParticipants / totalTarget) * 100)
+
+  const enrollmentChartData = useMemo(
+    () => activeStudies.map(s => ({
+      name: s.name.length > 18 ? s.name.slice(0, 16) + '…' : s.name,
+      enrolled: s.enrollmentData?.randomizations ?? 0,
+      target: s.targetEnrollment,
+    })),
+    [activeStudies],
+  )
+
+  const utilizationForChart = useMemo(
+    () => utilizationData.map(d => ({ name: d.name, value: d.utilization })),
+    [utilizationData],
+  )
+
+  const forecastData = useMemo(
+    () => computeCapacityForecast(investigators, visits, assessments, 4),
+    [investigators, visits, assessments],
+  )
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-3 gap-4">
-          {[1, 2, 3].map((n) => <Skeleton key={n} className="h-24 w-full" />)}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1440 }}>
+        <Skeleton height={60} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+          {[0, 1, 2, 3].map(i => <Skeleton key={i} height={110} rounded={14} />)}
         </div>
-        <Skeleton className="h-64 w-full" />
+        <Skeleton height={240} rounded={14} />
+        <Skeleton height={200} rounded={14} />
+        <Skeleton height={240} rounded={14} />
       </div>
     )
   }
 
+  if (studiesError || invError) {
+    return <ErrorState message={(studiesError || invError)?.message ?? 'Failed to load'} />
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Overview</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-          Site capacity and workload summary for the current week.
-        </p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1440 }}>
+      <h1 style={{
+        position: 'absolute', width: 1, height: 1, margin: -1, padding: 0,
+        overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0,
+      }}>Management Overview</h1>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-label)' }}>
+          K2 · Tampa
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+          {user?.displayName ?? ''} · Week {weekNumber(new Date(weekStart))}
+        </div>
+      </header>
+
+      <HeroSentence firstName={firstName} utilizations={utilizationData.map(d => d.utilization)} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }} role="region" aria-label="Key metrics">
+        <Tile
+          variant="hero"
+          label="Capacity"
+          value={siteCapacityPct}
+          suffix="%"
+          sub="avg utilization"
+          signal={siteCapacityPct >= 90 ? 'alert' : siteCapacityPct >= 75 ? 'warn' : 'good'}
+        />
+        <Tile label="Studies" value={activeStudies.length} sub="enrolling or maintenance" signal="neutral" />
+        <Tile
+          label="Alerts"
+          value={alertCount}
+          sub="capacity warnings"
+          signal={alertCount > 0 ? 'alert' : 'good'}
+        />
+        <Tile
+          label="Enrollment"
+          value={enrollPct}
+          suffix="%"
+          sub="of YTD target"
+          signal={enrollPct >= 100 ? 'good' : enrollPct >= 80 ? 'neutral' : 'warn'}
+        />
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Site Capacity Used</p>
-          <p className={`text-3xl font-bold tabular-nums mt-1 ${utilizationColor(siteCapacityPct)}`}>
-            {siteCapacityPct}%
-          </p>
-          <p className="text-xs text-slate-400 mt-0.5">avg across all investigators this week</p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Active Studies</p>
-          <p className="text-3xl font-bold tabular-nums mt-1 text-slate-800 dark:text-slate-100">
-            {activeStudies.length}
-          </p>
-          <p className="text-xs text-slate-400 mt-0.5">enrolling or in maintenance</p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Capacity Alerts</p>
-          <p className="text-3xl font-bold tabular-nums mt-1 text-slate-800 dark:text-slate-100">
-            {alerts.length}
-          </p>
-          <p className="text-xs text-slate-400 mt-0.5">investigators at or near capacity</p>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14 }}>
+        <Panel title="Enrollment Progress">
+          {enrollmentChartData.length === 0 ? (
+            <EmptyState title="No active studies" body="Create a study to start tracking enrollment." />
+          ) : (
+            <HUDBarChart
+              data={enrollmentChartData}
+              xKey="name"
+              yKey="enrolled"
+              height={220}
+            />
+          )}
+        </Panel>
+        <ActiveParticipantsPanel
+          total={totalParticipants}
+          activeStudiesCount={activeStudies.length}
+          snapshots={[]}
+        />
       </div>
 
-      {/* Alerts */}
-      {alerts.length > 0 && (
-        <div className="space-y-2">
-          {alerts.map((alert, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-2 text-sm text-amber-800 dark:text-amber-300"
-            >
-              <span className="font-medium">⚠</span>
-              {alert}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Projected Capacity Alerts */}
-      <CapacityAlertSummary
-        investigators={investigators}
-        visits={visits}
-        assessments={assessments}
-      />
-
-      {/* Investigator Utilization Chart */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">
-          Investigator Utilization — This Week
-        </h2>
-        {utilizationData.length === 0 ? (
-          <p className="text-sm text-slate-400 py-8 text-center">No investigators found.</p>
+      <Panel title="Projected Capacity · Next 4 Weeks">
+        {investigators.length === 0 ? (
+          <EmptyState title="Not enough data" body="Add investigators and schedule visits to see projections." />
         ) : (
-          <>
-            <ul className="mb-3 space-y-1">
-              {utilizationData.map((d) => (
-                <li key={d.name} className="flex items-center justify-between text-sm">
-                  <span className="text-slate-700 dark:text-slate-300">{d.name}</span>
-                  <span className={`font-medium tabular-nums ${utilizationColor(d.utilization)}`}>
-                    {d.utilization}% ({d.totalHours}h / {d.capacityHours}h)
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={utilizationData} margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis unit="%" domain={[0, 100]} tick={{ fontSize: 12 }} />
-                <Tooltip
-                  formatter={(value, _name, props: { payload?: { totalHours: number; capacityHours: number } }) => [
-                    `${value ?? 0}% (${props.payload?.totalHours ?? 0}h / ${props.payload?.capacityHours ?? 0}h)`,
-                    'Utilization',
-                  ]}
-                />
-                <Bar dataKey="utilization" radius={[4, 4, 0, 0]}>
-                  {utilizationData.map((entry, idx) => (
-                    <Cell key={idx} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </>
+          <HUDAreaChart
+            data={forecastData}
+            xKey="label"
+            series={[
+              { key: 'avg', name: 'Avg Utilization' },
+              { key: 'max', name: 'Peak Investigator' },
+            ]}
+            height={200}
+            referenceLines={[
+              { y: 75, label: '75%', signal: 'warn' },
+              { y: 90, label: '90%', signal: 'alert' },
+            ]}
+            valueFormatter={(v) => `${Math.round(v)}%`}
+          />
         )}
-      </div>
+      </Panel>
 
-      {/* Enrollment Summary Chart */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">
-          Enrollment Progress
-        </h2>
-        {enrollmentData.length === 0 ? (
-          <p className="text-sm text-slate-400 py-8 text-center">No active studies.</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={enrollmentData} margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Bar dataKey="target" name="Target" fill="#e2e8f0" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="enrolled" name="Enrolled" fill="#0d9488" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14 }}>
+        <Panel title="Investigator Utilization — This Week">
+          {utilizationData.length === 0 ? (
+            <EmptyState title="No investigators found" body="Add an investigator on the Investigators page." />
+          ) : (
+            <HUDBarChart
+              data={utilizationForChart}
+              xKey="name"
+              yKey="value"
+              height={220}
+              signalByValue
+              valueFormatter={(v) => `${Math.round(v)}%`}
+            />
+          )}
+        </Panel>
+        <NearCapacityList entries={utilizationData} />
       </div>
     </div>
   )
+}
+
+function weekNumber(d: Date): number {
+  const oneJan = new Date(d.getFullYear(), 0, 1)
+  return Math.ceil((((d.getTime() - oneJan.getTime()) / 86400000) + oneJan.getDay() + 1) / 7)
 }
