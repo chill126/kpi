@@ -3,8 +3,8 @@
 **Date:** 2026-04-21 (completed)
 **Branch:** `hud/pass-1`
 **Base:** `master`
-**Tip at ship:** `e35f0d0`
-**Commits ahead of master:** 43
+**Tip at ship:** `e022efe`
+**Commits ahead of master:** 45
 
 **Preview URL used for F3 manual checks:**
 https://kpi-tracker-da9cf--hud-pass-1-16hjd4rk.web.app (expires 2026-04-28)
@@ -85,6 +85,16 @@ User saw `/studies` and `/investigators` failing with "Failed to load page" afte
 | ChunkErrorBoundary required manual "Reload" click | now auto-reloads once per session on ChunkLoadError (with sessionStorage guard against infinite loop); HUD-skinned fallback for other errors | | `57a2a3d` |
 | `/studies` and `/investigators` TypeError "Cannot destructure property 'label' of undefined" | `StatusBadge` destructured `STATUS_CONFIG[status]` without a fallback → any study with a non-enum status (legacy/typo/null) crashed the page | widened the prop type and added a humanized fallback | `e35f0d0` |
 | Firestore rules drift | rules fresh-deployed via `firebase deploy --only firestore:rules` as a precaution | | n/a (infra) |
+
+### Round 4 — Codex review (`codex review --base master`)
+
+Three regressions surfaced by Codex's independent pass after the PR opened:
+
+| Issue | Root cause | Fix | Commit |
+|---|---|---|---|
+| **P1** SPA deep-link refreshes still cached stale index | `"source": "/index.html"` only matches the literal URL; Firebase's rewrite serves index.html at any path, so header rule never fires for `/studies`, `/reports`, etc. | Reorder `firebase.json` headers: `/assets/**` → long-cache first, catch-all `**` → no-cache second. Top-down match means assets get immutable, everything else gets no-cache. | _TBD_ |
+| **P2** Active Participants overcounted | `totalParticipants` summed `enrollmentData.randomizations` (includes withdrawn/completed), not `.active` | One-character change: `.randomizations` → `.active`. Existing mocks have both fields; no test break. | _TBD_ |
+| **P2** Palette actions silently no-op | `HudShell` defaulted `onAction` to `() => {}`, so "New Study", "Log Visit", etc. closed the palette without doing anything | Make `CommandPalette`'s `onAction` truly optional; hide the Actions group entirely when undefined. `HudShell` passes `onAction` through as-is (undefined until Pass 2 wires the action dispatcher). +1 test locking this contract. | _TBD_ |
 
 ---
 
