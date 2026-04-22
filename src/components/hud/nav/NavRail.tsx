@@ -12,7 +12,7 @@ interface Props {
 
 const managementGroups: Array<{ label: string; ids: string[] }> = [
   { label: 'Command',  ids: ['overview'] },
-  { label: 'Operate',  ids: ['workload', 'enrollment', 'deviations'] },
+  { label: 'Operate',  ids: ['workload', 'enrollment', 'deviations', 'operations'] },
   { label: 'Plan',     ids: ['forecast', 'what-if', 'reports'] },
   { label: 'Catalog',  ids: ['studies', 'investigators', 'financial'] },
   { label: 'System',   ids: ['import', 'settings'] },
