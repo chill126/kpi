@@ -115,4 +115,8 @@ describe('Overview (HUD)', () => {
     render(<Overview />)
     expect(screen.getByText(/active participants/i)).toBeInTheDocument()
   })
+  it('exposes a top-level <h1> for screen readers', () => {
+    render(<Overview />)
+    expect(screen.getByRole('heading', { level: 1, name: /management overview/i })).toBeInTheDocument()
+  })
 })

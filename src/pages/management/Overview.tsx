@@ -110,6 +110,10 @@ export function Overview() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1440 }}>
+      <h1 style={{
+        position: 'absolute', width: 1, height: 1, margin: -1, padding: 0,
+        overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0,
+      }}>Management Overview</h1>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-label)' }}>
           K2 · Tampa

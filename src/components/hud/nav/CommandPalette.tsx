@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Command } from 'cmdk'
 import {
@@ -15,17 +15,25 @@ interface Props {
 
 export function CommandPalette({ open, onOpenChange, role, onAction }: Props) {
   const [query, setQuery] = useState('')
+  const [recentIds, setRecentIds] = useState<string[]>(() => readRecent())
   const nav = useNavigate()
+
+  useEffect(() => {
+    if (open) setRecentIds(readRecent())
+  }, [open])
 
   const pages = role === 'management' ? managementPages : staffPages
   const actions = actionsForRole(role)
-  const recentIds = useMemo(readRecent, [open])
 
   const pagesFiltered = filterCommands(pages, query)
   const actionsFiltered = filterCommands(actions, query)
   const recentPages = pages.filter(p => recentIds.includes(p.route ?? ''))
 
-  const go = (route: string) => { pushRecent(route); nav(route); onOpenChange(false); setQuery('') }
+  const go = (route: string) => {
+    pushRecent(route)
+    setRecentIds(readRecent())
+    nav(route); onOpenChange(false); setQuery('')
+  }
   const act = (actionId: string) => { onAction(actionId); onOpenChange(false); setQuery('') }
 
   if (!open) return null
