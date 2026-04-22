@@ -3,7 +3,7 @@ import { chartPalette } from './palette'
 import { HUDTooltip } from './HUDTooltip'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 
-interface Datum { [key: string]: string | number }
+type Datum = object
 interface Props {
   data: Datum[]
   xKey: string

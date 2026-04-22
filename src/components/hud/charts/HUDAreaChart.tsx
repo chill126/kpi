@@ -6,7 +6,7 @@ import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 
 const gradientNames = ['violet', 'cyan', 'mint', 'amber', 'coral'] as const
 
-interface Datum { [key: string]: string | number }
+type Datum = object
 interface Series { key: string; name?: string }
 interface ReferenceLineSpec { y: number; label?: string; signal?: 'warn' | 'alert' }
 

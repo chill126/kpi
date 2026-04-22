@@ -6,7 +6,7 @@ import { HUDChartDefs } from './defs'
 import { HUDTooltip } from './HUDTooltip'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 
-interface Datum { [key: string]: string | number }
+type Datum = object
 
 interface Props {
   data: Datum[]
@@ -51,7 +51,7 @@ export function HUDBarChart({
           fill="url(#hud-bar-primary)"
         >
           {signalByValue && data.map((d, i) => {
-            const v = Number(d[yKey])
+            const v = Number((d as Record<string, unknown>)[yKey])
             const id = v >= 90 ? 'hud-bar-alert' : v >= 75 ? 'hud-bar-warn' : 'hud-bar-good'
             return <Cell key={i} fill={`url(#${id})`} />
           })}

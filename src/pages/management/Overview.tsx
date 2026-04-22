@@ -5,6 +5,7 @@ import { useSiteVisits } from '@/hooks/useSiteVisits'
 import { useSiteAssessments } from '@/hooks/useSiteAssessments'
 import { useAuthContext } from '@/context/AuthContext'
 import { getWeekStart, computeWeekMetrics } from '@/lib/capacity'
+import { computeCapacityForecast } from '@/lib/capacityForecast'
 
 import { Tile } from '@/components/hud/Tile'
 import { Panel } from '@/components/hud/Panel'
@@ -84,6 +85,11 @@ export function Overview() {
     [utilizationData],
   )
 
+  const forecastData = useMemo(
+    () => computeCapacityForecast(investigators, visits, assessments, 4),
+    [investigators, visits, assessments],
+  )
+
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1440 }}>
@@ -161,13 +167,16 @@ export function Overview() {
       </div>
 
       <Panel title="Projected Capacity · Next 4 Weeks">
-        {utilizationData.length === 0 ? (
-          <EmptyState title="Not enough data" body="Schedule visits to see projections." />
+        {investigators.length === 0 ? (
+          <EmptyState title="Not enough data" body="Add investigators and schedule visits to see projections." />
         ) : (
           <HUDAreaChart
-            data={buildProjection(utilizationData)}
-            xKey="week"
-            series={[{ key: 'avg', name: 'Avg Utilization' }]}
+            data={forecastData}
+            xKey="label"
+            series={[
+              { key: 'avg', name: 'Avg Utilization' },
+              { key: 'max', name: 'Peak Investigator' },
+            ]}
             height={200}
             referenceLines={[
               { y: 75, label: '75%', signal: 'warn' },
@@ -202,15 +211,4 @@ export function Overview() {
 function weekNumber(d: Date): number {
   const oneJan = new Date(d.getFullYear(), 0, 1)
   return Math.ceil((((d.getTime() - oneJan.getTime()) / 86400000) + oneJan.getDay() + 1) / 7)
-}
-
-function buildProjection(utilization: { name: string; utilization: number }[]): Array<{ week: string; avg: number }> {
-  const avg = utilization.length === 0 ? 0
-    : utilization.reduce((s, u) => s + u.utilization, 0) / utilization.length
-  return [
-    { week: 'W+0', avg },
-    { week: 'W+1', avg: Math.min(100, avg + 4) },
-    { week: 'W+2', avg: Math.min(100, avg + 7) },
-    { week: 'W+3', avg: Math.min(100, avg + 6) },
-  ]
 }

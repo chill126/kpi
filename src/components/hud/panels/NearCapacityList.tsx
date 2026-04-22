@@ -5,6 +5,8 @@ import { EmptyState } from '../EmptyState'
 export interface UtilizationEntry {
   name: string
   utilization: number
+  totalHours: number
+  capacityHours: number
 }
 
 interface Props { entries: UtilizationEntry[] }
@@ -35,18 +37,35 @@ export function NearCapacityList({ entries }: Props) {
               key={r.name}
               role="listitem"
               style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '10px 0',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                gap: 12, padding: '10px 0',
                 borderBottom: '1px solid rgba(255 255 255 / 0.06)',
                 fontSize: 13,
               }}
             >
-              <span style={{ color: 'var(--text-secondary)' }}>{r.name}</span>
               <span style={{
-                fontFamily: 'JetBrains Mono', fontSize: 12.5,
-                color: signalFor(r.utilization), fontFeatureSettings: '"tnum"',
-              }}>
-                {Math.round(r.utilization)}%
+                color: 'var(--text-secondary)', flex: 1, minWidth: 0,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{r.name}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 10 }}>
+                <span style={{
+                  fontFamily: 'JetBrains Mono, ui-monospace, monospace',
+                  fontSize: 11.5,
+                  color: 'var(--text-muted)',
+                  fontFeatureSettings: '"tnum"',
+                }}>
+                  {r.totalHours}h / {r.capacityHours}h
+                </span>
+                <span style={{
+                  fontFamily: 'JetBrains Mono, ui-monospace, monospace',
+                  fontSize: 12.5,
+                  color: signalFor(r.utilization),
+                  fontFeatureSettings: '"tnum"',
+                  minWidth: 40,
+                  textAlign: 'right',
+                }}>
+                  {Math.round(r.utilization)}%
+                </span>
               </span>
             </li>
           ))}
