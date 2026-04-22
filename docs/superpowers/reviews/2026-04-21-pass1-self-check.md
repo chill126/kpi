@@ -1,10 +1,13 @@
 # HUD Pass 1 — Self-Check Report
 
-**Date:** 2026-04-21
+**Date:** 2026-04-21 (completed)
 **Branch:** `hud/pass-1`
 **Base:** `master`
-**Tip:** `0b6fe97` (pre-F3; self-check + PR commit to follow)
-**Commits:** 32 ahead of master (31 `hud:` commits + 1 resume notes + this self-check)
+**Tip at ship:** `e35f0d0`
+**Commits ahead of master:** 43
+
+**Preview URL used for F3 manual checks:**
+https://kpi-tracker-da9cf--hud-pass-1-16hjd4rk.web.app (expires 2026-04-28)
 
 ---
 
@@ -16,118 +19,113 @@
 
 ---
 
-## Section 8 gauntlet — automated checks
+## Automated checks (Section 8 gauntlet)
 
-| Check | Result | Evidence |
-|---|---|---|
-| `npm run test -- --run` | ✅ **293 passed / 69 files** | Baseline was 231; +62 new tests from Pass 1 primitives, charts, nav, panels, and Overview. Console ChunkLoadError noise is expected from pre-existing `ChunkErrorBoundary.test.tsx`. |
-| `npx tsc --noEmit` | ✅ **clean** (no output) | Zero type errors. Zero `any` without justification in Pass 1 files (one render-prop `any` in C4/C5/C6 Tooltip contents with an eslint-disable comment, documented as a Recharts 3.x generics workaround). |
-| `npm run lint` | n/a (aliased to `tsc --noEmit`) | Same result as TS check above — clean. |
-| `npm run build` | ✅ **built in 5.26s** | 2700 modules transformed. No new warnings. Full bundle output below. |
+| Check | Result |
+|---|---|
+| `npm run test -- --run` | ✅ **317 passed / 70 files** (baseline 231 → +86 net; console ChunkLoadError noise is the intentional throw in `ChunkErrorBoundary.test.tsx`) |
+| `npx tsc --noEmit` | ✅ clean, zero errors, zero unjustified `any` |
+| `npm run lint` (aliased to tsc) | ✅ clean |
+| `npm run build` | ✅ ~5.2s, 2700 modules. Overview chunk 18.41 kB / gzip 5.99 kB. Bundle delta well inside the +80 KB gzipped ceiling from the plan |
 
-### Bundle impact (Overview route chunk)
-- `Overview-Dq0KbbaN.js` — **18.41 kB / gzip 5.99 kB**
-- New vendor additions: `cmdk` (small), `react-intersection-observer` (unused in F1–F2 but available for Pass 2+).
-- Vendor-recharts and vendor-firebase unchanged.
-- Bundle delta: well within the plan's +80 KB gzipped ceiling (actual delta is a handful of KB — the primitives ride inline into the Overview chunk, and cmdk only loads when the palette opens).
+New vendor deps: `cmdk` (lazy — only loads with the palette) and `react-intersection-observer` (registered for Pass 2+ lazy mounts). `@radix-ui/react-dropdown-menu` was already present via the meta `radix-ui` package.
 
 ---
 
-## Section 8 gauntlet — manual / browser checks (user to run)
+## Manual checks (F3 — ran live against the preview channel)
 
-These require a browser + DevTools. Each is a simple capture — not expected to surface issues based on implementation review.
+| Check | Result |
+|---|---|
+| Overview at 1440×900 matches spec layout | ✅ screenshot at `docs/superpowers/reviews/pass1-overview-1440.png` |
+| `prefers-reduced-motion: reduce` disables all motion | ✅ screenshot at `docs/superpowers/reviews/pass1-overview-reduced-motion.png` |
+| Keyboard-only traversal reaches NavRail, ⌘K chip, every tile, every panel action | ✅ user-confirmed |
+| Focus ring visible (violet outline + glow) | ✅ user-confirmed |
+| ⌘K palette opens, filters by query, Enter navigates, Escape closes | ✅ after fix |
+| User menu (Sign out) accessible and readable | ✅ after fix |
+| Other pages still functional (unstyled but not broken) after `.dark` class added to `<html>` | ✅ |
+| Firestore indexes deployed and studies/investigators load | ✅ |
 
-| Check | Status | Notes |
-|---|---|---|
-| Overview at 1440×900 matches spec layout (TopBar → HeroSentence → 4 tiles → Enrollment+ActiveParticipants → Projected Capacity → Utilization+NearCap) | ⏳ PENDING | `npm run dev`, log in as management, screenshot to `docs/superpowers/reviews/pass1-overview-1440.png` |
-| `prefers-reduced-motion: reduce` disables all animations on `/` | ⏳ PENDING | Chrome DevTools → Rendering → `prefers-reduced-motion: reduce`. Verify count-ups, panel entrances, chart bar fills all render instantly. Screenshot to `pass1-overview-reduced-motion.png` |
-| Lighthouse desktop — Perf ≥ 85, A11y ≥ 95, Best-Practices ≥ 95 | ⏳ PENDING | Run on `/` in an incognito window, throttling off. Record scores inline below. |
-| Axe DevTools — 0 critical, 0 serious | ⏳ PENDING | Run scanner on `/`. Expected clean given tokens have been chosen for WCAG AA contrast. |
-| Keyboard-only traversal reaches every interactive control starting from page load | ⏳ PENDING | Tab through: NavRail items → ⌘K chip → TopBar → tile row → panel actions. Focus ring (violet + glow) must be visible on each. |
-| Command palette: ⌘K opens, Esc closes, filters pages+actions by keyword, Enter navigates | ⏳ PENDING | Covered by automated tests (`CommandPalette.test.tsx` — 3/3), but confirm live on `/`. |
+Deferred from F3 and not run (browser-tool-only): Lighthouse desktop, Axe DevTools. These are recommended before merge but not blocking; automated unit coverage + the spec's token contrast targets (≥ 7:1 for `text-secondary`, ≥ 13:1 for `text-primary`) should satisfy both. Follow-up: run them as part of Pass 2 close-out.
 
 ---
 
-## Design contract verification — automated
+## Preview-deployment iteration log
 
-| Contract | Automated coverage | Status |
+Three rounds of fixes landed after the first preview deploy, driven by live testing on the preview channel.
+
+### Round 1 — reviewer code-quality rollup (pre-ship)
+
+Comprehensive read of the branch surfaced four critical gaps the per-task reviewers couldn't catch (scope-limited):
+
+| Fix | Commit |
+|---|---|
+| C4 — delete orphaned `src/components/layout/` (AppShell/Sidebar/TopBar/NavItem/Sidebar.test) | `f532ad4` |
+| C1+C2 — real 4-week `computeCapacityForecast` (replaces fabricated `buildProjection`) + hours breakdown in `NearCapacityList` + chart `Datum` widening | `0be23fb` |
+| C3+I3 — `UserChip` converted to radix `DropdownMenu` with Sign out wired to `@/lib/auth.signOut`, `<html class="dark">` added for non-HUD pages, `role="main"` removed from `<main>` | `31fd7e6` |
+| I1+I5+I6+I7 — palette Recent-list liveness, visually-hidden `<h1>` on Overview, polyfill docstrings, recent role-gating confirmed | `b2d22f5` |
+
+### Round 2 — F3 preview feedback
+
+User reported from live testing against preview:
+
+| Issue | Fix | Commit |
 |---|---|---|
-| `heroLine()` renders correct variant for 0 / 1 near-cap / 3 near-cap / 1 at-cap | `HeroSentence.test.tsx` — 4 unit tests | ✅ |
-| `Tile` `signal` thresholds (boundary at 74/75/89/90) | `Tile.test.tsx` — aria-label composition + signal rendering covered; boundary tests live in the caller (Overview) | ✅ (via Overview test block + chart palette test) |
-| `chartPalette.signalBar` boundaries at 75, 90 | `palette.test.ts` — 5 unit tests | ✅ |
-| `NearCapacityList` filters to ≥75% and sorts descending | `NearCapacityList.test.tsx` — 3 unit tests | ✅ |
-| `ActiveParticipantsPanel` hero number, sparkline threshold (≥2 snapshots), trend chip, empty state | `ActiveParticipantsPanel.test.tsx` — 4 unit tests | ✅ |
-| Command palette role-gating (management-only actions hidden for staff) | `CommandPalette.test.tsx` — 3 unit tests | ✅ |
-| Keyboard shortcuts: ⌘K opens palette, `g o` chord navigates, chord suppressed in inputs | `keyboardShortcuts.test.ts` — 3 unit tests | ✅ |
-| NavRail renders role-appropriate items | `NavRail.test.tsx` — 2 unit tests | ✅ |
-| Count-up lands on exact target | `useCountUp.test.ts` — 3 unit tests (reduced-motion, mid-flight intermediate, target-change re-animate) | ✅ |
+| Escape didn't close ⌘K | window keydown listener scoped to `open` | `316e8a4` |
+| User menu too transparent over the translucent NavRail | solid `canvas-raised` fill + HUD border instead of `glass-strong` | `316e8a4` |
+| Firestore "index required" error showed on Overview with an unclickable URL | `ErrorState` detects URLs and renders them as external links | `316e8a4` |
+| 4 composite indexes missing from `firestore.indexes.json` | declared and deployed via `firebase deploy --only firestore:indexes` | `316e8a4` |
+
+### Round 3 — crash fix
+
+User saw `/studies` and `/investigators` failing with "Failed to load page" after navigation:
+
+| Issue | Root cause | Fix | Commit |
+|---|---|---|---|
+| Page crashes needing 1–2 reloads | Firebase Hosting served `index.html` with a default 1-hour cache → browser's cached index referenced JS chunk hashes that no longer existed after redeploy | `index.html` gets `no-cache`; `/assets/**` gets `max-age=31536000, immutable` in `firebase.json` | `57a2a3d` |
+| ChunkErrorBoundary required manual "Reload" click | now auto-reloads once per session on ChunkLoadError (with sessionStorage guard against infinite loop); HUD-skinned fallback for other errors | | `57a2a3d` |
+| `/studies` and `/investigators` TypeError "Cannot destructure property 'label' of undefined" | `StatusBadge` destructured `STATUS_CONFIG[status]` without a fallback → any study with a non-enum status (legacy/typo/null) crashed the page | widened the prop type and added a humanized fallback | `e35f0d0` |
+| Firestore rules drift | rules fresh-deployed via `firebase deploy --only firestore:rules` as a precaution | | n/a (infra) |
+
+---
+
+## Known non-blocking items
+
+- **`FirebaseError: permission-denied` on a snapshot listener.** Pre-existing data-layer concern the old Overview swallowed. The new Overview's error boundary was never hit by it (StatusBadge crash fired first). Likely cause: a document whose `siteId` doesn't match the user's `users/{uid}.siteId`, failing `isSameSite()` in Firestore rules. Not a code fix — needs a data audit. Flagged for Pass 2.
+- **Lighthouse + Axe** not run yet (browser-tool-only). Design-token contrast ratios and a11y patterns (`aria-labelledby`, `aria-current`, `aria-label` on Tile, `role="alert"` / `role="status"`, visually-hidden `<h1>`, focus-visible rings) meet WCAG 2.1 AA on paper. Recommended before Pass 2 close-out.
+- **Codex review** per project `CLAUDE.md` convention — recommended: `/codex:review --base master`.
+- **Downstream pages still render the old shadcn look** against the new NavRail. Pass 2 scope: Staff `MyDashboard`, `WorkloadPlanner`, `StudyDetail`. Pass 3 scope: the remaining ~11 pages.
 
 ---
 
 ## Intentional deviations from the plan (all safe, all documented)
 
-1. **C3 HUDTooltip** uses a locally-defined `Payload` interface instead of extending Recharts' `TooltipProps<...>` — Recharts 3.x generics are strict enough to conflict. Plan pre-authorized this fallback.
-2. **C4 / C5 / C6 chart wrappers** pass a render function to `<Tooltip content={(props) => <HUDTooltip {...} />}>` rather than a raw element — avoids the same Recharts type issue. Same pattern across all three.
-3. **D6 CommandPalette** added `ResizeObserver` and `scrollIntoView` polyfills to `src/test-setup.ts`. cmdk uses both internally; jsdom provides neither. Necessary infrastructure fix.
-4. **F1 integration** — the existing `AppRouter` owns its own `<BrowserRouter>`, so `HudShell` (which calls `useNavigate`) couldn't be added from `App.tsx`. Instead, `HudShellLayout` was injected as a layout route inside `src/router/index.tsx`, replacing the old `AppShell`. `App.tsx` itself was not modified.
-5. **F2 Overview** calls `useAuthContext` (the actual exported hook) instead of the plan's placeholder `useAuth`. One-symbol correction.
-
----
-
-## Deferred items (recommended before merge, not blocking)
-
-- **Code-quality rollup review** on B3 Skeleton, B6 Tile, B7 Panel. All three are spec-clean and have substantive logic worth a second pair of eyes on naming and edge cases. All three are small files.
-- **Codex review** per the project's global `CLAUDE.md` convention: `/codex:review --base master`.
-- **Pass 2 scoping** — MyDashboard (staff front door), WorkloadPlanner, StudyDetail. Each gets its own session with Sections 1–5, 7–9 of the spec plus a new Section-6-style composition.
-
----
-
-## Full Pass 1 commit map
-
-```
-96b4bc2 hud: add cmdk and react-intersection-observer
-21e3674 hud: add design tokens, aurora body, glass utilities
-975b7ad hud: add useCountUp and usePrefersReducedMotion hooks
-519a43a hud: add StatusDot primitive
-f349f97 hud: add TrendChip primitive
-f18cb44 hud: add Skeleton primitive with shimmer
-97ac82e hud: add EmptyState primitive
-1dde5a5 hud: add ErrorState primitive
-eee1ad0 hud: add Tile primitive with count-up animation
-bd1bbdd hud: add Panel primitive
-600bf55 docs: HUD Pass 1 resume notes (paused at B7)
-260a641 hud: add StatRing primitive
-b2b25c4 hud: add HeroSentence + heroLine helper
-77a8664 hud: add SectionHeader primitive
-d210d3f hud: add chart palette with signal bucketing
-7a5f7dc hud: add chart gradient defs
-fb4c1cf hud: add HUDTooltip
-41df265 hud: add HUDBarChart wrapper
-02b2328 hud: add HUDLineChart wrapper
-341d8a6 hud: add HUDAreaChart wrapper
-22cd7cc hud: add BrandLockup
-c28cf74 hud: add NavItem
-3efa1a1 hud: add NavGroup
-a79751e hud: add UserChip
-80a8b34 hud: add command registry and keyboard shortcuts
-00353ca hud: add CommandPalette on cmdk
-c024ef6 hud: add NavRail and HudShell
-0dfd989 hud: add NearCapacityList panel
-490e06a hud: add ActiveParticipantsPanel
-8ddb402 hud: wire HudShell into App root
-8dfe601 hud: rewrite Management Overview with primitives
-0b6fe97 docs: HUD Pass 1 final summary — 30 of 31 tasks, awaiting F3
-```
+1. **C3 `HUDTooltip`** uses a locally-defined `Payload` interface instead of extending Recharts' `TooltipProps<…>` — Recharts 3.x generics conflict. Plan pre-authorized this fallback.
+2. **C4 / C5 / C6 chart wrappers** pass a render function to `<Tooltip content={(props) => <HUDTooltip {...} />}>` rather than a raw element — avoids the same Recharts type issue.
+3. **C4 / C5 / C6 Datum widened to `object`** — named interfaces like `CapacityForecastWeek` cannot be assigned to an index-signature type in TypeScript; widening the chart prop type to `object` removes the cast burden from callers. HUDBarChart's one dynamic key access casts inline via `Record<string, unknown>`.
+4. **D6 `CommandPalette`** added `ResizeObserver` and `scrollIntoView` polyfills to `src/test-setup.ts`. cmdk (and later radix dropdown) need both; jsdom ships neither.
+5. **F1 integration** — the existing `AppRouter` owns its own `<BrowserRouter>`, so `HudShell` (which calls `useNavigate`) couldn't be added from `App.tsx`. `HudShellLayout` was injected as a layout route inside `src/router/index.tsx`, replacing the old `AppShell`.
+6. **F2 Overview** calls `useAuthContext` (the actual exported hook) rather than the plan's `useAuth` placeholder. One-symbol correction.
+7. **Overview's 4-week projection** now calls `computeCapacityForecast` (real rolling-average data via existing `projectWeekMetrics`) instead of the fabricated `buildProjection` scaffold the plan shipped with. This was a blocking reviewer finding (C1); the new function lives in `src/lib/capacityForecast.ts` with 7 unit tests.
 
 ---
 
 ## Pass 1 success criteria (from spec Section 9)
 
-1. **All Section 8 checks pass** — automated portion ✅; manual portion (screenshots/Lighthouse/Axe) awaits user run.
-2. **A coordinator opening `/` sees capacity state within 2 seconds of page ready** — implementation supports it; confirm live.
-3. **A new hire can find any destination in the app via ⌘K within 10 seconds** — palette registry covers all 12 management pages and 4 staff pages with keyword aliases. Works in dev.
-4. **A compliance reviewer's first impression is "professional clinical tool"** — intensity dialed to "calibrated" (M) per Section 2; aurora is subtle, no gradient text, no looping animations, mint/amber/coral used only for semantic signals.
-5. **You look at the screen and think *that's mine*** — user to confirm.
+1. **All Section 8 checks pass** — automated ✅; manual (screenshots/keyboard/palette/user menu) ✅; Lighthouse + Axe deferred to Pass 2 close-out.
+2. **A coordinator opening `/` sees capacity state within 2 seconds of page ready** — implementation supports it; confirmed on preview.
+3. **A new hire can find any destination in the app via ⌘K within 10 seconds** — palette registry covers all 12 management pages and 4 staff pages with keyword aliases, Esc closes, Enter navigates.
+4. **A compliance reviewer's first impression is "professional clinical tool"** — intensity dialed to "calibrated" (M) per spec Section 2; aurora is subtle, no gradient text, no looping animations, signal colors used only for semantic severity.
+5. **You look at the screen and think *that's mine*** — user-confirmed ("It does look much better … looks better" during preview testing).
+
+---
+
+## Deferred for Pass 2
+
+- Skin three more pages: Staff `MyDashboard` (front door), `WorkloadPlanner` (most-used analytical), `StudyDetail` (most-visited record).
+- Investigate and close the `permission-denied` Firestore issue (data audit).
+- **web_board integration** — separate Firebase project `k2-board` holds a 9-column Kanban of day-to-day participant flow with rich timestamps. New `Operations` page in kpi-tracker should surface derived metrics: No Shows, Randomizations, visit duration, screening visits per study, per-investigator patient counts, per-coordinator workload/admin burden, study momentum. Integration pattern recommended: daily Cloud Function export from `k2-board` → kpi-tracker ingestion + aggregation (decoupled, easy governance). Full scoping in its own spec when Pass 2 starts.
+- Run Lighthouse desktop + Axe DevTools and append the scores to this report as `Round 4 — formal a11y/perf audit`.
+- Code-quality rollup review on the substantive primitives (B3 Skeleton, B6 Tile, B7 Panel — all spec-clean, substantive logic).
 
 ---
 
