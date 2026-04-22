@@ -27,4 +27,19 @@ describe('StatusBadge', () => {
     render(<StatusBadge status="maintenance" />)
     expect(screen.getByText('Maintenance')).toBeInTheDocument()
   })
+
+  it('renders "Unknown" when status is undefined (bad data)', () => {
+    render(<StatusBadge status={undefined} />)
+    expect(screen.getByText('Unknown')).toBeInTheDocument()
+  })
+
+  it('renders "Unknown" when status is null (bad data)', () => {
+    render(<StatusBadge status={null} />)
+    expect(screen.getByText('Unknown')).toBeInTheDocument()
+  })
+
+  it('renders a humanized label for a string status not in the config', () => {
+    render(<StatusBadge status="pending_review" />)
+    expect(screen.getByText('Pending Review')).toBeInTheDocument()
+  })
 })
