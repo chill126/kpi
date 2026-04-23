@@ -76,6 +76,11 @@ function makeDeviation(overrides: Partial<ProtocolDeviation> = {}): ProtocolDevi
 
 beforeEach(() => {
   vi.clearAllMocks()
+  window.matchMedia = vi.fn().mockReturnValue({
+    matches: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })
   vi.mocked(authHook.useAuth).mockReturnValue({
     user: makeUser(),
     role: 'management',
@@ -164,7 +169,7 @@ describe('Deviations page', () => {
       error: null,
     })
     render(<Deviations />)
-    expect(document.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
+    expect(document.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(0)
   })
 
   it('shows record count', () => {
@@ -175,5 +180,76 @@ describe('Deviations page', () => {
     })
     render(<Deviations />)
     expect(screen.getByText(/1 record/i)).toBeInTheDocument()
+  })
+})
+
+describe('Deviations — open count badge', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })
+    vi.mocked(authHook.useAuth).mockReturnValue({
+      user: makeUser(),
+      role: 'management',
+      loading: false,
+    } as ReturnType<typeof authHook.useAuth>)
+    vi.mocked(siteHook.useSite).mockReturnValue({ siteId: 'site-1', setActiveSite: vi.fn() })
+    vi.mocked(studiesHook.useStudies).mockReturnValue({
+      studies: [makeStudy()],
+      loading: false,
+      error: null,
+    })
+    vi.mocked(deviationsHook.useAllProtocolDeviations).mockReturnValue({
+      deviations: [],
+      loading: false,
+      error: null,
+    })
+  })
+
+  it('shows open badge when there are open deviations', () => {
+    vi.mocked(deviationsHook.useAllProtocolDeviations).mockReturnValue({
+      deviations: [makeDeviation({ status: 'open' }), makeDeviation({ id: 'dev-2', status: 'closed' })],
+      loading: false,
+      error: null,
+    })
+    render(<Deviations />)
+    expect(screen.getByText('1 open')).toBeInTheDocument()
+  })
+
+  it('does not show open badge when all deviations are closed', () => {
+    vi.mocked(deviationsHook.useAllProtocolDeviations).mockReturnValue({
+      deviations: [makeDeviation({ status: 'closed' })],
+      loading: false,
+      error: null,
+    })
+    render(<Deviations />)
+    expect(screen.queryByText(/\d+ open/)).not.toBeInTheDocument()
+  })
+
+  it('open badge count reflects study filter', async () => {
+    const user = userEvent.setup()
+    vi.mocked(deviationsHook.useAllProtocolDeviations).mockReturnValue({
+      deviations: [
+        makeDeviation({ id: 'dev-1', studyId: 'study-1', status: 'open' }),
+        makeDeviation({ id: 'dev-2', studyId: 'study-2', status: 'open' }),
+      ],
+      loading: false,
+      error: null,
+    })
+    vi.mocked(studiesHook.useStudies).mockReturnValue({
+      studies: [makeStudy({ id: 'study-1', name: 'Study Alpha' }), makeStudy({ id: 'study-2', name: 'Study Beta' })],
+      loading: false,
+      error: null,
+    })
+    render(<Deviations />)
+    // All studies shown: 2 open
+    expect(screen.getByText('2 open')).toBeInTheDocument()
+    // Filter to study-1 only: 1 open
+    const select = screen.getByRole('combobox', { name: /filter by study/i })
+    await user.selectOptions(select, 'study-1')
+    expect(screen.getByText('1 open')).toBeInTheDocument()
   })
 })

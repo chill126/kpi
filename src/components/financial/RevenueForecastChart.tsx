@@ -3,9 +3,10 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
 } from 'recharts'
+import { Panel } from '@/components/hud/Panel'
+import { EmptyState } from '@/components/hud/EmptyState'
+import { chartPalette } from '@/components/hud/charts/palette'
 import type { ContractMilestone, Study } from '@/types'
-
-const STUDY_COLORS = ['#0d9488', '#6366f1', '#f59e0b', '#ec4899', '#14b8a6', '#8b5cf6']
 
 interface Props {
   studies: Study[]
@@ -142,6 +143,7 @@ export function RevenueForecastChart({ studies, startDate, endDate }: Props) {
     }[] = []
     for (const qs of qualifying) {
       for (const m of qs.milestones) {
+        if (!m.expectedDate) continue
         const d = parseIsoToUtc(m.expectedDate)
         if (Number.isNaN(d.getTime())) continue
         const t = d.getTime()
@@ -162,30 +164,25 @@ export function RevenueForecastChart({ studies, startDate, endDate }: Props) {
 
   if (qualifying.length === 0) {
     return (
-      <div className="py-16 text-center">
-        <p className="text-slate-400 text-sm">No contract data available.</p>
-        <p className="text-slate-400 text-xs mt-1">
-          Add contract values to studies to enable revenue forecasting.
-        </p>
-      </div>
+      <EmptyState
+        title="No contract data available"
+        body="Add contract values to studies to enable revenue forecasting."
+      />
     )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
-          Projected Revenue by Month
-        </h2>
-        <p className="text-xs text-slate-400 mb-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Panel title="Projected Revenue by Month">
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16, marginTop: -4 }}>
           Stacked contributions per study, based on milestone dates or even distribution.
         </p>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }} stackOffset="none">
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartPalette.grid} />
+            <XAxis dataKey="month" tick={{ fill: chartPalette.axis, fontFamily: 'JetBrains Mono', fontSize: 11 }} />
             <YAxis
-              tick={{ fontSize: 11 }}
+              tick={{ fill: chartPalette.axis, fontFamily: 'JetBrains Mono', fontSize: 11 }}
               tickFormatter={(value: number) => `$${value.toLocaleString()}`}
             />
             <Tooltip formatter={(value, name) => ['$' + Number(value).toLocaleString(), name]} />
@@ -196,55 +193,52 @@ export function RevenueForecastChart({ studies, startDate, endDate }: Props) {
                 type="monotone"
                 dataKey={qs.study.name}
                 stackId="revenue"
-                stroke={STUDY_COLORS[idx % STUDY_COLORS.length]}
-                fill={STUDY_COLORS[idx % STUDY_COLORS.length]}
+                stroke={chartPalette.series[idx % chartPalette.series.length]}
+                fill={chartPalette.series[idx % chartPalette.series.length]}
                 fillOpacity={0.6}
               />
             ))}
           </AreaChart>
         </ResponsiveContainer>
-      </div>
+      </Panel>
 
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
-          Milestone Timeline
-        </h2>
+      <Panel title="Milestone Timeline">
         {milestoneRows.length === 0 ? (
-          <p className="text-xs text-slate-400 py-4 text-center">
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', padding: '16px 0', textAlign: 'center' }}>
             No milestones scheduled within this range.
           </p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-xs text-slate-400 uppercase border-b border-slate-100 dark:border-slate-700">
-                <th className="text-left pb-2">Study</th>
-                <th className="text-left pb-2">Milestone</th>
-                <th className="text-right pb-2">Amount</th>
-                <th className="text-right pb-2">Expected Date</th>
-                <th className="text-right pb-2">Status</th>
+              <tr style={{ borderBottom: '1px solid rgba(255 255 255 / 0.08)' }}>
+                <th className="text-left pb-2" style={{ color: 'var(--text-label)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Study</th>
+                <th className="text-left pb-2" style={{ color: 'var(--text-label)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Milestone</th>
+                <th className="text-right pb-2" style={{ color: 'var(--text-label)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Amount</th>
+                <th className="text-right pb-2" style={{ color: 'var(--text-label)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Expected Date</th>
+                <th className="text-right pb-2" style={{ color: 'var(--text-label)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Status</th>
               </tr>
             </thead>
             <tbody>
               {milestoneRows.map((row, idx) => (
                 <tr
                   key={`${row.studyId}-${row.name}-${idx}`}
-                  className="border-b border-slate-50 dark:border-slate-800"
+                  style={{ borderBottom: '1px solid rgba(255 255 255 / 0.06)' }}
                 >
-                  <td className="py-2 text-slate-700 dark:text-slate-300">{row.studyName}</td>
-                  <td className="py-2 text-slate-600 dark:text-slate-400">{row.name}</td>
-                  <td className="py-2 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                  <td className="py-2" style={{ color: 'var(--text-primary)' }}>{row.studyName}</td>
+                  <td className="py-2" style={{ color: 'var(--text-secondary)' }}>{row.name}</td>
+                  <td className="py-2 text-right tabular-nums" style={{ color: 'var(--text-primary)' }}>
                     ${row.amount.toLocaleString()}
                   </td>
-                  <td className="py-2 text-right tabular-nums text-slate-500">
+                  <td className="py-2 text-right tabular-nums" style={{ color: 'var(--text-muted)' }}>
                     {row.expectedDate}
                   </td>
                   <td className="py-2 text-right">
                     {row.achieved ? (
-                      <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--signal-good)' }}>
                         Achieved ✓
                       </span>
                     ) : (
-                      <span className="text-xs font-medium text-slate-500">Pending</span>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-muted)' }}>Pending</span>
                     )}
                   </td>
                 </tr>
@@ -252,7 +246,7 @@ export function RevenueForecastChart({ studies, startDate, endDate }: Props) {
             </tbody>
           </table>
         )}
-      </div>
+      </Panel>
     </div>
   )
 }

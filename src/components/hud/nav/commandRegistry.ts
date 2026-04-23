@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, Gauge, TrendingUp, ShieldAlert, LineChart, Sparkles, FileBarChart,
-  FolderKanban, Users, DollarSign, Upload, Settings, Pencil, User,
+  FolderKanban, Users, DollarSign, Upload, Settings, Pencil, User, Activity,
 } from 'lucide-react'
 
 export type Role = 'management' | 'staff'
@@ -21,6 +21,7 @@ export const managementPages: CommandItem[] = [
   { id: 'workload',      title: 'Workload Planner',   keywords: ['workload','capacity','schedule','heatmap'],       icon: Gauge,           route: '/workload',       roles: ['management'] },
   { id: 'enrollment',    title: 'Enrollment',         keywords: ['enrollment','randomization','screen failures'],   icon: TrendingUp,      route: '/enrollment',     roles: ['management'] },
   { id: 'deviations',    title: 'Deviations',         keywords: ['deviations','pd','compliance','protocol'],        icon: ShieldAlert,     route: '/deviations',     roles: ['management'] },
+  { id: 'operations',   title: 'Operations',         keywords: ['board','k2','sessions','no show','visit duration','participants','live'], icon: Activity, route: '/operations', roles: ['management'] },
   { id: 'forecast',      title: 'Forecast',           keywords: ['forecast','projection','capacity forecast'],      icon: LineChart,       route: '/forecast',       roles: ['management'] },
   { id: 'what-if',       title: 'What-If',            keywords: ['what if','simulate','scenario'],                  icon: Sparkles,        route: '/what-if',        roles: ['management'] },
   { id: 'reports',       title: 'Reports',            keywords: ['reports','export','utilization report'],          icon: FileBarChart,    route: '/reports',        roles: ['management'] },

@@ -26,10 +26,12 @@ export function DataEntry() {
   }
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Data Entry</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
+          Data Entry
+        </h1>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
           Log visits and assessments for your assigned studies.
         </p>
       </div>

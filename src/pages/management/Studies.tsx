@@ -8,7 +8,7 @@ import { StudyFilters, type StudyFilterState } from '@/components/studies/StudyF
 import { StudyForm } from '@/components/studies/StudyForm'
 import { StudyComparison } from '@/components/studies/StudyComparison'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/hud/Skeleton'
 import { Plus, GitCompareArrows } from 'lucide-react'
 
 export function Studies() {
@@ -28,11 +28,11 @@ export function Studies() {
   const loading = studiesLoading || invLoading
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Studies</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>Studies</h1>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
             {studies.length} {studies.length === 1 ? 'study' : 'studies'} at this site
           </p>
         </div>
@@ -56,8 +56,8 @@ export function Studies() {
       <StudyFilters filters={filters} onChange={setFilters} investigators={investigators} />
 
       {loading ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map((n) => <Skeleton key={n} className="h-12 w-full rounded-md" />)}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[1, 2, 3].map((n) => <Skeleton key={n} height={48} />)}
         </div>
       ) : (
         <StudyTable

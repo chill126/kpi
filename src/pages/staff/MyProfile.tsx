@@ -5,19 +5,37 @@ import { updateUser } from '@/lib/users'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/hud/Skeleton'
+import { Panel } from '@/components/hud/Panel'
+import { EmptyState } from '@/components/hud/EmptyState'
 import type { Role } from '@/types'
 
 function RoleBadge({ role }: { role: Role }) {
-  const cls =
+  const style: React.CSSProperties =
     role === 'management'
-      ? 'bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700'
-      : 'bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600'
-  return (
-    <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${cls}`}>
-      {role}
-    </span>
-  )
+      ? {
+          display: 'inline-flex',
+          alignItems: 'center',
+          fontSize: 11,
+          fontWeight: 500,
+          padding: '3px 10px',
+          borderRadius: 99,
+          background: 'rgba(114 90 193 / 0.15)',
+          color: 'var(--accent-primary)',
+          border: '1px solid rgba(114 90 193 / 0.3)',
+        }
+      : {
+          display: 'inline-flex',
+          alignItems: 'center',
+          fontSize: 11,
+          fontWeight: 500,
+          padding: '3px 10px',
+          borderRadius: 99,
+          background: 'rgba(255 255 255 / 0.06)',
+          color: 'var(--text-secondary)',
+          border: '1px solid rgba(255 255 255 / 0.12)',
+        }
+  return <span style={style}>{role}</span>
 }
 
 export function MyProfile() {
@@ -49,78 +67,78 @@ export function MyProfile() {
   }
 
   if (!user) {
-    return <Skeleton className="h-64 w-full" />
+    return <Skeleton height={256} />
   }
 
   return (
-    <div className="space-y-6 max-w-lg">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 512 }}>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">My Profile</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
+          My Profile
+        </h1>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
           Manage your display name and view your site assignments.
         </p>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 space-y-4">
-        <div className="space-y-1">
-          <Label htmlFor="profile-name">Display Name</Label>
-          <Input
-            id="profile-name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-          />
-        </div>
+      <Panel title="Profile">
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Label htmlFor="profile-name">Display Name</Label>
+            <Input
+              id="profile-name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+            />
+          </div>
 
-        <div className="space-y-1">
-          <Label>Email</Label>
-          <p className="text-sm text-slate-700 dark:text-slate-200 h-9 flex items-center px-3 rounded-md bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
-            {user.email}
-          </p>
-        </div>
+          <div className="space-y-1">
+            <Label>Email</Label>
+            <p className="text-sm h-9 flex items-center px-3 rounded-md border border-slate-200 dark:border-slate-600"
+               style={{ color: 'var(--text-primary)', background: 'rgba(255 255 255 / 0.04)' }}>
+              {user.email}
+            </p>
+          </div>
 
-        <div className="space-y-1">
-          <Label>Role</Label>
-          <div className="h-9 flex items-center">
-            <RoleBadge role={user.role} />
+          <div className="space-y-1">
+            <Label>Role</Label>
+            <div className="h-9 flex items-center">
+              <RoleBadge role={user.role} />
+            </div>
+          </div>
+
+          <div className="flex justify-end items-center gap-3">
+            {saved && (
+              <p style={{ fontSize: 13, color: 'var(--signal-good)' }}>Saved!</p>
+            )}
+            <Button
+              onClick={handleSave}
+              disabled={!dirty || saving}
+              style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
+            >
+              {saving ? 'Saving…' : 'Save Changes'}
+            </Button>
           </div>
         </div>
+      </Panel>
 
-        <div className="flex justify-end items-center gap-3">
-          {saved && (
-            <p className="text-sm text-emerald-600 dark:text-emerald-400">Saved!</p>
-          )}
-          <Button
-            onClick={handleSave}
-            disabled={!dirty || saving}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
-          >
-            {saving ? 'Saving…' : 'Save Changes'}
-          </Button>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 space-y-3">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          Assigned Studies
-        </h2>
+      <Panel title="Assigned Studies">
         {studiesLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-3/4" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Skeleton height={24} />
+            <Skeleton height={24} width={288} />
           </div>
         ) : assignedStudies.length === 0 ? (
-          <p className="text-sm text-slate-400 italic">
-            No studies assigned. Contact your site manager.
-          </p>
+          <EmptyState title="No studies assigned" body="Contact your site manager." />
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-slate-700">
             {assignedStudies.map((study) => (
               <li key={study.id} className="py-2 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                  <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
                     {study.name}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                     {study.sponsor} · {study.phase}
                   </p>
                 </div>
@@ -128,7 +146,7 @@ export function MyProfile() {
             ))}
           </ul>
         )}
-      </div>
+      </Panel>
     </div>
   )
 }

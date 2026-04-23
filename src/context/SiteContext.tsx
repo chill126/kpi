@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useAuthContext } from '@/context/AuthContext'
 
 interface SiteContextValue {
   siteId: string
@@ -27,4 +28,13 @@ export function useSiteContext(): SiteContextValue {
   const ctx = useContext(SiteContext)
   if (!ctx) throw new Error('useSiteContext must be used within SiteProvider')
   return ctx
+}
+
+export function SiteSync() {
+  const { user } = useAuthContext()
+  const { setActiveSite } = useSiteContext()
+  useEffect(() => {
+    if (user?.siteId) setActiveSite(user.siteId)
+  }, [user?.siteId, setActiveSite])
+  return null
 }

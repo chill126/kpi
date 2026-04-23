@@ -5,18 +5,31 @@ import { Settings } from '@/pages/management/Settings'
 import type { AppUser, Site, Study } from '@/types'
 
 vi.mock('@/hooks/useSite', () => ({ useSite: vi.fn() }))
-vi.mock('@/hooks/useSiteData', () => ({ useSiteData: vi.fn() }))
+vi.mock('@/hooks/useSites', () => ({ useSites: vi.fn() }))
 vi.mock('@/hooks/useSiteUsers', () => ({ useSiteUsers: vi.fn() }))
 vi.mock('@/hooks/useStudies', () => ({ useStudies: vi.fn() }))
-vi.mock('@/lib/sites', () => ({ updateSite: vi.fn() }))
+vi.mock('@/lib/sites', () => ({ updateSite: vi.fn(), createSite: vi.fn() }))
 vi.mock('@/lib/users', () => ({ updateUser: vi.fn() }))
+vi.mock('@/hooks/useDashboardConfig', () => ({
+  useDashboardConfig: vi.fn(),
+  DEFAULT_DASHBOARD_CONFIG: {
+    tiles: [
+      { id: 'capacity', visible: true, order: 0 },
+      { id: 'studies', visible: true, order: 1 },
+      { id: 'alerts', visible: true, order: 2 },
+      { id: 'enrollment', visible: true, order: 3 },
+      { id: 'today-activity', visible: true, order: 4 },
+    ],
+  },
+}))
 
 import * as siteHook from '@/hooks/useSite'
-import * as siteDataHook from '@/hooks/useSiteData'
+import * as sitesHook from '@/hooks/useSites'
 import * as siteUsersHook from '@/hooks/useSiteUsers'
 import * as studiesHook from '@/hooks/useStudies'
 import * as sitesLib from '@/lib/sites'
 import * as usersLib from '@/lib/users'
+import * as dashboardConfigModule from '@/hooks/useDashboardConfig'
 
 function makeSite(overrides: Partial<Site> = {}): Site {
   return {
@@ -78,8 +91,8 @@ beforeEach(() => {
     siteId: 'tampa',
     setActiveSite: vi.fn(),
   })
-  vi.mocked(siteDataHook.useSiteData).mockReturnValue({
-    site: makeSite(),
+  vi.mocked(sitesHook.useSites).mockReturnValue({
+    sites: [makeSite()],
     loading: false,
     error: null,
   })
@@ -92,6 +105,18 @@ beforeEach(() => {
     studies: [makeStudy()],
     loading: false,
     error: null,
+  })
+  vi.mocked(dashboardConfigModule.useDashboardConfig).mockReturnValue({
+    config: {
+      tiles: [
+        { id: 'capacity' as const, visible: true, order: 0 },
+        { id: 'studies' as const, visible: true, order: 1 },
+        { id: 'alerts' as const, visible: true, order: 2 },
+        { id: 'enrollment' as const, visible: true, order: 3 },
+        { id: 'today-activity' as const, visible: true, order: 4 },
+      ],
+    },
+    saveConfig: vi.fn().mockResolvedValue(undefined),
   })
 })
 
@@ -106,24 +131,38 @@ describe('Settings', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows site configuration form fields pre-populated', () => {
+  it('shows site rows in the Site Configuration tab', () => {
     render(<Settings />)
+    expect(screen.getByText('Tampa Research')).toBeInTheDocument()
+    expect(screen.getByText('Tampa, FL')).toBeInTheDocument()
+  })
+
+  it('opens edit dialog pre-populated when site Edit is clicked', async () => {
+    const user = userEvent.setup()
+    render(<Settings />)
+    await user.click(screen.getByRole('button', { name: /^edit$/i }))
+    expect(
+      screen.getByRole('dialog', { name: /edit site/i }),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText(/site name/i)).toHaveValue('Tampa Research')
     expect(screen.getByLabelText(/location/i)).toHaveValue('Tampa, FL')
     expect(screen.getByLabelText(/timezone/i)).toHaveValue('America/New_York')
     expect(screen.getByLabelText(/active/i)).toBeChecked()
   })
 
-  it('disables save button when form is not dirty', () => {
+  it('disables save button when edit form is not dirty', async () => {
+    const user = userEvent.setup()
     render(<Settings />)
+    await user.click(screen.getByRole('button', { name: /^edit$/i }))
     expect(
       screen.getByRole('button', { name: /save changes/i }),
     ).toBeDisabled()
   })
 
-  it('enables save button when form changes', async () => {
+  it('enables save button when edit form changes', async () => {
     const user = userEvent.setup()
     render(<Settings />)
+    await user.click(screen.getByRole('button', { name: /^edit$/i }))
     await user.clear(screen.getByLabelText(/site name/i))
     await user.type(screen.getByLabelText(/site name/i), 'New Name')
     expect(
@@ -135,6 +174,7 @@ describe('Settings', () => {
     const user = userEvent.setup()
     vi.mocked(sitesLib.updateSite).mockResolvedValue(undefined)
     render(<Settings />)
+    await user.click(screen.getByRole('button', { name: /^edit$/i }))
     await user.clear(screen.getByLabelText(/location/i))
     await user.type(screen.getByLabelText(/location/i), 'Orlando, FL')
     await user.click(screen.getByRole('button', { name: /save changes/i }))
@@ -146,16 +186,6 @@ describe('Settings', () => {
     })
   })
 
-  it('shows "Site document not found" when site is null', () => {
-    vi.mocked(siteDataHook.useSiteData).mockReturnValue({
-      site: null,
-      loading: false,
-      error: null,
-    })
-    render(<Settings />)
-    expect(screen.getByText(/site document not found/i)).toBeInTheDocument()
-  })
-
   it('renders user rows in the User Management tab', async () => {
     const user = userEvent.setup()
     render(<Settings />)
@@ -164,11 +194,11 @@ describe('Settings', () => {
     expect(screen.getByText('user1@example.com')).toBeInTheDocument()
   })
 
-  it('opens edit dialog when Edit is clicked', async () => {
+  it('opens edit dialog when user Edit is clicked', async () => {
     const user = userEvent.setup()
     render(<Settings />)
     await user.click(screen.getByRole('tab', { name: /user management/i }))
-    await user.click(screen.getByRole('button', { name: /edit/i }))
+    await user.click(screen.getByRole('button', { name: /^edit$/i }))
     expect(
       screen.getByRole('dialog', { name: /edit user/i }),
     ).toBeInTheDocument()
@@ -180,7 +210,7 @@ describe('Settings', () => {
     vi.mocked(usersLib.updateUser).mockResolvedValue(undefined)
     render(<Settings />)
     await user.click(screen.getByRole('tab', { name: /user management/i }))
-    await user.click(screen.getByRole('button', { name: /edit/i }))
+    await user.click(screen.getByRole('button', { name: /^edit$/i }))
     await user.clear(screen.getByLabelText(/display name/i))
     await user.type(screen.getByLabelText(/display name/i), 'Alice Renamed')
     await user.click(screen.getByLabelText('Study Alpha'))
@@ -190,5 +220,91 @@ describe('Settings', () => {
       role: 'staff',
       assignedStudies: ['study-1'],
     })
+  })
+})
+
+describe('Settings — My Dashboard tab', () => {
+  beforeEach(() => {
+    vi.mocked(siteHook.useSite).mockReturnValue({ siteId: 'tampa', setActiveSite: vi.fn() })
+    vi.mocked(sitesHook.useSites).mockReturnValue({ sites: [makeSite()], loading: false, error: null })
+    vi.mocked(siteUsersHook.useSiteUsers).mockReturnValue({ users: [], loading: false, error: null })
+    vi.mocked(studiesHook.useStudies).mockReturnValue({ studies: [], loading: false, error: null })
+  })
+
+  it('shows My Dashboard tab', async () => {
+    render(<Settings />)
+    expect(screen.getByRole('tab', { name: /my dashboard/i })).toBeInTheDocument()
+  })
+
+  it('renders tile list when My Dashboard tab is active', async () => {
+    render(<Settings />)
+    await userEvent.click(screen.getByRole('tab', { name: /my dashboard/i }))
+    expect(screen.getByText('Capacity')).toBeInTheDocument()
+    expect(screen.getByLabelText(/move capacity up/i)).toBeInTheDocument()
+  })
+
+  it('calls saveConfig when tile visibility is toggled', async () => {
+    const saveConfig = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(dashboardConfigModule.useDashboardConfig).mockReturnValue({
+      config: {
+        tiles: [
+          { id: 'capacity' as const, visible: true, order: 0 },
+          { id: 'studies' as const, visible: true, order: 1 },
+          { id: 'alerts' as const, visible: true, order: 2 },
+          { id: 'enrollment' as const, visible: true, order: 3 },
+          { id: 'today-activity' as const, visible: true, order: 4 },
+        ],
+      },
+      saveConfig,
+    })
+    render(<Settings />)
+    await userEvent.click(screen.getByRole('tab', { name: /my dashboard/i }))
+    const capacityCheckbox = screen.getByRole('checkbox', { name: /capacity/i })
+    await userEvent.click(capacityCheckbox)
+    expect(saveConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tiles: expect.arrayContaining([
+          expect.objectContaining({ id: 'capacity', visible: false }),
+        ]),
+      }),
+    )
+  })
+
+  it('calls saveConfig when Reset to defaults is clicked', async () => {
+    const saveConfig = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(dashboardConfigModule.useDashboardConfig).mockReturnValue({
+      config: {
+        tiles: [{ id: 'capacity' as const, visible: false, order: 0 }],
+      },
+      saveConfig,
+    })
+    render(<Settings />)
+    await userEvent.click(screen.getByRole('tab', { name: /my dashboard/i }))
+    await userEvent.click(screen.getByRole('button', { name: /reset to defaults/i }))
+    expect(saveConfig).toHaveBeenCalled()
+  })
+})
+
+describe('Settings — site switcher', () => {
+  beforeEach(() => {
+    vi.mocked(siteUsersHook.useSiteUsers).mockReturnValue({ users: [], loading: false, error: null })
+    vi.mocked(studiesHook.useStudies).mockReturnValue({ studies: [], loading: false, error: null })
+  })
+
+  it('shows site switcher when multiple sites exist', () => {
+    vi.mocked(siteHook.useSite).mockReturnValue({ siteId: 'tampa', setActiveSite: vi.fn() })
+    vi.mocked(sitesHook.useSites).mockReturnValue({
+      sites: [makeSite({ id: 'tampa', name: 'Tampa' }), makeSite({ id: 'orlando', name: 'Orlando' })],
+      loading: false, error: null,
+    })
+    render(<Settings />)
+    expect(screen.getByLabelText(/viewing site/i)).toBeInTheDocument()
+  })
+
+  it('does not show site switcher when only one site exists', () => {
+    vi.mocked(siteHook.useSite).mockReturnValue({ siteId: 'tampa', setActiveSite: vi.fn() })
+    vi.mocked(sitesHook.useSites).mockReturnValue({ sites: [makeSite()], loading: false, error: null })
+    render(<Settings />)
+    expect(screen.queryByLabelText(/viewing site/i)).not.toBeInTheDocument()
   })
 })

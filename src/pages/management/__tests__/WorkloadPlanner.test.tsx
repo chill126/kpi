@@ -26,7 +26,7 @@ beforeEach(() => {
 describe('WorkloadPlanner', () => {
   it('renders the page heading', () => {
     render(<WorkloadPlanner />)
-    expect(screen.getByRole('heading', { name: /workload planner/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /capacity planner/i })).toBeInTheDocument()
   })
 
   it('renders investigator names in the heat map', () => {
@@ -34,16 +34,15 @@ describe('WorkloadPlanner', () => {
     expect(screen.getByText('Dr. Wilson')).toBeInTheDocument()
   })
 
-  it('renders 13 week columns', () => {
+  it('renders 8 week columns', () => {
     render(<WorkloadPlanner />)
-    // 13 week header cells (not counting the name column)
     const cells = screen.getAllByText(/\d{2}-\d{2}/)
-    expect(cells.length).toBe(13)
+    expect(cells.length).toBe(8)
   })
 
-  it('renders 0% cells when no visits are logged', () => {
+  it('renders dash cells when no visits are scheduled', () => {
     render(<WorkloadPlanner />)
-    const zeroCells = screen.getAllByText('0%')
-    expect(zeroCells.length).toBeGreaterThan(0)
+    const emptyCells = screen.getAllByText('—')
+    expect(emptyCells.length).toBeGreaterThan(0)
   })
 })

@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { DelegationLogTab } from '@/components/study-detail/DelegationLogTab'
 import { VisitCompletionTracker } from '@/components/workload/VisitCompletionTracker'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/hud/Skeleton'
+import { EmptyState } from '@/components/hud/EmptyState'
 import {
   Tabs,
   TabsContent,
@@ -27,45 +28,48 @@ export function MyStudies() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <Skeleton height={32} width={192} />
+        <Skeleton height={256} />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">My Studies</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
+          My Studies
+        </h1>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
           {myStudies.length} assigned {myStudies.length === 1 ? 'study' : 'studies'}
         </p>
       </div>
 
       {myStudies.length === 0 && (
-        <p className="text-slate-400 text-sm py-8 text-center">
-          You have no assigned studies. Contact your site manager to be assigned to a study.
-        </p>
+        <EmptyState
+          title="No studies assigned"
+          body="Contact your site manager to be assigned to a study."
+        />
       )}
 
       {myStudies.length > 0 && (
-        <div className="grid grid-cols-4 gap-6">
-          <div className="col-span-1 space-y-2">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: 16, alignItems: 'start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {myStudies.map((study) => (
               <button
                 key={study.id}
                 onClick={() => setActiveStudyId(study.id)}
-                className={`w-full text-left rounded-lg border p-3 transition-colors ${
+                style={
                   (selected?.id ?? myStudies[0]?.id) === study.id
-                    ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
-                    : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'
-                }`}
+                    ? { width: '100%', textAlign: 'left', borderRadius: 8, padding: 12, border: '1px solid var(--accent-primary)', background: 'rgba(114 90 193 / 0.10)', cursor: 'pointer' }
+                    : { width: '100%', textAlign: 'left', borderRadius: 8, padding: 12, border: '1px solid rgba(255 255 255 / 0.08)', background: 'transparent', cursor: 'pointer' }
+                }
               >
-                <p className="text-sm font-medium text-slate-800 dark:text-slate-100 leading-tight">
+                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.3 }}>
                   {study.name}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{study.sponsor}</p>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{study.sponsor}</p>
                 <div className="mt-1.5">
                   <StatusBadge status={study.status} />
                 </div>
@@ -74,12 +78,12 @@ export function MyStudies() {
           </div>
 
           {selected && (
-            <div className="col-span-3 space-y-4">
+            <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                <h2 style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--text-primary)' }}>
                   {selected.name}
                 </h2>
-                <p className="text-sm text-slate-500">
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                   {selected.sponsor} · {selected.therapeuticArea} · {selected.phase}
                 </p>
               </div>

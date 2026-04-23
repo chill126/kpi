@@ -9,6 +9,9 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { CATEGORY_LABELS } from './ScreenFailureForm'
+import { Panel } from '@/components/hud/Panel'
+import { EmptyState } from '@/components/hud/EmptyState'
+import { chartPalette } from '@/components/hud/charts/palette'
 import type { ScreenFailure } from '@/types'
 
 interface Props {
@@ -30,13 +33,12 @@ export function ScreenFailureReasonChart({ failures }: Props) {
   }, [failures])
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-      <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
-        Failure Reasons
-      </h2>
-      <p className="text-xs text-slate-400 mb-4">Aggregated across all recorded failures.</p>
+    <Panel title="Failure Reasons">
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16, marginTop: -4 }}>
+        Aggregated across all recorded failures.
+      </p>
       {data.length === 0 ? (
-        <p className="text-sm text-slate-400 py-12 text-center">No data to chart.</p>
+        <EmptyState title="No data" body="No data to chart yet." />
       ) : (
         <ResponsiveContainer width="100%" height={Math.max(240, data.length * 36)}>
           <BarChart
@@ -44,19 +46,19 @@ export function ScreenFailureReasonChart({ failures }: Props) {
             layout="vertical"
             margin={{ top: 4, right: 16, bottom: 0, left: 16 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartPalette.grid} />
+            <XAxis type="number" allowDecimals={false} tick={{ fill: chartPalette.axis, fontFamily: 'JetBrains Mono', fontSize: 11 }} />
             <YAxis
               dataKey="reason"
               type="category"
-              tick={{ fontSize: 11 }}
+              tick={{ fill: chartPalette.axis, fontFamily: 'JetBrains Mono', fontSize: 11 }}
               width={140}
             />
             <Tooltip />
-            <Bar dataKey="count" fill="#0d9488" />
+            <Bar dataKey="count" fill={chartPalette.series[0]} />
           </BarChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </Panel>
   )
 }

@@ -1,6 +1,7 @@
 import { BrandLockup } from './BrandLockup'
 import { NavGroup } from './NavGroup'
 import { NavItem } from './NavItem'
+import { SiteSwitcher } from './SiteSwitcher'
 import { UserChip } from './UserChip'
 import { managementPages, staffPages, type Role, type CommandItem } from './commandRegistry'
 
@@ -12,7 +13,7 @@ interface Props {
 
 const managementGroups: Array<{ label: string; ids: string[] }> = [
   { label: 'Command',  ids: ['overview'] },
-  { label: 'Operate',  ids: ['workload', 'enrollment', 'deviations'] },
+  { label: 'Operate',  ids: ['workload', 'enrollment', 'deviations', 'operations'] },
   { label: 'Plan',     ids: ['forecast', 'what-if', 'reports'] },
   { label: 'Catalog',  ids: ['studies', 'investigators', 'financial'] },
   { label: 'System',   ids: ['import', 'settings'] },
@@ -53,7 +54,10 @@ export function NavRail({ role, user, onSignOut }: Props) {
       <div style={{ padding: '0 18px 6px' }}>
         <BrandLockup mode="sidebar" />
       </div>
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ padding: '0 10px 10px' }}>
+        <SiteSwitcher role={role} />
+      </div>
+      <div className="nav-scroll" style={{ flex: 1, overflowY: 'auto' }}>
         {groups.map(g => (
           <NavGroup key={g.label} label={g.label}>
             {g.ids.map(id => {

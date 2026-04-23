@@ -25,6 +25,7 @@ const MyProfile = lazy(() => import('@/pages/staff/MyProfile').then(m => ({ defa
 const Forecast = lazy(() => import('@/pages/management/Forecast').then(m => ({ default: m.Forecast })))
 const WhatIf = lazy(() => import('@/pages/management/WhatIf').then(m => ({ default: m.WhatIf })))
 const Deviations = lazy(() => import('@/pages/management/Deviations').then(m => ({ default: m.Deviations })))
+const Operations = lazy(() => import('@/pages/management/Operations').then(m => ({ default: m.Operations })))
 
 // Keeps AppShell mounted while page chunks load; catches failed chunk loads
 const AuthenticatedOutlet = () => (
@@ -73,6 +74,7 @@ export function AppRouter() {
                 <Route path="/forecast" element={<Forecast />} />
                 <Route path="/what-if" element={<WhatIf />} />
                 <Route path="/deviations" element={<Deviations />} />
+                <Route path="/operations" element={<Operations />} />
                 <Route path="/studies/:id" element={<StudyDetail />} />
               </Route>
 

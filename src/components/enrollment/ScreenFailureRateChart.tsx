@@ -8,6 +8,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { Panel } from '@/components/hud/Panel'
+import { EmptyState } from '@/components/hud/EmptyState'
+import { chartPalette } from '@/components/hud/charts/palette'
 import type { ScreenFailure, Study } from '@/types'
 
 interface Props {
@@ -33,26 +36,23 @@ export function ScreenFailureRateChart({ failures, study }: Props) {
   }, [failures, study.id])
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-      <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
-        Screen Failures per Month
-      </h2>
-      <p className="text-xs text-slate-400 mb-4">
+    <Panel title="Screen Failures per Month">
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16, marginTop: -4 }}>
         Historical screen counts unavailable; showing failure counts per month.
       </p>
       {data.length === 0 ? (
-        <p className="text-sm text-slate-400 py-12 text-center">No data to chart.</p>
+        <EmptyState title="No data" body="No data to chart yet." />
       ) : (
         <ResponsiveContainer width="100%" height={240}>
           <LineChart data={data} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartPalette.grid} />
+            <XAxis dataKey="month" tick={{ fill: chartPalette.axis, fontFamily: 'JetBrains Mono', fontSize: 11 }} />
+            <YAxis allowDecimals={false} tick={{ fill: chartPalette.axis, fontFamily: 'JetBrains Mono', fontSize: 11 }} />
             <Tooltip />
-            <Line type="monotone" dataKey="count" stroke="#0d9488" strokeWidth={2} dot={{ r: 3 }} />
+            <Line type="monotone" dataKey="count" stroke={chartPalette.series[0]} strokeWidth={2} dot={{ r: 3 }} />
           </LineChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </Panel>
   )
 }

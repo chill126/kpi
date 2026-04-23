@@ -40,14 +40,13 @@ export function WhatIfForm({ value, onChange, investigators }: Props) {
         <Label>Assigned investigators</Label>
         <div className="mt-1 space-y-1">
           {investigators.map((inv) => (
-            <label key={inv.id} className="flex items-center gap-2 text-sm cursor-pointer">
+            <label key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={value.assignedInvestigatorIds.includes(inv.id)}
                 onChange={() => toggleInvestigator(inv.id)}
-                className="rounded"
               />
-              <span className="text-slate-700 dark:text-slate-300">{inv.name}</span>
+              <span style={{ color: 'var(--text-primary)' }}>{inv.name}</span>
             </label>
           ))}
         </div>
@@ -82,7 +81,7 @@ export function WhatIfForm({ value, onChange, investigators }: Props) {
         <div className="mt-1 grid grid-cols-4 gap-2">
           {FORECAST_CONFIG.RAMP_CHECKPOINTS.map((week) => (
             <div key={week}>
-              <span className="text-xs text-slate-400">Wk {week}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Wk {week}</span>
               <Input
                 type="number"
                 min={0}

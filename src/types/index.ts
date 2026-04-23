@@ -1,5 +1,22 @@
 export type Role = 'management' | 'staff'
 
+export type OverviewTileId =
+  | 'capacity'
+  | 'studies'
+  | 'alerts'
+  | 'enrollment'
+  | 'today-activity'
+
+export interface DashboardTile {
+  id: OverviewTileId
+  visible: boolean
+  order: number
+}
+
+export interface DashboardConfig {
+  tiles: DashboardTile[]
+}
+
 export type SyncStatus = 'synced' | 'syncing' | 'offline'
 
 export interface AppUser {
@@ -9,6 +26,7 @@ export interface AppUser {
   role: Role
   siteId: string
   assignedStudies: string[]
+  dashboardConfig?: DashboardConfig
 }
 
 export interface Site {
@@ -30,6 +48,8 @@ export interface Investigator {
   weeklyCapacityHours: number
   siteBaselinePct: number
   assignedStudies: string[]
+  /** Display name as it appears in k2-board (e.g. 'Wilson'). Used for board session cross-referencing. */
+  boardName?: string
 }
 
 export type StudyStatus = 'enrolling' | 'paused' | 'maintenance' | 'completed' | 'on_hold'
@@ -196,7 +216,7 @@ export interface DelegationLog {
 export interface Import {
   id: string
   siteId: string
-  type: 'clinical_conductor' | 'advarra_ereg' | 'enrollment_snapshot' | 'protocol_pdf'
+  type: 'clinical_conductor' | 'advarra_ereg' | 'enrollment_snapshot' | 'protocol_pdf' | 'k2_board_export'
   uploadedBy: string
   uploadedAt: string
   rowCount: number
@@ -269,6 +289,42 @@ export interface SimulationResult {
   byInvestigator: Record<string, InvestigatorSimResult>
   estimatedRevenue: number
   overallVerdict: FeasibilityVerdict
+}
+
+// ─── Board Session (k2-board daily import) ───────────────────────────────────
+
+export interface BoardSessionEntry {
+  subjectId: string
+  crioId?: string
+  study: string
+  investigatorNames: string[]
+  status: string
+  arrivalTime?: string
+  leftTime?: string
+  visitDurationMin: number | null
+  wasNoShow: boolean
+  wasCompleted: boolean
+}
+
+export interface BoardSessionMetrics {
+  totalScheduled: number
+  arrivals: number
+  completedVisits: number
+  noShows: number
+  avgVisitDurationMin: number | null
+  byStudy: Record<string, { scheduled: number; arrivals: number; noShows: number; avgDurationMin: number | null }>
+  byInvestigator: Record<string, { visits: number }>
+}
+
+export interface BoardSession {
+  id: string
+  siteId: string
+  sessionDate: string
+  importedAt: string
+  importedBy: string
+  entryCount: number
+  metrics: BoardSessionMetrics
+  entries: BoardSessionEntry[]
 }
 
 export interface WhatIfScenario {

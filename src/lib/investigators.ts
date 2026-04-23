@@ -1,9 +1,13 @@
 import {
+  addDoc,
   collection,
+  deleteDoc,
+  doc,
   onSnapshot,
-  query,
-  where,
   orderBy,
+  query,
+  updateDoc,
+  where,
 } from 'firebase/firestore'
 import { db } from './firebase'
 import type { Investigator } from '@/types'
@@ -27,4 +31,22 @@ export function subscribeInvestigators(
     (snap) => onData(snap.docs.map((d) => toInvestigator(d.id, d.data()))),
     onError,
   )
+}
+
+export async function createInvestigator(
+  data: Omit<Investigator, 'id'>,
+): Promise<string> {
+  const ref = await addDoc(collection(db, 'investigators'), data)
+  return ref.id
+}
+
+export async function updateInvestigator(
+  id: string,
+  updates: Partial<Omit<Investigator, 'id'>>,
+): Promise<void> {
+  await updateDoc(doc(db, 'investigators', id), updates as Record<string, unknown>)
+}
+
+export async function deleteInvestigator(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'investigators', id))
 }

@@ -40,6 +40,6 @@ describe('WhatIf', () => {
 
   it('renders the output placeholder when no investigators selected', () => {
     render(<MemoryRouter><WhatIf /></MemoryRouter>)
-    expect(screen.getByText(/fill in the form/i)).toBeInTheDocument()
+    expect(screen.getByText(/assign investigators/i)).toBeInTheDocument()
   })
 })

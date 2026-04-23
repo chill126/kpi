@@ -12,9 +12,7 @@ export function Login() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({})
   const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-
+  async function doSignIn() {
     const next: typeof errors = {}
     if (!email) next.email = 'Email is required'
     if (!password) next.password = 'Password is required'
@@ -34,6 +32,11 @@ export function Login() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    await doSignIn()
   }
 
   return (
@@ -74,6 +77,7 @@ export function Login() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void doSignIn() }}
               className={errors.password ? 'border-red-500' : ''}
             />
             {errors.password && (

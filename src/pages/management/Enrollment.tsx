@@ -11,14 +11,12 @@ import { ScreenFailureReasonChart } from '@/components/enrollment/ScreenFailureR
 import { CrossStudyComparisonPanel } from '@/components/enrollment/CrossStudyComparisonPanel'
 import { EnrollmentBurndownChart } from '@/components/enrollment/EnrollmentBurndownChart'
 import { SnapshotImportDialog } from '@/components/enrollment/SnapshotImportDialog'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { HUDTabBar } from '@/components/hud/TabBar'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/hud/Skeleton'
+import { EmptyState } from '@/components/hud/EmptyState'
 import { deleteScreenFailure } from '@/lib/screenFailures'
 import type { ScreenFailure } from '@/types'
-
-const selectClass =
-  'w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100'
 
 export function Enrollment() {
   const { siteId } = useSite()
@@ -58,35 +56,33 @@ export function Enrollment() {
 
   if (studiesLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-72 w-full" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <Skeleton height={28} width={260} />
+        <Skeleton height={288} />
       </div>
     )
   }
 
   if (studies.length === 0) {
     return (
-      <div className="space-y-6">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Enrollment</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>Enrollment</h1>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
             Screen failure tracking and analytics
           </p>
         </div>
-        <p className="text-sm text-slate-400 py-8 text-center">
-          No studies found. Create a study to begin tracking screen failures.
-        </p>
+        <EmptyState title="No studies yet" body="Create a study to begin tracking screen failures." />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Enrollment</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>Enrollment</h1>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
             Screen failure tracking and enrollment analytics
           </p>
         </div>
@@ -94,7 +90,7 @@ export function Enrollment() {
           <Button
             onClick={openCreate}
             disabled={!effectiveStudyId}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
           >
             + Add Screen Failure
           </Button>
@@ -102,7 +98,7 @@ export function Enrollment() {
           <Button
             onClick={() => setImportOpen(true)}
             disabled={!effectiveStudyId}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
           >
             Import Historical Data
           </Button>
@@ -110,14 +106,14 @@ export function Enrollment() {
       </div>
 
       <div className="max-w-md">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">
+        <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', flexShrink: 0 }} className="mb-1 block">
           Study
         </label>
         <select
           aria-label="Select study"
           value={effectiveStudyId}
           onChange={(e) => setSelectedStudyId(e.target.value)}
-          className={selectClass}
+          style={{ height: 36, background: 'rgba(255 255 255 / 0.06)', border: '1px solid rgba(255 255 255 / 0.12)', borderRadius: 8, color: 'var(--text-primary)', padding: '0 10px', fontSize: 13, width: '100%' }}
         >
           {studies.map((s) => (
             <option key={s.id} value={s.id}>
@@ -127,44 +123,44 @@ export function Enrollment() {
         </select>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="screen-failures">Screen Failures</TabsTrigger>
-          <TabsTrigger value="predictor">Completion Predictor</TabsTrigger>
-        </TabsList>
+      <HUDTabBar
+        tabs={[
+          { value: 'screen-failures', label: 'Screen Failures' },
+          { value: 'predictor', label: 'Completion Predictor' },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
 
-        <TabsContent value="screen-failures">
-          <div className="space-y-6 pt-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {selectedStudy && <ScreenFailureRateChart failures={failures} study={selectedStudy} />}
-              <ScreenFailureReasonChart failures={failures} />
-            </div>
-
-            <CrossStudyComparisonPanel allFailures={allFailures} studies={studies} />
-
-            {selectedStudy && (
-              <ScreenFailureTable
-                failures={failures}
-                study={selectedStudy}
-                onEdit={openEdit}
-                onDelete={handleDelete}
-              />
-            )}
+      {tab === 'screen-failures' && (
+        <div className="space-y-6 pt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {selectedStudy && <ScreenFailureRateChart failures={failures} study={selectedStudy} />}
+            <ScreenFailureReasonChart failures={failures} />
           </div>
-        </TabsContent>
 
-        <TabsContent value="predictor">
-          <div className="space-y-6 pt-4">
-            {selectedStudy ? (
-              <EnrollmentBurndownChart snapshots={snapshots} study={selectedStudy} />
-            ) : (
-              <p className="text-sm text-slate-400 py-8 text-center">
-                Select a study to view completion predictions.
-              </p>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+          <CrossStudyComparisonPanel allFailures={allFailures} studies={studies} />
+
+          {selectedStudy && (
+            <ScreenFailureTable
+              failures={failures}
+              study={selectedStudy}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+            />
+          )}
+        </div>
+      )}
+
+      {tab === 'predictor' && (
+        <div className="space-y-6 pt-4">
+          {selectedStudy ? (
+            <EnrollmentBurndownChart snapshots={snapshots} study={selectedStudy} />
+          ) : (
+            <EmptyState title="No study selected" body="Select a study to view completion predictions." />
+          )}
+        </div>
+      )}
 
       {selectedStudy && (
         <ScreenFailureForm

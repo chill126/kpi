@@ -1,4 +1,4 @@
-import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc, onSnapshot, query, updateDoc } from 'firebase/firestore'
 import { db } from './firebase'
 import type { Site } from '@/types'
 
@@ -27,6 +27,22 @@ export function subscribeSite(
   return onSnapshot(
     doc(db, 'sites', siteId),
     (snap) => onData(snap.exists() ? toSite(snap.id, snap.data()) : null),
+    onError,
+  )
+}
+
+export async function createSite(data: Omit<Site, 'id'>): Promise<string> {
+  const ref = await addDoc(collection(db, 'sites'), data)
+  return ref.id
+}
+
+export function subscribeAllSites(
+  onData: (sites: Site[]) => void,
+  onError: (err: Error) => void,
+): () => void {
+  return onSnapshot(
+    query(collection(db, 'sites')),
+    (snap) => onData(snap.docs.map((d) => toSite(d.id, d.data()))),
     onError,
   )
 }

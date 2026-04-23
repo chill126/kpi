@@ -26,6 +26,18 @@ export function subscribeUsers(
   )
 }
 
+export function subscribeUser(
+  uid: string,
+  onData: (user: AppUser | null) => void,
+  onError: (err: Error) => void,
+): () => void {
+  return onSnapshot(
+    doc(db, 'users', uid),
+    (snap) => onData(snap.exists() ? toAppUser(snap.id, snap.data()) : null),
+    onError,
+  )
+}
+
 export async function updateUser(
   uid: string,
   updates: Partial<Omit<AppUser, 'uid'>>,
