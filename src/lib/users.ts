@@ -28,13 +28,13 @@ export function subscribeUsers(
 
 export function subscribeUser(
   uid: string,
-  onData: (user: AppUser) => void,
+  onData: (user: AppUser | null) => void,
   onError: (err: Error) => void,
 ): () => void {
   return onSnapshot(
     doc(db, 'users', uid),
-    (snap) => { if (snap.exists()) onData(toAppUser(snap.id, snap.data())) },
-    (err) => onError(err),
+    (snap) => onData(snap.exists() ? toAppUser(snap.id, snap.data()) : null),
+    onError,
   )
 }
 

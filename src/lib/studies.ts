@@ -53,7 +53,7 @@ export function subscribeAllStudies(
   return onSnapshot(
     q,
     (snap) => onData(snap.docs.map((d) => toStudy(d.id, d.data()))),
-    (err) => onError(err),
+    onError,
   )
 }
 
