@@ -309,6 +309,7 @@ export function Operations() {
                       {['Date', 'Scheduled', 'Arrivals', 'Completed', 'No-Shows', 'No-Show %', 'Avg Duration'].map(h => (
                         <th
                           key={h}
+                          scope="col"
                           style={{
                             padding: '0 12px 8px 0', textAlign: 'left', fontWeight: 500,
                             fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase',
@@ -395,6 +396,7 @@ export function Operations() {
                     {['Type', 'Study', 'Investigator', 'Visit / Scale', 'Status', 'Duration'].map((h) => (
                       <th
                         key={h}
+                        scope="col"
                         style={{
                           padding: '0 12px 8px 0', textAlign: 'left', fontWeight: 500,
                           fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase',
