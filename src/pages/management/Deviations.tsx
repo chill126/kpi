@@ -49,6 +49,11 @@ export function Deviations() {
     [deviations, filterStudyId],
   )
 
+  const openCount = useMemo(
+    () => filtered.filter((d) => d.status === 'open').length,
+    [filtered],
+  )
+
   function openCreate() {
     setEditingDeviation(undefined)
     setFormOpen(true)
@@ -63,9 +68,23 @@ export function Deviations() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
-            Protocol Deviations
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
+              Protocol Deviations
+            </h1>
+            {openCount > 0 && (
+              <span
+                aria-label={`${openCount} open deviation${openCount !== 1 ? 's' : ''}`}
+                style={{
+                  fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
+                  background: 'rgba(239 68 68 / 0.15)', color: 'var(--signal-alert)',
+                  border: '1px solid rgba(239 68 68 / 0.3)',
+                }}
+              >
+                {openCount} open
+              </span>
+            )}
+          </div>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
             Log and track protocol deviations across all studies.
           </p>
