@@ -47,12 +47,13 @@ export function computeWeekMetrics(
   visits: Visit[],
   assessments: Assessment[],
   weekStartIso: string,
+  visitStatuses: Visit['status'][] = ['completed'],
 ): WeekMetrics {
   const visitMinutes = visits
     .filter(
       (v) =>
         v.investigatorId === investigatorId &&
-        v.status === 'completed' &&
+        visitStatuses.includes(v.status) &&
         inWeek(v.scheduledDate, weekStartIso),
     )
     .reduce((sum, v) => sum + (v.actualDurationMinutes ?? v.durationMinutes), 0)

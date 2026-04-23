@@ -11,7 +11,7 @@ import { ScreenFailureReasonChart } from '@/components/enrollment/ScreenFailureR
 import { CrossStudyComparisonPanel } from '@/components/enrollment/CrossStudyComparisonPanel'
 import { EnrollmentBurndownChart } from '@/components/enrollment/EnrollmentBurndownChart'
 import { SnapshotImportDialog } from '@/components/enrollment/SnapshotImportDialog'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { HUDTabBar } from '@/components/hud/TabBar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/hud/Skeleton'
 import { EmptyState } from '@/components/hud/EmptyState'
@@ -123,42 +123,44 @@ export function Enrollment() {
         </select>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="screen-failures">Screen Failures</TabsTrigger>
-          <TabsTrigger value="predictor">Completion Predictor</TabsTrigger>
-        </TabsList>
+      <HUDTabBar
+        tabs={[
+          { value: 'screen-failures', label: 'Screen Failures' },
+          { value: 'predictor', label: 'Completion Predictor' },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
 
-        <TabsContent value="screen-failures">
-          <div className="space-y-6 pt-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {selectedStudy && <ScreenFailureRateChart failures={failures} study={selectedStudy} />}
-              <ScreenFailureReasonChart failures={failures} />
-            </div>
-
-            <CrossStudyComparisonPanel allFailures={allFailures} studies={studies} />
-
-            {selectedStudy && (
-              <ScreenFailureTable
-                failures={failures}
-                study={selectedStudy}
-                onEdit={openEdit}
-                onDelete={handleDelete}
-              />
-            )}
+      {tab === 'screen-failures' && (
+        <div className="space-y-6 pt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {selectedStudy && <ScreenFailureRateChart failures={failures} study={selectedStudy} />}
+            <ScreenFailureReasonChart failures={failures} />
           </div>
-        </TabsContent>
 
-        <TabsContent value="predictor">
-          <div className="space-y-6 pt-4">
-            {selectedStudy ? (
-              <EnrollmentBurndownChart snapshots={snapshots} study={selectedStudy} />
-            ) : (
-              <EmptyState title="No study selected" body="Select a study to view completion predictions." />
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+          <CrossStudyComparisonPanel allFailures={allFailures} studies={studies} />
+
+          {selectedStudy && (
+            <ScreenFailureTable
+              failures={failures}
+              study={selectedStudy}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+            />
+          )}
+        </div>
+      )}
+
+      {tab === 'predictor' && (
+        <div className="space-y-6 pt-4">
+          {selectedStudy ? (
+            <EnrollmentBurndownChart snapshots={snapshots} study={selectedStudy} />
+          ) : (
+            <EmptyState title="No study selected" body="Select a study to view completion predictions." />
+          )}
+        </div>
+      )}
 
       {selectedStudy && (
         <ScreenFailureForm
