@@ -128,7 +128,7 @@ function weekNumber(d: Date): number {
 export function Overview() {
   const { user } = useAuthContext()
   const navigate = useNavigate()
-  const firstName = (user?.displayName ?? user?.email ?? 'there').split(/[\s@]/)[0]
+  const firstName = ((user?.displayName ?? user?.email ?? 'there').trim().split(/[\s@]/)[0]) || 'there'
 
   const [overviewTab, setOverviewTab] = useState<'dashboard' | 'network'>('dashboard')
 
@@ -140,7 +140,7 @@ export function Overview() {
 
   const loading = studiesLoading || invLoading
   const weekStart = getWeekStart(new Date())
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], [])
 
   const activeStudies = useMemo(
     () => studies.filter((s) => s.status === 'enrolling' || s.status === 'maintenance'),
@@ -244,12 +244,10 @@ export function Overview() {
         )
       case 'today-activity':
         return (
-          <div
-            role="button"
-            tabIndex={0}
-            style={{ cursor: 'pointer', display: 'contents' }}
+          <button
+            aria-label="Today's Activity — open operations"
             onClick={() => navigate('/operations')}
-            onKeyDown={(e) => { if (e.key === 'Enter') navigate('/operations') }}
+            style={{ all: 'unset', display: 'block', width: '100%', cursor: 'pointer' }}
           >
             <Tile
               label="Today's Activity"
@@ -257,13 +255,18 @@ export function Overview() {
               sub="visits & assessments"
               signal="neutral"
             />
-          </div>
+          </button>
         )
+      default: {
+        const _: never = id
+        void _
+        return null
+      }
     }
   }
 
   const visibleTiles = useMemo(
-    () => [...config.tiles].filter((t) => t.visible).sort((a, b) => a.order - b.order),
+    () => config.tiles.filter((t) => t.visible).sort((a, b) => a.order - b.order),
     [config.tiles],
   )
 
