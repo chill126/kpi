@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSite } from '@/hooks/useSite'
 import { useSites } from '@/hooks/useSites'
 import { useSiteUsers } from '@/hooks/useSiteUsers'
@@ -19,7 +19,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import type { AppUser, Role, Site, Study } from '@/types'
+import { useDashboardConfig, DEFAULT_DASHBOARD_CONFIG } from '@/hooks/useDashboardConfig'
+import type { AppUser, Role, Site, Study, OverviewTileId } from '@/types'
 
 const TIMEZONES = [
   'America/New_York',
@@ -40,6 +41,14 @@ const HUD_SELECT_STYLE: React.CSSProperties = {
   padding: '0 10px',
   fontSize: 13,
   width: '100%',
+}
+
+const TILE_DISPLAY: Record<OverviewTileId, { label: string; description: string }> = {
+  'capacity': { label: 'Capacity', description: 'Average site utilization this week' },
+  'studies': { label: 'Studies', description: 'Active enrolling or maintenance studies' },
+  'alerts': { label: 'Alerts', description: 'Investigators at or above capacity threshold' },
+  'enrollment': { label: 'Enrollment', description: 'Randomizations as % of YTD target' },
+  'today-activity': { label: "Today's Activity", description: 'Visits and assessments logged today' },
 }
 
 interface SiteForm {
@@ -172,6 +181,35 @@ function SiteEditDialog({ site, open, onOpenChange }: SiteEditDialogProps) {
   )
 }
 
+function ActiveSiteSelector() {
+  const { sites } = useSites()
+  const { siteId, setActiveSite } = useSite()
+
+  if (sites.length <= 1) return null
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <label htmlFor="active-site-select" style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+        Viewing site
+      </label>
+      <select
+        id="active-site-select"
+        aria-label="Viewing site"
+        value={siteId}
+        onChange={(e) => setActiveSite(e.target.value)}
+        className="glass"
+        style={HUD_SELECT_STYLE}
+      >
+        {sites.map((site) => (
+          <option key={site.id} value={site.id}>
+            {site.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
 function SiteConfigurationTab() {
   const { sites, loading } = useSites()
   const { siteId: activeSiteId } = useSite()
@@ -189,6 +227,7 @@ function SiteConfigurationTab() {
 
   return (
     <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <ActiveSiteSelector />
       {sites.length === 0 ? (
         <EmptyState title="No sites found" />
       ) : (
@@ -627,6 +666,110 @@ function SeedDataTab() {
   )
 }
 
+function DashboardTab() {
+  const { config, saveConfig } = useDashboardConfig()
+
+  const sorted = useMemo(
+    () => [...config.tiles].sort((a, b) => a.order - b.order),
+    [config.tiles],
+  )
+
+  function handleToggle(id: OverviewTileId) {
+    const newTiles = config.tiles.map((t) => (t.id === id ? { ...t, visible: !t.visible } : t))
+    void saveConfig({ tiles: newTiles })
+  }
+
+  function handleMove(fromIdx: number, direction: 'up' | 'down') {
+    const toIdx = direction === 'up' ? fromIdx - 1 : fromIdx + 1
+    if (toIdx < 0 || toIdx >= sorted.length) return
+    const reordered = [...sorted]
+    ;[reordered[fromIdx], reordered[toIdx]] = [reordered[toIdx], reordered[fromIdx]]
+    const newTiles = reordered.map((t, i) => ({ ...t, order: i }))
+    void saveConfig({ tiles: newTiles })
+  }
+
+  function handleReset() {
+    void saveConfig(DEFAULT_DASHBOARD_CONFIG)
+  }
+
+  return (
+    <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Panel title="Overview Tile Layout">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {sorted.map((tile, idx) => (
+            <div
+              key={tile.id}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '10px 12px', borderRadius: 8,
+                background: 'rgba(255 255 255 / 0.03)',
+                border: '1px solid rgba(255 255 255 / 0.08)',
+              }}
+            >
+              <input
+                type="checkbox"
+                id={`tile-toggle-${tile.id}`}
+                checked={tile.visible}
+                onChange={() => handleToggle(tile.id)}
+                aria-label={TILE_DISPLAY[tile.id].label}
+                style={{ width: 16, height: 16, accentColor: 'var(--accent-primary)', flexShrink: 0 }}
+              />
+              <label htmlFor={`tile-toggle-${tile.id}`} style={{ flex: 1, cursor: 'pointer' }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+                  {TILE_DISPLAY[tile.id].label}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  {TILE_DISPLAY[tile.id].description}
+                </div>
+              </label>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button
+                  aria-label={`Move ${TILE_DISPLAY[tile.id].label} up`}
+                  disabled={idx === 0}
+                  onClick={() => handleMove(idx, 'up')}
+                  style={{
+                    width: 28, height: 28, borderRadius: 6,
+                    border: '1px solid rgba(255 255 255 / 0.12)',
+                    background: 'rgba(255 255 255 / 0.06)',
+                    color: 'var(--text-secondary)',
+                    cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                    fontSize: 12, opacity: idx === 0 ? 0.4 : 1,
+                  }}
+                >▲</button>
+                <button
+                  aria-label={`Move ${TILE_DISPLAY[tile.id].label} down`}
+                  disabled={idx === sorted.length - 1}
+                  onClick={() => handleMove(idx, 'down')}
+                  style={{
+                    width: 28, height: 28, borderRadius: 6,
+                    border: '1px solid rgba(255 255 255 / 0.12)',
+                    background: 'rgba(255 255 255 / 0.06)',
+                    color: 'var(--text-secondary)',
+                    cursor: idx === sorted.length - 1 ? 'not-allowed' : 'pointer',
+                    fontSize: 12, opacity: idx === sorted.length - 1 ? 0.4 : 1,
+                  }}
+                >▼</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Panel>
+
+      <button
+        onClick={handleReset}
+        style={{
+          alignSelf: 'flex-start', padding: '6px 14px', borderRadius: 8,
+          border: '1px solid rgba(255 255 255 / 0.15)',
+          background: 'rgba(255 255 255 / 0.06)',
+          color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer',
+        }}
+      >
+        Reset to defaults
+      </button>
+    </div>
+  )
+}
+
 export function Settings() {
   const [tab, setTab] = useState('site')
 
@@ -646,6 +789,7 @@ export function Settings() {
           { value: 'site', label: 'Site Configuration' },
           { value: 'users', label: 'User Management' },
           { value: 'seed', label: 'Seed Data' },
+          { value: 'dashboard', label: 'My Dashboard' },
         ]}
         value={tab}
         onChange={setTab}
@@ -653,6 +797,7 @@ export function Settings() {
       {tab === 'site' && <SiteConfigurationTab />}
       {tab === 'users' && <UserManagementTab />}
       {tab === 'seed' && <SeedDataTab />}
+      {tab === 'dashboard' && <DashboardTab />}
     </div>
   )
 }

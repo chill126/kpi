@@ -10,6 +10,18 @@ vi.mock('@/hooks/useSiteUsers', () => ({ useSiteUsers: vi.fn() }))
 vi.mock('@/hooks/useStudies', () => ({ useStudies: vi.fn() }))
 vi.mock('@/lib/sites', () => ({ updateSite: vi.fn(), createSite: vi.fn() }))
 vi.mock('@/lib/users', () => ({ updateUser: vi.fn() }))
+vi.mock('@/hooks/useDashboardConfig', () => ({
+  useDashboardConfig: vi.fn(),
+  DEFAULT_DASHBOARD_CONFIG: {
+    tiles: [
+      { id: 'capacity', visible: true, order: 0 },
+      { id: 'studies', visible: true, order: 1 },
+      { id: 'alerts', visible: true, order: 2 },
+      { id: 'enrollment', visible: true, order: 3 },
+      { id: 'today-activity', visible: true, order: 4 },
+    ],
+  },
+}))
 
 import * as siteHook from '@/hooks/useSite'
 import * as sitesHook from '@/hooks/useSites'
@@ -17,6 +29,7 @@ import * as siteUsersHook from '@/hooks/useSiteUsers'
 import * as studiesHook from '@/hooks/useStudies'
 import * as sitesLib from '@/lib/sites'
 import * as usersLib from '@/lib/users'
+import * as dashboardConfigModule from '@/hooks/useDashboardConfig'
 
 function makeSite(overrides: Partial<Site> = {}): Site {
   return {
@@ -92,6 +105,18 @@ beforeEach(() => {
     studies: [makeStudy()],
     loading: false,
     error: null,
+  })
+  vi.mocked(dashboardConfigModule.useDashboardConfig).mockReturnValue({
+    config: {
+      tiles: [
+        { id: 'capacity' as const, visible: true, order: 0 },
+        { id: 'studies' as const, visible: true, order: 1 },
+        { id: 'alerts' as const, visible: true, order: 2 },
+        { id: 'enrollment' as const, visible: true, order: 3 },
+        { id: 'today-activity' as const, visible: true, order: 4 },
+      ],
+    },
+    saveConfig: vi.fn().mockResolvedValue(undefined),
   })
 })
 
@@ -195,5 +220,91 @@ describe('Settings', () => {
       role: 'staff',
       assignedStudies: ['study-1'],
     })
+  })
+})
+
+describe('Settings — My Dashboard tab', () => {
+  beforeEach(() => {
+    vi.mocked(siteHook.useSite).mockReturnValue({ siteId: 'tampa', setActiveSite: vi.fn() })
+    vi.mocked(sitesHook.useSites).mockReturnValue({ sites: [makeSite()], loading: false, error: null })
+    vi.mocked(siteUsersHook.useSiteUsers).mockReturnValue({ users: [], loading: false, error: null })
+    vi.mocked(studiesHook.useStudies).mockReturnValue({ studies: [], loading: false, error: null })
+  })
+
+  it('shows My Dashboard tab', async () => {
+    render(<Settings />)
+    expect(screen.getByRole('tab', { name: /my dashboard/i })).toBeInTheDocument()
+  })
+
+  it('renders tile list when My Dashboard tab is active', async () => {
+    render(<Settings />)
+    await userEvent.click(screen.getByRole('tab', { name: /my dashboard/i }))
+    expect(screen.getByText('Capacity')).toBeInTheDocument()
+    expect(screen.getByLabelText(/move capacity up/i)).toBeInTheDocument()
+  })
+
+  it('calls saveConfig when tile visibility is toggled', async () => {
+    const saveConfig = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(dashboardConfigModule.useDashboardConfig).mockReturnValue({
+      config: {
+        tiles: [
+          { id: 'capacity' as const, visible: true, order: 0 },
+          { id: 'studies' as const, visible: true, order: 1 },
+          { id: 'alerts' as const, visible: true, order: 2 },
+          { id: 'enrollment' as const, visible: true, order: 3 },
+          { id: 'today-activity' as const, visible: true, order: 4 },
+        ],
+      },
+      saveConfig,
+    })
+    render(<Settings />)
+    await userEvent.click(screen.getByRole('tab', { name: /my dashboard/i }))
+    const capacityCheckbox = screen.getByRole('checkbox', { name: /capacity/i })
+    await userEvent.click(capacityCheckbox)
+    expect(saveConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tiles: expect.arrayContaining([
+          expect.objectContaining({ id: 'capacity', visible: false }),
+        ]),
+      }),
+    )
+  })
+
+  it('calls saveConfig when Reset to defaults is clicked', async () => {
+    const saveConfig = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(dashboardConfigModule.useDashboardConfig).mockReturnValue({
+      config: {
+        tiles: [{ id: 'capacity' as const, visible: false, order: 0 }],
+      },
+      saveConfig,
+    })
+    render(<Settings />)
+    await userEvent.click(screen.getByRole('tab', { name: /my dashboard/i }))
+    await userEvent.click(screen.getByRole('button', { name: /reset to defaults/i }))
+    expect(saveConfig).toHaveBeenCalled()
+  })
+})
+
+describe('Settings — site switcher', () => {
+  beforeEach(() => {
+    vi.mocked(siteUsersHook.useSiteUsers).mockReturnValue({ users: [], loading: false, error: null })
+    vi.mocked(studiesHook.useStudies).mockReturnValue({ studies: [], loading: false, error: null })
+  })
+
+  it('shows site switcher when multiple sites exist', () => {
+    vi.mocked(siteHook.useSite).mockReturnValue({ siteId: 'tampa', setActiveSite: vi.fn() })
+    vi.mocked(sitesHook.useSites).mockReturnValue({
+      sites: [makeSite({ id: 'tampa', name: 'Tampa' }), makeSite({ id: 'orlando', name: 'Orlando' })],
+      loading: false, error: null,
+    })
+    render(<Settings />)
+    expect(screen.getByLabelText(/viewing site/i)).toBeInTheDocument()
+  })
+
+  it('does not show site switcher when only one site exists', () => {
+    vi.mocked(siteHook.useSite).mockReturnValue({ siteId: 'tampa', setActiveSite: vi.fn() })
+    vi.mocked(sitesHook.useSites).mockReturnValue({ sites: [makeSite()], loading: false, error: null })
+    render(<Settings />)
+    expect(screen.queryByLabelText(/viewing site/i)).not.toBeInTheDocument()
   })
 })
