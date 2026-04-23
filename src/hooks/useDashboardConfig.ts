@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuthContext } from '@/context/AuthContext'
 import { subscribeUser, updateUser } from '@/lib/users'
 import type { DashboardConfig, OverviewTileId } from '@/types'
@@ -35,7 +35,10 @@ export function useDashboardConfig(): {
   const [config, setConfig] = useState<DashboardConfig>(DEFAULT_DASHBOARD_CONFIG)
 
   useEffect(() => {
-    if (!user?.uid) return
+    if (!user?.uid) {
+      setConfig(DEFAULT_DASHBOARD_CONFIG)
+      return
+    }
     return subscribeUser(
       user.uid,
       (u) =>
@@ -44,14 +47,20 @@ export function useDashboardConfig(): {
             ? mergeDashboardConfig(u.dashboardConfig)
             : DEFAULT_DASHBOARD_CONFIG,
         ),
-      () => setConfig(DEFAULT_DASHBOARD_CONFIG),
+      (err) => {
+        console.error('[useDashboardConfig] subscription error:', err)
+        setConfig(DEFAULT_DASHBOARD_CONFIG)
+      },
     )
   }, [user?.uid])
 
-  async function saveConfig(c: DashboardConfig): Promise<void> {
-    if (!user?.uid) return
-    await updateUser(user.uid, { dashboardConfig: c })
-  }
+  const saveConfig = useCallback(
+    async (c: DashboardConfig): Promise<void> => {
+      if (!user?.uid) return
+      await updateUser(user.uid, { dashboardConfig: c })
+    },
+    [user?.uid],
+  )
 
   return { config, saveConfig }
 }
