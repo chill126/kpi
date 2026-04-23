@@ -1,7 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from 'recharts'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useInvestigators } from '@/hooks/useInvestigators'
 import { useSiteVisits } from '@/hooks/useSiteVisits'
@@ -13,15 +10,13 @@ import {
   getWeekStart,
   computeWeekMetrics,
   computeWeekHistory,
-  utilizationColor,
-  utilizationBarColor,
 } from '@/lib/capacity'
 import {
   createInvestigator,
   updateInvestigator,
   deleteInvestigator,
 } from '@/lib/investigators'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/hud/Skeleton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,10 +28,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { Panel } from '@/components/hud/Panel'
+import { Tile } from '@/components/hud/Tile'
+import { EmptyState } from '@/components/hud/EmptyState'
+import { HUDLineChart } from '@/components/hud/charts/HUDLineChart'
 import type { Investigator, InvestigatorRole, Study, Visit, Assessment } from '@/types'
-
-const SELECT_CLASS =
-  'w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100'
 
 interface InvestigatorForm {
   name: string
@@ -69,15 +65,13 @@ function investigatorToForm(inv: Investigator): InvestigatorForm {
 
 function CapacityBar({ pct }: { pct: number }) {
   const capped = Math.min(pct, 100)
+  const color = pct >= 90 ? 'var(--signal-alert)' : pct >= 75 ? 'var(--signal-warn)' : 'var(--signal-good)'
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
-        <div
-          className="h-2 rounded-full transition-all"
-          style={{ width: `${capped}%`, backgroundColor: utilizationBarColor(pct) }}
-        />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(255 255 255 / 0.08)', overflow: 'hidden' }}>
+        <div style={{ height: 4, borderRadius: 2, width: `${capped}%`, background: color, transition: 'width 0.3s' }} />
       </div>
-      <span className={`text-xs font-semibold tabular-nums w-10 text-right ${utilizationColor(pct)}`}>
+      <span style={{ fontSize: 11, fontWeight: 600, fontFeatureSettings: '"tnum"', color, minWidth: 36, textAlign: 'right' }}>
         {pct}%
       </span>
     </div>
@@ -117,56 +111,52 @@ function InvestigatorDetail({
   const currentWeek = history[0]
 
   return (
-    <div className="mt-3 p-4 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-200 dark:border-slate-600 space-y-4">
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <p className="text-xs font-medium text-slate-400 uppercase">This Week</p>
-          <p className="text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
-            {+(currentWeek.totalMinutes / 60).toFixed(1)}h
-            <span className="text-sm font-normal text-slate-400"> / {investigator.weeklyCapacityHours}h</span>
-          </p>
-          <p className="text-xs text-slate-500">
-            {+(currentWeek.visitMinutes / 60).toFixed(1)}h visits + {+(currentWeek.assessmentMinutes / 60).toFixed(1)}h assessments
-          </p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-slate-400 uppercase">Role</p>
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mt-0.5">
-            {investigator.credentials} · {investigator.role}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-slate-400 uppercase">Assigned Studies</p>
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mt-0.5">
-            {assignedStudies.length}
-          </p>
-        </div>
+    <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+        <Tile
+          label="This Week"
+          value={+(currentWeek.totalMinutes / 60).toFixed(1)}
+          suffix="h"
+          sub={`cap ${investigator.weeklyCapacityHours}h`}
+          signal={currentWeek.utilizationPct >= 90 ? 'alert' : currentWeek.utilizationPct >= 75 ? 'warn' : 'good'}
+        />
+        <Tile
+          label="Role"
+          value={investigator.role}
+          sub={investigator.credentials}
+        />
+        <Tile
+          label="Studies"
+          value={assignedStudies.length}
+        />
       </div>
 
       <div>
-        <p className="text-xs font-medium text-slate-500 mb-2">Weekly Utilization — Last 12 Weeks</p>
-        <ResponsiveContainer width="100%" height={120}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="week" tick={{ fontSize: 10 }} />
-            <YAxis unit="%" domain={[0, 100]} tick={{ fontSize: 10 }} width={35} />
-            <Tooltip formatter={(v) => [`${v}%`, 'Utilization']} />
-            <Line type="monotone" dataKey="utilization" stroke="#0d9488" strokeWidth={2} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
+        <p style={{ fontSize: 10.5, fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-label)', marginBottom: 8, marginTop: 0 }}>
+          Weekly Utilization — Last 12 Weeks
+        </p>
+        <HUDLineChart
+          data={chartData}
+          xKey="week"
+          yKey="utilization"
+          height={160}
+          valueFormatter={(v) => `${v}%`}
+        />
       </div>
 
       {assignedStudies.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-slate-500 mb-2">Study Assignments</p>
-          <div className="space-y-1">
+          <p style={{ fontSize: 10.5, fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-label)', marginBottom: 8, marginTop: 0 }}>
+            Study Assignments
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {assignedStudies.map((s) => {
               const role = s.assignedInvestigators.find((a) => a.investigatorId === investigator.id)?.role
               return (
-                <div key={s.id} className="flex items-center justify-between text-sm">
-                  <span className="text-slate-700 dark:text-slate-200">{s.name}</span>
-                  <div className="flex items-center gap-2">
-                    {role && <span className="text-xs text-slate-400">{role}</span>}
+                <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span style={{ color: 'var(--text-primary)' }}>{s.name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {role && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{role}</span>}
                     <StatusBadge status={s.status} />
                   </div>
                 </div>
@@ -259,7 +249,7 @@ function InvestigatorFormDialog({ open, onOpenChange, initial }: InvestigatorFor
               id="inv-role"
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value as InvestigatorRole })}
-              className={SELECT_CLASS}
+              style={{ height: 36, background: 'rgba(255 255 255 / 0.06)', border: '1px solid rgba(255 255 255 / 0.12)', borderRadius: 8, color: 'var(--text-primary)', padding: '0 10px', fontSize: 13, width: '100%' }}
             >
               <option value="PI">PI</option>
               <option value="Sub-I">Sub-I</option>
@@ -313,7 +303,7 @@ function InvestigatorFormDialog({ open, onOpenChange, initial }: InvestigatorFor
           <Button
             onClick={handleSave}
             disabled={!form.name.trim() || saving}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
           >
             {saving ? 'Saving…' : isEdit ? 'Save' : 'Create'}
           </Button>
@@ -329,7 +319,7 @@ export function Investigators() {
   const { assessments } = useSiteAssessments()
   const { studies } = useStudies()
   const { role } = useAuth()
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Investigator | null>(null)
 
@@ -351,6 +341,10 @@ export function Investigators() {
     [investigators, visits, assessments, currentWeekStart],
   )
 
+  const selectedInv = investigators.find(
+    (i) => i.id === (selectedId ?? investigators[0]?.id),
+  ) ?? null
+
   async function handleDelete(inv: Investigator) {
     if (!window.confirm(`Delete ${inv.name}?`)) return
     await deleteInvestigator(inv.id)
@@ -358,94 +352,108 @@ export function Investigators() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        {[1, 2, 3].map((n) => <Skeleton key={n} className="h-16 w-full" />)}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <Skeleton height={28} width={240} />
+        <div style={{ display: 'flex', gap: 16 }}>
+          <div style={{ flex: '0 0 280px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[1, 2, 3].map((n) => <Skeleton key={n} height={56} />)}
+          </div>
+          <div style={{ flex: 1 }}><Skeleton height={400} /></div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Investigators</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
+            Investigators
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
             {investigators.length} investigators · current week utilization
           </p>
         </div>
         {isManagement && (
           <Button
             onClick={() => setCreateOpen(true)}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
           >
             Add Investigator
           </Button>
         )}
       </div>
 
-      <div className="space-y-2">
-        {rows.map(({ investigator: inv, metrics }) => (
-          <div
-            key={inv.id}
-            className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4"
-          >
-            <div className="flex items-center gap-4">
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        {/* Left column: investigator list */}
+        <div style={{ flex: '0 0 280px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {rows.map(({ investigator: inv, metrics }) => {
+            const isSelected = (selectedId ?? investigators[0]?.id) === inv.id
+            return (
               <button
-                className="flex-1 min-w-0 text-left flex items-center gap-4"
-                onClick={() => setExpandedId(expandedId === inv.id ? null : inv.id)}
+                key={inv.id}
+                onClick={() => setSelectedId(inv.id)}
+                style={{
+                  width: '100%', textAlign: 'left', padding: '12px 14px',
+                  borderRadius: 10,
+                  border: isSelected ? '1px solid var(--accent-primary)' : '1px solid rgba(255 255 255 / 0.08)',
+                  background: isSelected ? 'rgba(114 90 193 / 0.10)' : 'rgba(255 255 255 / 0.03)',
+                  cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6,
+                }}
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{inv.name}</p>
-                  <p className="text-xs text-slate-500">{inv.credentials} · {inv.role}</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{inv.name}</span>
                 </div>
-                <div className="w-48">
-                  <CapacityBar pct={metrics.utilizationPct} />
-                </div>
-                <div className="text-xs text-slate-400 w-32 text-right">
-                  {+(metrics.totalMinutes / 60).toFixed(1)}h / {inv.weeklyCapacityHours}h this week
-                </div>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{inv.credentials} · {inv.role}</span>
+                <CapacityBar pct={metrics.utilizationPct} />
               </button>
-              {isManagement && (
-                <div className="flex items-center gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-label={`Edit ${inv.name}`}
-                    onClick={() => setEditTarget(inv)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-label={`Delete ${inv.name}`}
-                    onClick={() => handleDelete(inv)}
-                    className="h-8 w-8 p-0 text-rose-600 hover:text-rose-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+            )
+          })}
+          {investigators.length === 0 && (
+            <EmptyState title="No investigators" body="Seed or add investigators to get started." />
+          )}
+        </div>
+
+        {/* Right column: detail panel */}
+        {selectedInv && (() => {
+          return (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Panel
+                title={selectedInv.name}
+                action={isManagement ? (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Edit ${selectedInv.name}`}
+                      onClick={() => setEditTarget(selectedInv)}
+                      style={{ height: 28, padding: '0 8px', fontSize: 12, color: 'var(--text-secondary)' }}
+                    >
+                      <Pencil size={13} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Delete ${selectedInv.name}`}
+                      onClick={() => handleDelete(selectedInv)}
+                      style={{ height: 28, padding: '0 8px', fontSize: 12, color: 'var(--signal-alert)' }}
+                    >
+                      <Trash2 size={13} />
+                    </Button>
+                  </div>
+                ) : undefined}
+              >
+                <InvestigatorDetail
+                  investigator={selectedInv}
+                  visits={visits}
+                  assessments={assessments}
+                  studies={studies}
+                />
+              </Panel>
             </div>
-
-            {expandedId === inv.id && (
-              <InvestigatorDetail
-                investigator={inv}
-                visits={visits}
-                assessments={assessments}
-                studies={studies}
-              />
-            )}
-          </div>
-        ))}
-
-        {investigators.length === 0 && (
-          <p className="text-sm text-slate-400 py-8 text-center">
-            No investigators found for this site.
-          </p>
-        )}
+          )
+        })()}
       </div>
 
       <InvestigatorFormDialog

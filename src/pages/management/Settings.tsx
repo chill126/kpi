@@ -8,7 +8,9 @@ import { updateUser } from '@/lib/users'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/hud/Skeleton'
+import { Panel } from '@/components/hud/Panel'
+import { EmptyState } from '@/components/hud/EmptyState'
 import {
   Tabs,
   TabsList,
@@ -34,8 +36,16 @@ const TIMEZONES = [
   'Pacific/Honolulu',
 ] as const
 
-const SELECT_CLASS =
-  'w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100'
+const HUD_SELECT_STYLE: React.CSSProperties = {
+  height: 36,
+  background: 'rgba(255 255 255 / 0.06)',
+  border: '1px solid rgba(255 255 255 / 0.12)',
+  borderRadius: 8,
+  color: 'var(--text-primary)',
+  padding: '0 10px',
+  fontSize: 13,
+  width: '100%',
+}
 
 interface SiteForm {
   name: string
@@ -126,7 +136,7 @@ function SiteEditDialog({ site, open, onOpenChange }: SiteEditDialogProps) {
               id="edit-site-timezone"
               value={form.timezone}
               onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-              className={SELECT_CLASS}
+              style={HUD_SELECT_STYLE}
             >
               {TIMEZONES.map((tz) => (
                 <option key={tz} value={tz}>
@@ -142,7 +152,7 @@ function SiteEditDialog({ site, open, onOpenChange }: SiteEditDialogProps) {
               type="checkbox"
               checked={form.active}
               onChange={(e) => setForm({ ...form, active: e.target.checked })}
-              className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+              style={{ width: 16, height: 16, accentColor: 'var(--accent-primary)' }}
             />
             <Label htmlFor="edit-site-active" className="cursor-pointer">
               Active
@@ -157,7 +167,7 @@ function SiteEditDialog({ site, open, onOpenChange }: SiteEditDialogProps) {
           <Button
             onClick={handleSave}
             disabled={!dirty || saving}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
           >
             {saving ? 'Saving…' : 'Save Changes'}
           </Button>
@@ -174,83 +184,92 @@ function SiteConfigurationTab() {
 
   if (loading) {
     return (
-      <div className="space-y-3 pt-4">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 16 }}>
+        <Skeleton height={40} />
+        <Skeleton height={40} />
+        <Skeleton height={40} />
       </div>
     )
   }
 
   return (
-    <div className="pt-4 space-y-4">
+    <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
       {sites.length === 0 ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          No sites found.
-        </p>
+        <EmptyState title="No sites found" />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-          <table className="w-full text-sm">
-            <thead className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                  Name
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                  Location
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-              {sites.map((site) => (
-                <tr
-                  key={site.id}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-700/50"
-                >
-                  <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">
-                    <div className="flex items-center gap-2">
-                      <span>{site.name}</span>
-                      {site.id === activeSiteId && (
-                        <span className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
-                          current
+        <Panel title="Site Network">
+          <div style={{ overflowX: 'auto' }}>
+            <table className="w-full text-sm">
+              <thead style={{ borderBottom: '1px solid rgba(255 255 255 / 0.08)' }}>
+                <tr>
+                  <th
+                    className="px-4 py-3 text-left"
+                    style={{ color: 'var(--text-label)' }}
+                  >
+                    Name
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left"
+                    style={{ color: 'var(--text-label)' }}
+                  >
+                    Location
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left"
+                    style={{ color: 'var(--text-label)' }}
+                  >
+                    Status
+                  </th>
+                  <th
+                    className="px-4 py-3 text-right"
+                    style={{ color: 'var(--text-label)' }}
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sites.map((site) => (
+                  <tr key={site.id}>
+                    <td style={{ color: 'var(--text-primary)', padding: '12px 16px', fontWeight: 500 }}>
+                      <div className="flex items-center gap-2">
+                        <span>{site.name}</span>
+                        {site.id === activeSiteId && (
+                          <span style={{ fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 99, background: 'rgba(114 90 193 / 0.15)', color: 'var(--accent-primary)', border: '1px solid rgba(114 90 193 / 0.3)' }}>
+                            current
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)', padding: '12px 16px' }}>
+                      {site.location}
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      {site.active ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 99, background: 'rgba(22 163 74 / 0.15)', color: 'var(--signal-good)', border: '1px solid rgba(22 163 74 / 0.3)' }}>
+                          active
+                        </span>
+                      ) : (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 99, background: 'rgba(255 255 255 / 0.06)', color: 'var(--text-muted)', border: '1px solid rgba(255 255 255 / 0.10)' }}>
+                          inactive
                         </span>
                       )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    {site.location}
-                  </td>
-                  <td className="px-4 py-3">
-                    {site.active ? (
-                      <span className="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                        inactive
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditSite(site)}
-                    >
-                      Edit
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditSite(site)}
+                      >
+                        Edit
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
       )}
 
       <AddSiteCard />
@@ -288,14 +307,14 @@ function AddSiteCard() {
   }
 
   return (
-    <div className="mt-4">
+    <div style={{ marginTop: 4 }}>
       {!open ? (
         <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
           + Add Site to Network
         </Button>
       ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 space-y-4">
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">New Site</p>
+        <div className="glass" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>New Site</p>
           <div className="space-y-1">
             <Label htmlFor="new-site-name">Site Name</Label>
             <Input id="new-site-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -306,13 +325,22 @@ function AddSiteCard() {
           </div>
           <div className="space-y-1">
             <Label htmlFor="new-site-timezone">Timezone</Label>
-            <select id="new-site-timezone" value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })} className={SELECT_CLASS}>
+            <select
+              id="new-site-timezone"
+              value={form.timezone}
+              onChange={(e) => setForm({ ...form, timezone: e.target.value })}
+              style={HUD_SELECT_STYLE}
+            >
               {TIMEZONES.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
             </select>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => { setOpen(false); setForm(BLANK_SITE_FORM) }}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!form.name.trim() || saving} className="bg-teal-600 hover:bg-teal-700 text-white">
+            <Button
+              onClick={handleCreate}
+              disabled={!form.name.trim() || saving}
+              style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
+            >
               {saving ? 'Creating…' : 'Create Site'}
             </Button>
           </div>
@@ -395,7 +423,7 @@ function UserEditDialog({
               id="user-role"
               value={role}
               onChange={(e) => setRole(e.target.value as Role)}
-              className={SELECT_CLASS}
+              style={HUD_SELECT_STYLE}
             >
               <option value="management">management</option>
               <option value="staff">staff</option>
@@ -417,7 +445,7 @@ function UserEditDialog({
                       type="checkbox"
                       checked={assignedStudies.includes(study.id)}
                       onChange={() => toggleStudy(study.id)}
-                      className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                      style={{ width: 16, height: 16, accentColor: 'var(--accent-primary)' }}
                     />
                     <span className="text-slate-700 dark:text-slate-200">
                       {study.name}
@@ -436,7 +464,7 @@ function UserEditDialog({
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
           >
             {saving ? 'Saving…' : 'Save'}
           </Button>
@@ -447,17 +475,11 @@ function UserEditDialog({
 }
 
 function RoleBadge({ role }: { role: Role }) {
-  const className =
+  const style: React.CSSProperties =
     role === 'management'
-      ? 'bg-teal-50 text-teal-700 border border-teal-200'
-      : 'bg-slate-100 text-slate-600 border border-slate-200'
-  return (
-    <span
-      className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${className}`}
-    >
-      {role}
-    </span>
-  )
+      ? { display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 99, background: 'rgba(114 90 193 / 0.15)', color: 'var(--accent-primary)', border: '1px solid rgba(114 90 193 / 0.3)' }
+      : { display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 99, background: 'rgba(255 255 255 / 0.06)', color: 'var(--text-secondary)', border: '1px solid rgba(255 255 255 / 0.10)' }
+  return <span style={style}>{role}</span>
 }
 
 function UserManagementTab() {
@@ -467,77 +489,89 @@ function UserManagementTab() {
 
   if (loading) {
     return (
-      <div className="space-y-2 pt-4">
-        {[1, 2, 3].map((n) => (
-          <Skeleton key={n} className="h-10 w-full" />
-        ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 16 }}>
+        <Skeleton height={40} />
+        <Skeleton height={40} />
+        <Skeleton height={40} />
       </div>
     )
   }
 
   return (
-    <div className="pt-4 space-y-4">
+    <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
       {users.length === 0 ? (
-        <p className="text-sm text-slate-400 py-8 text-center">
-          No users found for this site.
-        </p>
+        <EmptyState title="No users found" body="Users appear here on first sign-in." />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-          <table className="w-full text-sm">
-            <thead className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                  Name
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                  Email
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                  Role
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                  Assigned Studies
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-              {users.map((user) => (
-                <tr
-                  key={user.uid}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-700/50"
-                >
-                  <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">
-                    {user.displayName}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    {user.email}
-                  </td>
-                  <td className="px-4 py-3">
-                    <RoleBadge role={user.role} />
-                  </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300 tabular-nums">
-                    {user.assignedStudies.length}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditUser(user)}
-                    >
-                      Edit
-                    </Button>
-                  </td>
+        <Panel title="Users">
+          <div style={{ overflowX: 'auto' }}>
+            <table className="w-full text-sm">
+              <thead style={{ borderBottom: '1px solid rgba(255 255 255 / 0.08)' }}>
+                <tr>
+                  <th
+                    className="px-4 py-3 text-left"
+                    style={{ color: 'var(--text-label)' }}
+                  >
+                    Name
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left"
+                    style={{ color: 'var(--text-label)' }}
+                  >
+                    Email
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left"
+                    style={{ color: 'var(--text-label)' }}
+                  >
+                    Role
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left"
+                    style={{ color: 'var(--text-label)' }}
+                  >
+                    Assigned Studies
+                  </th>
+                  <th
+                    className="px-4 py-3 text-right"
+                    style={{ color: 'var(--text-label)' }}
+                  >
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user.uid}>
+                    <td style={{ color: 'var(--text-primary)', padding: '12px 16px', fontWeight: 500 }}>
+                      {user.displayName}
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)', padding: '12px 16px' }}>
+                      {user.email}
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <RoleBadge role={user.role} />
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)', padding: '12px 16px' }}>
+                      {user.assignedStudies.length}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditUser(user)}
+                      >
+                        Edit
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
       )}
 
-      <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3 text-xs text-blue-700 dark:text-blue-200">
+      <div style={{ borderRadius: 8, border: '1px solid rgba(99 149 255 / 0.3)', background: 'rgba(99 149 255 / 0.08)', padding: '10px 12px', fontSize: 12, color: 'var(--accent-info)' }}>
         To add new users, create their Firebase Auth account in the Firebase
         Console, then their profile will appear here automatically on first
         sign-in.
@@ -579,20 +613,20 @@ function SeedDataTab() {
   }
 
   return (
-    <div className="pt-4 space-y-4">
-      <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-3 text-xs text-amber-700 dark:text-amber-200">
+    <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ borderRadius: 8, border: '1px solid rgba(217 119 6 / 0.3)', background: 'rgba(217 119 6 / 0.08)', padding: '10px 12px', fontSize: 12, color: 'var(--signal-warn)' }}>
         Seeds initial investigators and studies for the active site. Safe to run
         multiple times — skips if data already exists.
       </div>
       <Button
         onClick={handleSeed}
         disabled={running}
-        className="bg-teal-600 hover:bg-teal-700 text-white"
+        style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
       >
         {running ? 'Seeding…' : 'Seed Site Data'}
       </Button>
       {result && (
-        <p className="text-sm text-slate-700 dark:text-slate-200">{result}</p>
+        <p style={{ fontSize: 13, color: 'var(--text-primary)', margin: 0 }}>{result}</p>
       )}
     </div>
   )
@@ -600,12 +634,12 @@ function SeedDataTab() {
 
 export function Settings() {
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+        <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
           Settings
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
           User management and site configuration.
         </p>
       </div>

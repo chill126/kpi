@@ -10,6 +10,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { Panel } from '@/components/hud/Panel'
+import { EmptyState } from '@/components/hud/EmptyState'
+import { chartPalette } from '@/components/hud/charts/palette'
 import type { EnrollmentSnapshot, Study } from '@/types'
 
 interface Props {
@@ -173,14 +176,9 @@ export function EnrollmentBurndownChart({ snapshots, study }: Props) {
 
   if (snapshots.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
-          Enrollment Burndown
-        </h2>
-        <p className="text-sm text-slate-400 text-center py-8">
-          Add snapshots to enable predictions.
-        </p>
-      </div>
+      <Panel title="Enrollment Burndown">
+        <EmptyState title="No snapshots yet" body="Add snapshots to enable predictions." />
+      </Panel>
     )
   }
 
@@ -207,17 +205,12 @@ export function EnrollmentBurndownChart({ snapshots, study }: Props) {
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
-          Enrollment Burndown
-        </h2>
-        <p className="text-xs text-slate-400">
-          Historical randomizations with projected completion range.
-        </p>
-      </div>
+    <Panel title="Enrollment Burndown">
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16, marginTop: -4 }}>
+        Historical randomizations with projected completion range.
+      </p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" style={{ marginBottom: 16 }}>
         <StatCard label="Current Enrollment" value={currentEnrollment} />
         <StatCard
           label="Projected Completion"
@@ -247,16 +240,16 @@ export function EnrollmentBurndownChart({ snapshots, study }: Props) {
 
       <ResponsiveContainer width="100%" height={280}>
         <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-          <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartPalette.grid} />
+          <XAxis dataKey="label" tick={{ fill: chartPalette.axis, fontFamily: 'JetBrains Mono', fontSize: 11 }} />
+          <YAxis allowDecimals={false} tick={{ fill: chartPalette.axis, fontFamily: 'JetBrains Mono', fontSize: 11 }} />
           <Tooltip />
-          <Legend wrapperStyle={{ fontSize: 12 }} />
+          <Legend wrapperStyle={{ fontSize: 12, color: 'var(--text-secondary)' }} />
           <Area
             type="monotone"
             dataKey="bestCase"
             stroke="none"
-            fill="#0d9488"
+            fill={chartPalette.series[0]}
             fillOpacity={0.15}
             name="Best / Worst Range"
             connectNulls
@@ -273,7 +266,7 @@ export function EnrollmentBurndownChart({ snapshots, study }: Props) {
           <Line
             type="monotone"
             dataKey="actual"
-            stroke="#0d9488"
+            stroke={chartPalette.series[0]}
             strokeWidth={2}
             dot={{ r: 3 }}
             name="Actual"
@@ -293,27 +286,26 @@ export function EnrollmentBurndownChart({ snapshots, study }: Props) {
 
       {budgetCard && (
         <div
-          className={
-            'rounded-md border px-3 py-2 text-sm ' +
-            (budgetCard.tone === 'green'
-              ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700'
+          style={
+            budgetCard.tone === 'green'
+              ? { borderRadius: 8, padding: '8px 12px', fontSize: 13, background: 'rgba(22 163 74 / 0.12)', border: '1px solid rgba(22 163 74 / 0.3)', color: 'var(--signal-good)', marginTop: 16 }
               : budgetCard.tone === 'amber'
-                ? 'border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-700'
-                : 'border-red-300 bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-200 dark:border-red-700')
+                ? { borderRadius: 8, padding: '8px 12px', fontSize: 13, background: 'rgba(217 119 6 / 0.12)', border: '1px solid rgba(217 119 6 / 0.3)', color: 'var(--signal-warn)', marginTop: 16 }
+                : { borderRadius: 8, padding: '8px 12px', fontSize: 13, background: 'rgba(220 38 38 / 0.12)', border: '1px solid rgba(220 38 38 / 0.3)', color: 'var(--signal-alert)', marginTop: 16 }
           }
         >
           {budgetCard.label}
         </div>
       )}
-    </div>
+    </Panel>
   )
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-slate-200 dark:border-slate-700 p-2">
-      <p className="text-xs font-medium text-slate-400 uppercase">{label}</p>
-      <p className="text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100 mt-0.5">
+    <div className="glass" style={{ padding: 8 }}>
+      <p style={{ fontSize: 10.5, fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-label)' }}>{label}</p>
+      <p style={{ fontSize: 13, fontWeight: 600, fontFeatureSettings: '"tnum"', color: 'var(--text-primary)', marginTop: 2 }}>
         {value}
       </p>
     </div>

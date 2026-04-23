@@ -35,6 +35,11 @@ const mockInvestigator: Investigator = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  window.matchMedia = vi.fn().mockReturnValue({
+    matches: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })
   vi.mocked(investigatorsModule.useInvestigators).mockReturnValue({ investigators: [mockInvestigator], loading: false, error: null })
   vi.mocked(siteVisitsModule.useSiteVisits).mockReturnValue({ visits: [], loading: false, error: null })
   vi.mocked(siteAssessmentsModule.useSiteAssessments).mockReturnValue({ assessments: [], loading: false, error: null })
@@ -51,7 +56,7 @@ describe('Investigators', () => {
 
   it('renders each investigator name', () => {
     render(<Investigators />)
-    expect(screen.getByText('Dr. Wilson')).toBeInTheDocument()
+    expect(screen.getAllByText('Dr. Wilson').length).toBeGreaterThan(0)
   })
 
   it('shows utilization percentage', () => {
@@ -59,9 +64,11 @@ describe('Investigators', () => {
     expect(screen.getByText(/0%/)).toBeInTheDocument()
   })
 
-  it('expands detail view when investigator row is clicked', async () => {
+  it('shows detail panel for the selected investigator', async () => {
     render(<Investigators />)
-    await userEvent.click(screen.getByText('Dr. Wilson'))
+    // first investigator is auto-selected; detail renders immediately
+    // click list button (name appears in both list and panel title — target first)
+    await userEvent.click(screen.getAllByText('Dr. Wilson')[0])
     expect(screen.getByTestId('line-chart')).toBeInTheDocument()
   })
 })
