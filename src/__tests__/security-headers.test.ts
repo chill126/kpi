@@ -19,6 +19,8 @@ describe('firebase.json security headers', () => {
     expect(csp).toContain('fonts.googleapis.com')
     expect(csp).toContain('fonts.gstatic.com')
     expect(csp).toContain('*.googleapis.com')
+    expect(csp).toContain("form-action 'self'")
+    expect(csp).toContain("script-src 'self'")
   })
 
   it('has X-Frame-Options DENY', () => {
