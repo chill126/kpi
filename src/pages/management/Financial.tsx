@@ -3,7 +3,6 @@ import { useStudies } from '@/hooks/useStudies'
 import { useSiteVisits } from '@/hooks/useSiteVisits'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Skeleton } from '@/components/hud/Skeleton'
-import { Panel } from '@/components/hud/Panel'
 import { EmptyState } from '@/components/hud/EmptyState'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -233,9 +232,7 @@ export function Financial() {
               )}
             </div>
 
-            <Panel title="Revenue Forecast">
-              <RevenueForecastChart studies={studies} startDate={startDate} endDate={endDate} />
-            </Panel>
+            <RevenueForecastChart studies={studies} startDate={startDate} endDate={endDate} />
           </div>
         </TabsContent>
       </Tabs>

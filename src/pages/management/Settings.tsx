@@ -433,13 +433,13 @@ function UserEditDialog({
           <div className="space-y-2">
             <Label>Assigned Studies</Label>
             {studies.length === 0 ? (
-              <p className="text-xs text-slate-500">No studies available.</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No studies available.</p>
             ) : (
-              <div className="max-h-48 overflow-y-auto space-y-1 rounded-md border border-slate-200 dark:border-slate-700 p-2">
+              <div style={{ maxHeight: 192, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4, borderRadius: 8, border: '1px solid rgba(255 255 255 / 0.10)', padding: 8, background: 'rgba(255 255 255 / 0.03)' }}>
                 {studies.map((study) => (
                   <label
                     key={study.id}
-                    className="flex items-center gap-2 text-sm cursor-pointer"
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}
                   >
                     <input
                       type="checkbox"
@@ -447,7 +447,7 @@ function UserEditDialog({
                       onChange={() => toggleStudy(study.id)}
                       style={{ width: 16, height: 16, accentColor: 'var(--accent-primary)' }}
                     />
-                    <span className="text-slate-700 dark:text-slate-200">
+                    <span style={{ color: 'var(--text-primary)' }}>
                       {study.name}
                     </span>
                   </label>
