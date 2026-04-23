@@ -668,28 +668,53 @@ function SeedDataTab() {
 
 function DashboardTab() {
   const { config, saveConfig } = useDashboardConfig()
+  const [saving, setSaving] = useState(false)
 
   const sorted = useMemo(
     () => [...config.tiles].sort((a, b) => a.order - b.order),
     [config.tiles],
   )
 
-  function handleToggle(id: OverviewTileId) {
-    const newTiles = config.tiles.map((t) => (t.id === id ? { ...t, visible: !t.visible } : t))
-    void saveConfig({ tiles: newTiles })
+  async function handleToggle(id: OverviewTileId) {
+    if (saving) return
+    setSaving(true)
+    try {
+      const newTiles = sorted.map((t) => (t.id === id ? { ...t, visible: !t.visible } : t))
+      await saveConfig({ tiles: newTiles })
+    } catch (err) {
+      console.error('[DashboardTab] Failed to save config:', err)
+    } finally {
+      setSaving(false)
+    }
   }
 
-  function handleMove(fromIdx: number, direction: 'up' | 'down') {
+  async function handleMove(fromIdx: number, direction: 'up' | 'down') {
+    if (saving) return
     const toIdx = direction === 'up' ? fromIdx - 1 : fromIdx + 1
     if (toIdx < 0 || toIdx >= sorted.length) return
-    const reordered = [...sorted]
-    ;[reordered[fromIdx], reordered[toIdx]] = [reordered[toIdx], reordered[fromIdx]]
-    const newTiles = reordered.map((t, i) => ({ ...t, order: i }))
-    void saveConfig({ tiles: newTiles })
+    setSaving(true)
+    try {
+      const reordered = [...sorted]
+      ;[reordered[fromIdx], reordered[toIdx]] = [reordered[toIdx], reordered[fromIdx]]
+      const newTiles = reordered.map((t, i) => ({ ...t, order: i }))
+      await saveConfig({ tiles: newTiles })
+    } catch (err) {
+      console.error('[DashboardTab] Failed to save config:', err)
+    } finally {
+      setSaving(false)
+    }
   }
 
-  function handleReset() {
-    void saveConfig(DEFAULT_DASHBOARD_CONFIG)
+  async function handleReset() {
+    if (saving) return
+    setSaving(true)
+    try {
+      await saveConfig(DEFAULT_DASHBOARD_CONFIG)
+    } catch (err) {
+      console.error('[DashboardTab] Failed to reset config:', err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -710,12 +735,13 @@ function DashboardTab() {
                 type="checkbox"
                 id={`tile-toggle-${tile.id}`}
                 checked={tile.visible}
-                onChange={() => handleToggle(tile.id)}
-                aria-label={TILE_DISPLAY[tile.id].label}
+                disabled={saving}
+                onChange={() => void handleToggle(tile.id)}
+                aria-labelledby={`tile-label-${tile.id}`}
                 style={{ width: 16, height: 16, accentColor: 'var(--accent-primary)', flexShrink: 0 }}
               />
               <label htmlFor={`tile-toggle-${tile.id}`} style={{ flex: 1, cursor: 'pointer' }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+                <div id={`tile-label-${tile.id}`} style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
                   {TILE_DISPLAY[tile.id].label}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
@@ -725,28 +751,28 @@ function DashboardTab() {
               <div style={{ display: 'flex', gap: 4 }}>
                 <button
                   aria-label={`Move ${TILE_DISPLAY[tile.id].label} up`}
-                  disabled={idx === 0}
-                  onClick={() => handleMove(idx, 'up')}
+                  disabled={saving || idx === 0}
+                  onClick={() => void handleMove(idx, 'up')}
                   style={{
                     width: 28, height: 28, borderRadius: 6,
                     border: '1px solid rgba(255 255 255 / 0.12)',
                     background: 'rgba(255 255 255 / 0.06)',
                     color: 'var(--text-secondary)',
-                    cursor: idx === 0 ? 'not-allowed' : 'pointer',
-                    fontSize: 12, opacity: idx === 0 ? 0.4 : 1,
+                    cursor: saving || idx === 0 ? 'not-allowed' : 'pointer',
+                    fontSize: 12, opacity: saving || idx === 0 ? 0.4 : 1,
                   }}
                 >▲</button>
                 <button
                   aria-label={`Move ${TILE_DISPLAY[tile.id].label} down`}
-                  disabled={idx === sorted.length - 1}
-                  onClick={() => handleMove(idx, 'down')}
+                  disabled={saving || idx === sorted.length - 1}
+                  onClick={() => void handleMove(idx, 'down')}
                   style={{
                     width: 28, height: 28, borderRadius: 6,
                     border: '1px solid rgba(255 255 255 / 0.12)',
                     background: 'rgba(255 255 255 / 0.06)',
                     color: 'var(--text-secondary)',
-                    cursor: idx === sorted.length - 1 ? 'not-allowed' : 'pointer',
-                    fontSize: 12, opacity: idx === sorted.length - 1 ? 0.4 : 1,
+                    cursor: saving || idx === sorted.length - 1 ? 'not-allowed' : 'pointer',
+                    fontSize: 12, opacity: saving || idx === sorted.length - 1 ? 0.4 : 1,
                   }}
                 >▼</button>
               </div>
@@ -756,12 +782,13 @@ function DashboardTab() {
       </Panel>
 
       <button
-        onClick={handleReset}
+        disabled={saving}
+        onClick={() => void handleReset()}
         style={{
           alignSelf: 'flex-start', padding: '6px 14px', borderRadius: 8,
           border: '1px solid rgba(255 255 255 / 0.15)',
           background: 'rgba(255 255 255 / 0.06)',
-          color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer',
+          color: 'var(--text-secondary)', fontSize: 12, cursor: saving ? 'not-allowed' : 'pointer',
         }}
       >
         Reset to defaults
