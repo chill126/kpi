@@ -16,6 +16,7 @@ export const DEFAULT_DASHBOARD_CONFIG: DashboardConfig = {
 }
 
 export function mergeDashboardConfig(stored: DashboardConfig): DashboardConfig {
+  if (!Array.isArray(stored.tiles)) return DEFAULT_DASHBOARD_CONFIG
   const knownStored = stored.tiles.filter(
     (t) => (ALL_TILE_IDS as string[]).includes(t.id),
   )

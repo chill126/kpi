@@ -27,8 +27,8 @@ import type { OverviewTileId, Site, Study } from '@/types'
 // ── Network Overview tab ────────────────────────────────────────────────────
 
 function NetworkOverviewTab() {
-  const { sites, loading: sitesLoading } = useSites()
-  const { studies, loading: studiesLoading } = useAllStudies()
+  const { sites, loading: sitesLoading, error: sitesError } = useSites()
+  const { studies, loading: studiesLoading, error: studiesError } = useAllStudies()
 
   const activeSites = useMemo(() => sites.filter((s) => s.active), [sites])
   const totalEnrolled = useMemo(
@@ -49,6 +49,10 @@ function NetworkOverviewTab() {
         <Skeleton height={200} rounded={14} />
       </div>
     )
+  }
+
+  if (sitesError || studiesError) {
+    return <ErrorState message={(sitesError || studiesError)?.message ?? 'Failed to load network data'} />
   }
 
   return (
@@ -140,7 +144,10 @@ export function Overview() {
 
   const loading = studiesLoading || invLoading
   const weekStart = getWeekStart(new Date())
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], [])
+  const todayStr = useMemo(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }, [])
 
   const activeStudies = useMemo(
     () => studies.filter((s) => s.status === 'enrolling' || s.status === 'maintenance'),

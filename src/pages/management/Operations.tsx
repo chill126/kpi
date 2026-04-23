@@ -12,6 +12,7 @@ import { HUDBarChart } from '@/components/hud/charts/HUDBarChart'
 import { HUDLineChart } from '@/components/hud/charts/HUDLineChart'
 import { EmptyState } from '@/components/hud/EmptyState'
 import { ErrorState } from '@/components/hud/ErrorState'
+import { Skeleton } from '@/components/hud/Skeleton'
 
 const STATUS_LABELS: Record<string, string> = {
   scheduled: 'Scheduled',
@@ -125,12 +126,16 @@ export function Operations() {
   )
 
   // ── Section C: Today's Data Entry ────────────────────────────────────────
-  const { visits } = useSiteVisits()
-  const { assessments } = useSiteAssessments()
+  const { visits, loading: visitsLoading } = useSiteVisits()
+  const { assessments, loading: assessmentsLoading } = useSiteAssessments()
   const { studies } = useStudies()
   const { investigators } = useInvestigators()
+  const sectionCLoading = visitsLoading || assessmentsLoading
 
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], [])
+  const todayStr = useMemo(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }, [])
 
   const studyNameById = useMemo(
     () => Object.fromEntries(studies.map((s) => [s.id, s.name])),
@@ -155,7 +160,7 @@ export function Operations() {
 
   const todayEntries = useMemo<TodayEntry[]>(() => {
     const visitEntries: TodayEntry[] = visits
-      .filter((v) => v.scheduledDate === todayStr)
+      .filter((v) => v.status === 'completed' && v.completedDate === todayStr)
       .map((v) => ({
         key: v.id,
         type: 'Visit',
@@ -376,7 +381,11 @@ export function Operations() {
             ) : undefined
           }
         >
-          {todayEntries.length === 0 ? (
+          {sectionCLoading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[0, 1, 2].map((i) => <Skeleton key={i} height={36} rounded={6} />)}
+            </div>
+          ) : todayEntries.length === 0 ? (
             <EmptyState title="No entries logged today" body="Staff data-entry submissions appear here." />
           ) : (
             <div style={{ overflowX: 'auto' }}>
