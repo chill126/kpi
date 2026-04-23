@@ -1,5 +1,22 @@
 export type Role = 'management' | 'staff'
 
+export type OverviewTileId =
+  | 'capacity'
+  | 'studies'
+  | 'alerts'
+  | 'enrollment'
+  | 'today-activity'
+
+export interface DashboardTile {
+  id: OverviewTileId
+  visible: boolean
+  order: number
+}
+
+export interface DashboardConfig {
+  tiles: DashboardTile[]
+}
+
 export type SyncStatus = 'synced' | 'syncing' | 'offline'
 
 export interface AppUser {
@@ -9,6 +26,7 @@ export interface AppUser {
   role: Role
   siteId: string
   assignedStudies: string[]
+  dashboardConfig?: DashboardConfig
 }
 
 export interface Site {
