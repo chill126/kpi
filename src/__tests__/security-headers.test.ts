@@ -21,6 +21,7 @@ describe('firebase.json security headers', () => {
     expect(csp).toContain('*.googleapis.com')
     expect(csp).toContain("form-action 'self'")
     expect(csp).toContain("script-src 'self'")
+    expect(csp).toContain("https://*.firebaseapp.com")
   })
 
   it('has X-Frame-Options DENY', () => {
