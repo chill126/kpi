@@ -143,6 +143,7 @@ export function RevenueForecastChart({ studies, startDate, endDate }: Props) {
     }[] = []
     for (const qs of qualifying) {
       for (const m of qs.milestones) {
+        if (!m.expectedDate) continue
         const d = parseIsoToUtc(m.expectedDate)
         if (Number.isNaN(d.getTime())) continue
         const t = d.getTime()

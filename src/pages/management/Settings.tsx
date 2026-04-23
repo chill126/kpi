@@ -11,12 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/hud/Skeleton'
 import { Panel } from '@/components/hud/Panel'
 import { EmptyState } from '@/components/hud/EmptyState'
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from '@/components/ui/tabs'
+import { HUDTabBar } from '@/components/hud/TabBar'
 import {
   Dialog,
   DialogContent,
@@ -633,6 +628,8 @@ function SeedDataTab() {
 }
 
 export function Settings() {
+  const [tab, setTab] = useState('site')
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
@@ -644,25 +641,18 @@ export function Settings() {
         </p>
       </div>
 
-      <Tabs defaultValue="site">
-        <TabsList>
-          <TabsTrigger value="site">Site Configuration</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="seed">Seed Data</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="site">
-          <SiteConfigurationTab />
-        </TabsContent>
-
-        <TabsContent value="users">
-          <UserManagementTab />
-        </TabsContent>
-
-        <TabsContent value="seed">
-          <SeedDataTab />
-        </TabsContent>
-      </Tabs>
+      <HUDTabBar
+        tabs={[
+          { value: 'site', label: 'Site Configuration' },
+          { value: 'users', label: 'User Management' },
+          { value: 'seed', label: 'Seed Data' },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === 'site' && <SiteConfigurationTab />}
+      {tab === 'users' && <UserManagementTab />}
+      {tab === 'seed' && <SeedDataTab />}
     </div>
   )
 }
