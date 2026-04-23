@@ -2,6 +2,10 @@ import { useMemo } from 'react'
 import { Activity, CalendarDays } from 'lucide-react'
 import { useBoardSessions } from '@/hooks/useBoardSessions'
 import { useK2BoardToday } from '@/hooks/useK2BoardToday'
+import { useSiteVisits } from '@/hooks/useSiteVisits'
+import { useSiteAssessments } from '@/hooks/useSiteAssessments'
+import { useStudies } from '@/hooks/useStudies'
+import { useInvestigators } from '@/hooks/useInvestigators'
 import { Panel } from '@/components/hud/Panel'
 import { Tile } from '@/components/hud/Tile'
 import { HUDBarChart } from '@/components/hud/charts/HUDBarChart'
@@ -119,6 +123,67 @@ export function Operations() {
     () => entries.filter(e => !['scheduled', 'left', 'no_show'].includes(e.status)).length,
     [entries],
   )
+
+  // ── Section C: Today's Data Entry ────────────────────────────────────────
+  const { visits } = useSiteVisits()
+  const { assessments } = useSiteAssessments()
+  const { studies } = useStudies()
+  const { investigators } = useInvestigators()
+
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], [])
+
+  const studyNameById = useMemo(
+    () => Object.fromEntries(studies.map((s) => [s.id, s.name])),
+    [studies],
+  )
+
+  const invNameById = useMemo(
+    () => Object.fromEntries(investigators.map((i) => [i.id, i.name])),
+    [investigators],
+  )
+
+  interface TodayEntry {
+    key: string
+    type: 'Visit' | 'Assessment'
+    participant: string
+    label: string
+    study: string
+    investigator: string
+    status: string
+    duration: number
+  }
+
+  const todayEntries = useMemo<TodayEntry[]>(() => {
+    const visitEntries: TodayEntry[] = visits
+      .filter((v) => v.scheduledDate === todayStr)
+      .map((v) => ({
+        key: v.id,
+        type: 'Visit',
+        participant: v.participantId,
+        label: v.visitType,
+        study: studyNameById[v.studyId] ?? v.studyId,
+        investigator: invNameById[v.investigatorId] ?? v.investigatorId,
+        status: v.status,
+        duration: v.actualDurationMinutes ?? v.durationMinutes,
+      }))
+
+    const assessmentEntries: TodayEntry[] = assessments
+      .filter((a) => a.date === todayStr)
+      .map((a) => ({
+        key: a.id,
+        type: 'Assessment',
+        participant: '—',
+        label: a.scaleType,
+        study: studyNameById[a.studyId] ?? a.studyId,
+        investigator: invNameById[a.investigatorId] ?? a.investigatorId,
+        status: 'completed',
+        duration: a.durationMinutes,
+      }))
+
+    return [...visitEntries, ...assessmentEntries].sort((a, b) =>
+      a.study.localeCompare(b.study),
+    )
+  }, [visits, assessments, todayStr, studyNameById, invNameById])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -295,6 +360,67 @@ export function Operations() {
             </Panel>
           </>
         )}
+      </div>
+
+      {/* ── Section C: Today's Data Entry ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={SECTION_LABEL_STYLE}>Today's Data Entry</div>
+
+        <Panel
+          title="Logged Entries"
+          action={
+            todayEntries.length > 0 ? (
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                {todayEntries.length} {todayEntries.length === 1 ? 'entry' : 'entries'} today
+              </span>
+            ) : undefined
+          }
+        >
+          {todayEntries.length === 0 ? (
+            <EmptyState title="No entries logged today" body="Staff data-entry submissions appear here." />
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>
+                <thead>
+                  <tr>
+                    {['Type', 'Study', 'Investigator', 'Visit / Scale', 'Status', 'Duration'].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          padding: '0 12px 8px 0', textAlign: 'left', fontWeight: 500,
+                          fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase',
+                          color: 'var(--text-label)',
+                          borderBottom: '1px solid rgba(255 255 255 / 0.08)',
+                        }}
+                      >{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {todayEntries.map((entry, i) => (
+                    <tr key={entry.key} style={{ background: i % 2 === 1 ? 'rgba(255 255 255 / 0.02)' : undefined }}>
+                      <td style={{ padding: '8px 12px 8px 0' }}>
+                        <span style={{
+                          fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 99,
+                          background: entry.type === 'Visit' ? 'rgba(114 90 193 / 0.15)' : 'rgba(22 163 74 / 0.12)',
+                          color: entry.type === 'Visit' ? 'var(--accent-primary)' : 'var(--signal-good)',
+                          border: entry.type === 'Visit' ? '1px solid rgba(114 90 193 / 0.3)' : '1px solid rgba(22 163 74 / 0.25)',
+                        }}>
+                          {entry.type}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px 8px 0', color: 'var(--text-primary)' }}>{entry.study}</td>
+                      <td style={{ padding: '8px 12px 8px 0', color: 'var(--text-secondary)' }}>{entry.investigator}</td>
+                      <td style={{ padding: '8px 12px 8px 0', color: 'var(--text-secondary)' }}>{entry.label}</td>
+                      <td style={{ padding: '8px 12px 8px 0', color: 'var(--text-secondary)' }}>{entry.status}</td>
+                      <td style={{ padding: '8px 12px 8px 0', color: 'var(--text-secondary)' }}>{entry.duration} min</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
       </div>
 
       {/* ── Section B: Live Today ── */}

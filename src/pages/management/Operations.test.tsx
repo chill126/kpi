@@ -23,14 +23,29 @@ vi.mock('recharts', () => ({
 
 vi.mock('@/hooks/useBoardSessions', () => ({ useBoardSessions: vi.fn() }))
 vi.mock('@/hooks/useK2BoardToday', () => ({ useK2BoardToday: vi.fn() }))
+vi.mock('@/hooks/useSiteVisits', () => ({ useSiteVisits: vi.fn() }))
+vi.mock('@/hooks/useSiteAssessments', () => ({ useSiteAssessments: vi.fn() }))
+vi.mock('@/hooks/useStudies', () => ({ useStudies: vi.fn() }))
+vi.mock('@/hooks/useInvestigators', () => ({ useInvestigators: vi.fn() }))
 
 import { useBoardSessions } from '@/hooks/useBoardSessions'
 import { useK2BoardToday } from '@/hooks/useK2BoardToday'
+import { useSiteVisits } from '@/hooks/useSiteVisits'
+import { useSiteAssessments } from '@/hooks/useSiteAssessments'
+import { useStudies } from '@/hooks/useStudies'
+import { useInvestigators } from '@/hooks/useInvestigators'
 import { Operations } from './Operations'
-import type { BoardSession } from '@/types'
+import type { BoardSession, Visit, Assessment, Study, Investigator } from '@/types'
 
 const mockUseBoardSessions = vi.mocked(useBoardSessions)
 const mockUseK2BoardToday = vi.mocked(useK2BoardToday)
+
+beforeEach(() => {
+  vi.mocked(useSiteVisits).mockReturnValue({ visits: [], loading: false, error: null })
+  vi.mocked(useSiteAssessments).mockReturnValue({ assessments: [], loading: false, error: null })
+  vi.mocked(useStudies).mockReturnValue({ studies: [], loading: false, error: null })
+  vi.mocked(useInvestigators).mockReturnValue({ investigators: [], loading: false, error: null })
+})
 
 const emptyHistory = { sessions: [], loading: false, error: null, circuitOpen: false }
 const emptyBoard = { entries: [], loading: false, error: null, circuitOpen: false, snapshotCount: 0 }
@@ -114,5 +129,81 @@ describe('Operations', () => {
     mockUseK2BoardToday.mockReturnValue({ ...emptyBoard, error: new Error('k2 auth failed') })
     render(<Operations />)
     expect(screen.getByText(/k2 auth failed/i)).toBeInTheDocument()
+  })
+})
+
+describe("Operations — Today's Data Entry section", () => {
+  const today = new Date().toISOString().split('T')[0]
+
+  const mockStudy: Study = {
+    id: 'study-1', name: 'Study Alpha', sponsor: 'P', sponsorProtocolId: '', therapeuticArea: '',
+    phase: 'Phase II', status: 'enrolling', siteId: 'site-1', piId: 'inv-1',
+    assignedInvestigators: [], targetEnrollment: 10, startDate: '', expectedEndDate: '',
+    visitSchedule: [], assessmentBattery: {},
+    adminOverride: { perStudyWeeklyHours: 2, perParticipantOverheadPct: 10 },
+    parsedFromProtocol: false,
+    enrollmentData: { prescreens: 0, screens: 0, randomizations: 0, active: 0, completions: 0 },
+    statusHistory: [],
+  }
+
+  const mockInvestigator: Investigator = {
+    id: 'inv-1', name: 'Dr. Wilson', credentials: 'MD', role: 'PI',
+    siteId: 'site-1', weeklyCapacityHours: 40, siteBaselinePct: 15, assignedStudies: [],
+  }
+
+  const todayVisit: Visit = {
+    id: 'v-today', participantId: 'P001', studyId: 'study-1', investigatorId: 'inv-1',
+    siteId: 'site-1', visitType: 'Screening', scheduledDate: today, completedDate: today,
+    status: 'completed', durationMinutes: 60, actualDurationMinutes: null, source: 'manual',
+  }
+
+  const todayAssessment: Assessment = {
+    id: 'a-today', investigatorId: 'inv-1', studyId: 'study-1', siteId: 'site-1',
+    visitId: null, scaleType: 'HDRS', durationMinutes: 30, date: today,
+  }
+
+  it("renders Today's Data Entry section header", () => {
+    mockUseBoardSessions.mockReturnValue(emptyHistory)
+    mockUseK2BoardToday.mockReturnValue(emptyBoard)
+    render(<Operations />)
+    expect(screen.getByText(/today.s data entry/i)).toBeInTheDocument()
+  })
+
+  it('shows empty state when no entries today', () => {
+    mockUseBoardSessions.mockReturnValue(emptyHistory)
+    mockUseK2BoardToday.mockReturnValue(emptyBoard)
+    render(<Operations />)
+    expect(screen.getByText(/no entries logged today/i)).toBeInTheDocument()
+  })
+
+  it("shows today's visit in the table", () => {
+    mockUseBoardSessions.mockReturnValue(emptyHistory)
+    mockUseK2BoardToday.mockReturnValue(emptyBoard)
+    vi.mocked(useSiteVisits).mockReturnValue({ visits: [todayVisit], loading: false, error: null })
+    vi.mocked(useStudies).mockReturnValue({ studies: [mockStudy], loading: false, error: null })
+    vi.mocked(useInvestigators).mockReturnValue({ investigators: [mockInvestigator], loading: false, error: null })
+    render(<Operations />)
+    expect(screen.getByText('Study Alpha')).toBeInTheDocument()
+    expect(screen.getByText('Dr. Wilson')).toBeInTheDocument()
+    expect(screen.getByText('Screening')).toBeInTheDocument()
+  })
+
+  it("shows today's assessment in the table", () => {
+    mockUseBoardSessions.mockReturnValue(emptyHistory)
+    mockUseK2BoardToday.mockReturnValue(emptyBoard)
+    vi.mocked(useSiteAssessments).mockReturnValue({ assessments: [todayAssessment], loading: false, error: null })
+    vi.mocked(useStudies).mockReturnValue({ studies: [mockStudy], loading: false, error: null })
+    vi.mocked(useInvestigators).mockReturnValue({ investigators: [mockInvestigator], loading: false, error: null })
+    render(<Operations />)
+    expect(screen.getByText('HDRS')).toBeInTheDocument()
+  })
+
+  it('shows entry count badge in section header', () => {
+    mockUseBoardSessions.mockReturnValue(emptyHistory)
+    mockUseK2BoardToday.mockReturnValue(emptyBoard)
+    vi.mocked(useSiteVisits).mockReturnValue({ visits: [todayVisit], loading: false, error: null })
+    vi.mocked(useSiteAssessments).mockReturnValue({ assessments: [todayAssessment], loading: false, error: null })
+    render(<Operations />)
+    expect(screen.getByText(/2 entries today/i)).toBeInTheDocument()
   })
 })
