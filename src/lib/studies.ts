@@ -45,6 +45,18 @@ export function subscribeStudy(
   )
 }
 
+export function subscribeAllStudies(
+  onData: (studies: Study[]) => void,
+  onError: (err: Error) => void,
+): () => void {
+  const q = query(collection(db, 'studies'), orderBy('name'))
+  return onSnapshot(
+    q,
+    (snap) => onData(snap.docs.map((d) => toStudy(d.id, d.data()))),
+    (err) => onError(err),
+  )
+}
+
 export async function createStudy(data: Omit<Study, 'id'>): Promise<string> {
   const ref = await addDoc(collection(db, 'studies'), {
     ...data,
