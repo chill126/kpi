@@ -7,11 +7,9 @@ import { DeviationAnalyticsPanel } from '@/components/deviations/DeviationAnalyt
 import { DeviationForm } from '@/components/deviations/DeviationForm'
 import { DeviationTable } from '@/components/deviations/DeviationTable'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/hud/Skeleton'
+import { Panel } from '@/components/hud/Panel'
 import type { ProtocolDeviation } from '@/types'
-
-const SELECT_CLASS =
-  'h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100'
 
 export function Deviations() {
   const { user, role } = useAuth()
@@ -61,35 +59,34 @@ export function Deviations() {
     setFormOpen(true)
   }
 
-
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+          <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
             Protocol Deviations
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
             Log and track protocol deviations across all studies.
           </p>
         </div>
         <Button
           onClick={openCreate}
-          className="bg-teal-600 hover:bg-teal-700 text-white"
+          style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
         >
           + Log Deviation
         </Button>
       </div>
 
       <div className="flex items-center gap-3">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 shrink-0">
+        <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', flexShrink: 0 }}>
           Study
         </label>
         <select
           aria-label="Filter by study"
           value={filterStudyId}
           onChange={(e) => setFilterStudyId(e.target.value)}
-          className={SELECT_CLASS}
+          style={{ height: 36, background: 'rgba(255 255 255 / 0.06)', border: '1px solid rgba(255 255 255 / 0.12)', borderRadius: 8, color: 'var(--text-primary)', padding: '0 10px', fontSize: 13, width: '100%' }}
         >
           <option value="">All Studies</option>
           {visibleStudies.map((s) => (
@@ -101,31 +98,30 @@ export function Deviations() {
       </div>
 
       {loading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <Skeleton height={160} />
+          <Skeleton height={40} />
+          <Skeleton height={40} />
         </div>
       ) : (
         <>
           <DeviationAnalyticsPanel deviations={filtered} />
 
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                Deviation Log
-              </h2>
-              <p className="text-xs text-slate-400">
+          <Panel
+            title="Deviation Log"
+            action={
+              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                 {filtered.length} record{filtered.length !== 1 ? 's' : ''}
               </p>
-            </div>
+            }
+          >
             <DeviationTable
               deviations={filtered}
               canManage={canManage}
               onEdit={openEdit}
               studyNameById={!filterStudyId ? studyNameById : undefined}
             />
-          </div>
+          </Panel>
         </>
       )}
 
@@ -145,4 +141,3 @@ export function Deviations() {
     </div>
   )
 }
-

@@ -2,9 +2,10 @@ import { useMemo } from 'react'
 import { useInvestigators } from '@/hooks/useInvestigators'
 import { useSiteVisits } from '@/hooks/useSiteVisits'
 import { useSiteAssessments } from '@/hooks/useSiteAssessments'
-import { recentWeekStarts, computeWeekMetrics, utilizationCellColor } from '@/lib/capacity'
+import { recentWeekStarts, computeWeekMetrics } from '@/lib/capacity'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/hud/Skeleton'
+import { Panel } from '@/components/hud/Panel'
 
 const NUM_WEEKS = 26
 
@@ -43,69 +44,119 @@ export function Reports() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <Skeleton height={28} width={200} />
+        <Skeleton height={256} />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Reports</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Investigator utilization — last {NUM_WEEKS} weeks. Use browser Print (Ctrl+P) to save as PDF.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={downloadCsv}>
-          Download CSV
-        </Button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>Reports</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+          Investigator utilization — last {NUM_WEEKS} weeks. Use browser Print (Ctrl+P) to save as PDF.
+        </p>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-        <table className="w-full text-xs">
-          <thead className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase sticky left-0 bg-white dark:bg-slate-800 w-40">
-                Investigator
-              </th>
-              {weekStarts.map((ws) => (
-                <th key={ws} className="px-1 py-3 text-center text-xs font-medium text-slate-400 w-14">
-                  {ws.slice(5)}
+      <Panel
+        title="Investigator Utilization"
+        action={
+          <Button variant="outline" size="sm" onClick={downloadCsv}>
+            Download CSV
+          </Button>
+        }
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead style={{ borderBottom: '1px solid rgba(255 255 255 / 0.08)' }}>
+              <tr>
+                <th
+                  className="sticky left-0"
+                  style={{
+                    padding: '12px 16px',
+                    textAlign: 'left',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: 'var(--text-label)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    width: 160,
+                    background: 'var(--color-canvas-raised)',
+                  }}
+                >
+                  Investigator
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-            {grid.map(({ investigator: inv, weeks }) => (
-              <tr key={inv.id}>
-                <td className="px-4 py-2 sticky left-0 bg-white dark:bg-slate-800">
-                  <p className="font-medium text-slate-700 dark:text-slate-200">{inv.name}</p>
-                  <p className="text-slate-400">{inv.weeklyCapacityHours}h</p>
-                </td>
-                {weeks.map((m) => (
-                  <td key={m.weekStart} className="px-0.5 py-0.5 text-center">
-                    <span
-                      className={`block rounded text-xs font-medium tabular-nums px-0.5 py-1 ${utilizationCellColor(m.utilizationPct)}`}
-                    >
-                      {m.utilizationPct}%
-                    </span>
-                  </td>
+                {weekStarts.map((ws) => (
+                  <th
+                    key={ws}
+                    style={{
+                      padding: '12px 4px',
+                      textAlign: 'center',
+                      fontSize: 11,
+                      fontWeight: 500,
+                      color: 'var(--text-muted)',
+                      width: 56,
+                    }}
+                  >
+                    {ws.slice(5)}
+                  </th>
                 ))}
               </tr>
-            ))}
-            {investigators.length === 0 && (
-              <tr>
-                <td colSpan={NUM_WEEKS + 1} className="py-8 text-center text-sm text-slate-400">
-                  No investigators found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {grid.map(({ investigator: inv, weeks }) => (
+                <tr key={inv.id} style={{ borderTop: '1px solid rgba(255 255 255 / 0.05)' }}>
+                  <td
+                    className="sticky left-0"
+                    style={{ padding: '8px 16px', background: 'var(--color-canvas-raised)' }}
+                  >
+                    <p style={{ margin: 0, fontWeight: 500, color: 'var(--text-primary)' }}>{inv.name}</p>
+                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 11 }}>{inv.weeklyCapacityHours}h</p>
+                  </td>
+                  {weeks.map((m) => (
+                    <td key={m.weekStart} style={{ padding: '2px', textAlign: 'center' }}>
+                      <span
+                        style={{
+                          display: 'block',
+                          borderRadius: 4,
+                          fontSize: 11,
+                          fontWeight: 500,
+                          fontFeatureSettings: '"tnum"',
+                          padding: '4px 2px',
+                          background:
+                            m.utilizationPct >= 90 ? 'rgba(220, 38, 38, 0.20)'
+                            : m.utilizationPct >= 75 ? 'rgba(217, 119, 6, 0.20)'
+                            : m.utilizationPct > 0   ? 'rgba(22, 163, 74, 0.15)'
+                            : 'rgba(255, 255, 255, 0.04)',
+                          color:
+                            m.utilizationPct >= 90 ? 'var(--signal-alert)'
+                            : m.utilizationPct >= 75 ? 'var(--signal-warn)'
+                            : m.utilizationPct > 0   ? 'var(--signal-good)'
+                            : 'var(--text-muted)',
+                        }}
+                      >
+                        {m.utilizationPct}%
+                      </span>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              {investigators.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={NUM_WEEKS + 1}
+                    style={{ padding: '32px 0', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}
+                  >
+                    No investigators found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
     </div>
   )
 }

@@ -76,6 +76,11 @@ function makeDeviation(overrides: Partial<ProtocolDeviation> = {}): ProtocolDevi
 
 beforeEach(() => {
   vi.clearAllMocks()
+  window.matchMedia = vi.fn().mockReturnValue({
+    matches: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })
   vi.mocked(authHook.useAuth).mockReturnValue({
     user: makeUser(),
     role: 'management',
@@ -164,7 +169,7 @@ describe('Deviations page', () => {
       error: null,
     })
     render(<Deviations />)
-    expect(document.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
+    expect(document.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(0)
   })
 
   it('shows record count', () => {

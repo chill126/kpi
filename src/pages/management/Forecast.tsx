@@ -7,11 +7,11 @@ import { useInvestigators } from '@/hooks/useInvestigators'
 import { useSiteVisits } from '@/hooks/useSiteVisits'
 import { useSiteAssessments } from '@/hooks/useSiteAssessments'
 import { useStudies } from '@/hooks/useStudies'
-import { projectWeekMetrics, getWeekStart, utilizationColor } from '@/lib/capacity'
+import { projectWeekMetrics, getWeekStart } from '@/lib/capacity'
 import { FORECAST_CONFIG } from '@/lib/forecast-config'
-import { Skeleton } from '@/components/ui/skeleton'
-
-const WEEK_COLORS = ['#0d9488', '#6366f1', '#f59e0b', '#ec4899', '#14b8a6', '#8b5cf6']
+import { Skeleton } from '@/components/hud/Skeleton'
+import { Panel } from '@/components/hud/Panel'
+import { chartPalette } from '@/components/hud/charts/palette'
 
 function addWeeks(isoDate: string, n: number): string {
   const d = new Date(isoDate + 'T00:00:00Z')
@@ -22,6 +22,16 @@ function addWeeks(isoDate: string, n: number): string {
 function shortDate(iso: string): string {
   const d = new Date(iso + 'T00:00:00Z')
   return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`
+}
+
+function utilizationStyle(pct: number): React.CSSProperties {
+  const color =
+    pct >= 90
+      ? 'var(--signal-alert)'
+      : pct >= 75
+      ? 'var(--signal-warn)'
+      : 'var(--signal-good)'
+  return { color, fontFeatureSettings: '"tnum"' }
 }
 
 export function Forecast() {
@@ -84,39 +94,40 @@ export function Forecast() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-72 w-full" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <Skeleton height={28} width={260} />
+        <Skeleton height={288} />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Capacity Forecast</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
+          Capacity Forecast
+        </h1>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
           Actual (past) + projected (future) investigator utilization — {FORECAST_CONFIG.FORECAST_WEEKS}-week view.
         </p>
       </div>
 
-      {/* Alert banners */}
       {projectedAlerts.length === 0 ? (
-        <p className="text-sm text-green-600 dark:text-green-400">
+        <p style={{ fontSize: 13, color: 'var(--signal-good)' }}>
           ✓ No projected capacity alerts in the next {FORECAST_CONFIG.ALERT_LOOKAHEAD_WEEKS} weeks.
         </p>
       ) : (
-        <div className="space-y-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {projectedAlerts.map((a) => (
             <div
               key={a.name}
-              className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm border ${
+              style={
                 a.level === 'critical'
-                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
-                  : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
-              }`}
+                  ? { display: 'flex', alignItems: 'center', gap: 8, borderRadius: 8, padding: '8px 14px', fontSize: 13, background: 'rgba(220 38 38 / 0.12)', border: '1px solid rgba(220 38 38 / 0.3)', color: 'var(--signal-alert)' }
+                  : { display: 'flex', alignItems: 'center', gap: 8, borderRadius: 8, padding: '8px 14px', fontSize: 13, background: 'rgba(217 119 6 / 0.12)', border: '1px solid rgba(217 119 6 / 0.3)', color: 'var(--signal-warn)' }
+              }
             >
-              <span className="font-medium">{a.level === 'critical' ? '🔴' : '⚠'}</span>
+              <span>{a.level === 'critical' ? '🔴' : '⚠'}</span>
               <span>
                 <strong>{a.name}</strong> projected to{' '}
                 {a.level === 'critical' ? 'exceed 90%' : 'reach 75%'} capacity in ~{a.weeksOut} week
@@ -127,17 +138,13 @@ export function Forecast() {
         </div>
       )}
 
-      {/* Chart */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
-          Utilization by Investigator
-        </h2>
-        <p className="text-xs text-slate-400 mb-4">Left = actual, right = projected.</p>
+      <Panel title="Utilization by Investigator">
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 16px' }}>Left = actual, right = projected.</p>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="week" tick={{ fontSize: 11 }} />
-            <YAxis unit="%" domain={[0, 110]} tick={{ fontSize: 12 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartPalette.grid} />
+            <XAxis dataKey="week" tick={{ fontSize: 11, fill: chartPalette.axis }} />
+            <YAxis unit="%" domain={[0, 110]} tick={{ fontSize: 12, fill: chartPalette.axis }} />
             <Tooltip formatter={(v) => [`${Number(v)}%`, '']} />
             <Legend />
             <ReferenceLine y={FORECAST_CONFIG.WARNING_THRESHOLD_PCT} stroke="#f59e0b" strokeDasharray="4 2" label={{ value: '75%', fontSize: 10 }} />
@@ -147,21 +154,19 @@ export function Forecast() {
                 key={inv.id}
                 type="monotone"
                 dataKey={inv.name}
-                stroke={WEEK_COLORS[idx % WEEK_COLORS.length]}
+                stroke={chartPalette.series[idx % chartPalette.series.length]}
                 strokeWidth={2}
                 dot={false}
               />
             ))}
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </Panel>
 
-      {/* Summary table */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">Current Week Summary</h2>
+      <Panel title="Current Week Summary">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs text-slate-400 uppercase border-b border-slate-100 dark:border-slate-700">
+            <tr style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', borderBottom: '1px solid rgba(255 255 255 / 0.08)' }}>
               <th className="text-left pb-2">Investigator</th>
               <th className="text-right pb-2">This Week</th>
               <th className="text-right pb-2">+{halfForecast}wk Projection</th>
@@ -172,12 +177,12 @@ export function Forecast() {
               const thisWeek = projectWeekMetrics(inv.id, inv.weeklyCapacityHours * 60, currentWeek, studies, visits, assessments)
               const projected = projectWeekMetrics(inv.id, inv.weeklyCapacityHours * 60, addWeeks(currentWeek, halfForecast), studies, visits, assessments)
               return (
-                <tr key={inv.id} className="border-b border-slate-50 dark:border-slate-800">
-                  <td className="py-2 text-slate-700 dark:text-slate-300">{inv.name}</td>
-                  <td className={`py-2 text-right font-medium tabular-nums ${utilizationColor(thisWeek.utilizationPct)}`}>
+                <tr key={inv.id} style={{ borderBottom: '1px solid rgba(255 255 255 / 0.05)' }}>
+                  <td className="py-2" style={{ color: 'var(--text-primary)' }}>{inv.name}</td>
+                  <td className="py-2 text-right font-medium" style={utilizationStyle(thisWeek.utilizationPct)}>
                     {thisWeek.utilizationPct}%
                   </td>
-                  <td className={`py-2 text-right font-medium tabular-nums ${utilizationColor(projected.utilizationPct)}`}>
+                  <td className="py-2 text-right font-medium" style={utilizationStyle(projected.utilizationPct)}>
                     {projected.utilizationPct}%
                   </td>
                 </tr>
@@ -185,7 +190,7 @@ export function Forecast() {
             })}
           </tbody>
         </table>
-      </div>
+      </Panel>
     </div>
   )
 }

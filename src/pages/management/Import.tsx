@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { FileSpreadsheet, FileText, LayoutGrid } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/hud/Skeleton'
+import { Panel } from '@/components/hud/Panel'
+import { EmptyState } from '@/components/hud/EmptyState'
 import { useImports } from '@/hooks/useImports'
 import { ClinicalConductorImportDialog } from '@/components/imports/ClinicalConductorImportDialog'
 import { AdvarraImportDialog } from '@/components/imports/AdvarraImportDialog'
@@ -66,12 +68,41 @@ const TYPE_LABELS: Record<ImportRecord['type'], string> = {
   k2_board_export: 'k2 Board Session',
 }
 
-function statusBadgeClass(status: ImportRecord['status']): string {
-  if (status === 'complete')
-    return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
-  if (status === 'error')
-    return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200'
-  return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200'
+function statusBadgeStyle(status: ImportRecord['status']): React.CSSProperties {
+  if (status === 'complete') {
+    return {
+      display: 'inline-flex',
+      alignItems: 'center',
+      borderRadius: 99,
+      padding: '2px 8px',
+      fontSize: 11,
+      fontWeight: 500,
+      background: 'rgba(22 163 74 / 0.15)',
+      color: 'var(--signal-good)',
+    }
+  }
+  if (status === 'error') {
+    return {
+      display: 'inline-flex',
+      alignItems: 'center',
+      borderRadius: 99,
+      padding: '2px 8px',
+      fontSize: 11,
+      fontWeight: 500,
+      background: 'rgba(220 38 38 / 0.15)',
+      color: 'var(--signal-alert)',
+    }
+  }
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    borderRadius: 99,
+    padding: '2px 8px',
+    fontSize: 11,
+    fontWeight: 500,
+    background: 'rgba(217 119 6 / 0.15)',
+    color: 'var(--signal-warn)',
+  }
 }
 
 function formatDateTime(iso: string): string {
@@ -95,10 +126,12 @@ export function Import() {
   const [openDialog, setOpenDialog] = useState<DialogKey>(null)
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Import</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
+          Import
+        </h1>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
           Import data from external sources into the KPI tracker
         </p>
       </div>
@@ -107,15 +140,16 @@ export function Import() {
         {CARDS.map(({ key, title, description, icon: Icon }) => (
           <div
             key={key}
-            className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 flex flex-col gap-3"
+            className="glass"
+            style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}
           >
             <div className="flex items-start gap-3">
-              <div className="rounded-md bg-teal-50 dark:bg-teal-900/30 p-2 text-teal-600 dark:text-teal-300">
+              <div style={{ borderRadius: 8, background: 'rgba(114 90 193 / 0.15)', padding: 8, color: 'var(--accent-primary)' }}>
                 <Icon size={20} aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <p className="font-semibold text-slate-800 dark:text-slate-100">{title}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>{title}</p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
                   {description}
                 </p>
               </div>
@@ -124,7 +158,7 @@ export function Import() {
               <Button
                 size="sm"
                 onClick={() => setOpenDialog(key)}
-                className="bg-teal-600 hover:bg-teal-700 text-white"
+                style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
               >
                 Import
               </Button>
@@ -133,54 +167,49 @@ export function Import() {
         ))}
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-        <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-3">
-          Import History
-        </h2>
+      <Panel title="Import History">
         {loading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Skeleton height={32} />
+            <Skeleton height={32} />
+            <Skeleton height={32} />
           </div>
         ) : imports.length === 0 ? (
-          <p className="text-sm text-slate-400 py-8 text-center">No imports yet.</p>
+          <EmptyState title="No imports yet" body="Use the import cards above to import data." />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <thead className="text-left">
                 <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="px-3 py-2">Type</th>
-                  <th className="px-3 py-2">Uploaded By</th>
-                  <th className="px-3 py-2">Date</th>
-                  <th className="px-3 py-2 text-right">Rows</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Errors</th>
+                  <th className="px-3 py-2 text-xs font-medium uppercase" style={{ color: 'var(--text-label)' }}>Type</th>
+                  <th className="px-3 py-2 text-xs font-medium uppercase" style={{ color: 'var(--text-label)' }}>Uploaded By</th>
+                  <th className="px-3 py-2 text-xs font-medium uppercase" style={{ color: 'var(--text-label)' }}>Date</th>
+                  <th className="px-3 py-2 text-xs font-medium uppercase text-right" style={{ color: 'var(--text-label)' }}>Rows</th>
+                  <th className="px-3 py-2 text-xs font-medium uppercase" style={{ color: 'var(--text-label)' }}>Status</th>
+                  <th className="px-3 py-2 text-xs font-medium uppercase" style={{ color: 'var(--text-label)' }}>Errors</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                 {imports.map((record) => (
                   <tr key={record.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                    <td className="px-3 py-2 text-slate-800 dark:text-slate-100">
+                    <td className="px-3 py-2" style={{ color: 'var(--text-primary)' }}>
                       {TYPE_LABELS[record.type]}
                     </td>
-                    <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
+                    <td className="px-3 py-2" style={{ color: 'var(--text-primary)' }}>
                       {record.uploadedBy}
                     </td>
-                    <td className="px-3 py-2 text-slate-600 dark:text-slate-300 tabular-nums">
+                    <td className="px-3 py-2 tabular-nums" style={{ color: 'var(--text-secondary)' }}>
                       {formatDateTime(record.uploadedAt)}
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums text-slate-700 dark:text-slate-200">
+                    <td className="px-3 py-2 text-right tabular-nums" style={{ color: 'var(--text-primary)' }}>
                       {record.rowCount}
                     </td>
                     <td className="px-3 py-2">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(record.status)}`}
-                      >
+                      <span style={statusBadgeStyle(record.status)}>
                         {record.status}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
+                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-muted)' }}>
                       {record.errors.length === 0 ? '—' : `${record.errors.length} issue${record.errors.length === 1 ? '' : 's'}`}
                     </td>
                   </tr>
@@ -189,7 +218,7 @@ export function Import() {
             </table>
           </div>
         )}
-      </div>
+      </Panel>
 
       <ClinicalConductorImportDialog
         open={openDialog === 'clinical_conductor'}

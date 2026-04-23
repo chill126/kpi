@@ -10,7 +10,8 @@ import { saveWhatIfScenario, deleteWhatIfScenario } from '@/lib/whatif'
 import { FORECAST_CONFIG } from '@/lib/forecast-config'
 import { WhatIfForm } from '@/components/management/WhatIfForm'
 import { SimulationOutput } from '@/components/management/SimulationOutput'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/hud/Skeleton'
+import { Panel } from '@/components/hud/Panel'
 import type { HypotheticalStudy, WhatIfScenario } from '@/types'
 
 function defaultStudy(): HypotheticalStudy {
@@ -71,78 +72,73 @@ export function WhatIf() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <Skeleton height={28} width={200} />
         <div className="grid grid-cols-2 gap-6">
-          <Skeleton className="h-96 w-full" />
-          <Skeleton className="h-96 w-full" />
+          <Skeleton height={384} />
+          <Skeleton height={384} />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">What-If Simulator</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>What-If Simulator</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
           Model a hypothetical study to see its capacity impact before committing.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        {/* Form */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Hypothetical Study</h2>
+        <Panel title="Hypothetical Study">
           <WhatIfForm value={study} onChange={setStudy} investigators={investigators} />
-        </div>
+        </Panel>
 
-        {/* Output */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Projection</h2>
+        <Panel title="Projection">
           <SimulationOutput
             result={result}
             investigators={assignedInvestigators}
             onSave={handleSave}
             saving={saving}
           />
-        </div>
+        </Panel>
       </div>
 
-      {/* Saved scenarios */}
       {!scenariosLoading && scenarios.length > 0 && (
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">Saved Scenarios</h2>
-          <div className="space-y-2">
+        <Panel title="Saved Scenarios">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {scenarios.map((s) => (
               <div
                 key={s.id}
-                className="flex items-center justify-between text-sm border border-slate-100 dark:border-slate-700 rounded px-3 py-2"
+                className="flex items-center justify-between text-sm"
+                style={{ border: '1px solid rgba(255 255 255 / 0.08)', borderRadius: 6, padding: '8px 12px' }}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-slate-700 dark:text-slate-300 font-medium">
+                  <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
                     {s.study.name || 'Untitled'}
                   </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  <span style={
                     s.result.overallVerdict === 'feasible'
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      ? { fontSize: 11, padding: '2px 8px', borderRadius: 99, fontWeight: 500, background: 'rgba(22, 163, 74, 0.15)', color: 'var(--signal-good)' }
                       : s.result.overallVerdict === 'caution'
-                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                  }`}>
+                      ? { fontSize: 11, padding: '2px 8px', borderRadius: 99, fontWeight: 500, background: 'rgba(217, 119, 6, 0.15)', color: 'var(--signal-warn)' }
+                      : { fontSize: 11, padding: '2px 8px', borderRadius: 99, fontWeight: 500, background: 'rgba(220, 38, 38, 0.15)', color: 'var(--signal-alert)' }
+                  }>
                     {s.result.overallVerdict}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleLoadScenario(s)}
-                    className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    style={{ fontSize: 12, color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
                   >
                     Load
                   </button>
                   <button
                     onClick={() => handleDelete(s.id)}
-                    className="text-xs text-red-400 hover:text-red-600"
+                    style={{ fontSize: 12, color: 'var(--signal-alert)', background: 'none', border: 'none', cursor: 'pointer' }}
                   >
                     Delete
                   </button>
@@ -150,7 +146,7 @@ export function WhatIf() {
               </div>
             ))}
           </div>
-        </div>
+        </Panel>
       )}
     </div>
   )
