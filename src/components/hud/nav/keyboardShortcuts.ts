@@ -9,7 +9,7 @@ const chordRoutes: Record<string, string> = {
   w: '/workload',
   e: '/enrollment',
   s: '/studies',
-  i: '/investigators',
+  i: '/staff',
   d: '/deviations',
 }
 

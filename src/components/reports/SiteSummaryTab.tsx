@@ -3,6 +3,7 @@ import { Panel } from '@/components/hud/Panel'
 import { Tile } from '@/components/hud/Tile'
 import { Skeleton } from '@/components/hud/Skeleton'
 import { EmptyState } from '@/components/hud/EmptyState'
+import { ErrorState } from '@/components/hud/ErrorState'
 import { HUDBarChart } from '@/components/hud/charts/HUDBarChart'
 import { useStudies } from '@/hooks/useStudies'
 import { useAllProtocolDeviations } from '@/hooks/useAllProtocolDeviations'
@@ -13,6 +14,7 @@ import { getWeekStart, computeWeekMetrics } from '@/lib/capacity'
 import type { StudyStatus } from '@/types'
 
 const STATUS_GROUPS = [
+  { key: 'pending', label: 'Pending' },
   { key: 'enrolling', label: 'Enrolling' },
   { key: 'open', label: 'Open' },
   { key: 'paused', label: 'Paused' },
@@ -34,13 +36,14 @@ function enrollmentSignal(pct: number): 'good' | 'warn' | 'alert' {
 }
 
 export function SiteSummaryTab() {
-  const { studies, loading: loadingStudies } = useStudies()
-  const { deviations, loading: loadingDeviations } = useAllProtocolDeviations()
-  const { visits, loading: loadingVisits } = useSiteVisits()
-  const { investigators, loading: loadingInvestigators } = useInvestigators()
-  const { assessments, loading: loadingAssessments } = useSiteAssessments()
+  const { studies, loading: loadingStudies, error: studiesError } = useStudies()
+  const { deviations, loading: loadingDeviations, error: deviationsError } = useAllProtocolDeviations()
+  const { visits, loading: loadingVisits, error: visitsError } = useSiteVisits()
+  const { investigators, loading: loadingInvestigators, error: investigatorsError } = useInvestigators()
+  const { assessments, loading: loadingAssessments, error: assessmentsError } = useSiteAssessments()
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    pending: false,
     enrolling: true,
     open: true,
     paused: false,
@@ -49,6 +52,12 @@ export function SiteSummaryTab() {
 
   const isLoading =
     loadingStudies || loadingDeviations || loadingVisits || loadingInvestigators || loadingAssessments
+  const loadError =
+    studiesError ?? deviationsError ?? visitsError ?? investigatorsError ?? assessmentsError
+
+  if (loadError) {
+    return <ErrorState message={loadError.message} />
+  }
 
   if (isLoading) {
     return (

@@ -10,7 +10,8 @@ interface Props {
   onSettings?: () => void
 }
 
-export function UserChip({ displayName, role, email, onSignOut }: Props) {
+export function UserChip({ displayName, role, email, onSignOut, onSettings }: Props) {
+  void onSettings
   const initials = displayName
     .split(/\s+/)
     .filter(Boolean)
@@ -82,24 +83,26 @@ export function UserChip({ displayName, role, email, onSignOut }: Props) {
               }}>{email}</div>
             )}
           </div>
-          <DropdownMenu.Item
-            asChild
-          >
-            <Link
-              to="/settings"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 12px', borderRadius: 8,
-                fontSize: 13, color: 'var(--text-primary)',
-                cursor: 'pointer', outline: 'none', textDecoration: 'none',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255 255 255 / 0.06)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <Settings size={16} color="var(--text-secondary)" />
-              <span>Settings</span>
-            </Link>
-          </DropdownMenu.Item>
+          {role !== 'staff' && (
+            <>
+              <DropdownMenu.Item asChild>
+                <Link
+                  to="/settings"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 12px', borderRadius: 8,
+                    fontSize: 13, color: 'var(--text-primary)',
+                    cursor: 'pointer', outline: 'none', textDecoration: 'none',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255 255 255 / 0.06)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  <Settings size={16} color="var(--text-secondary)" />
+                  <span>Settings</span>
+                </Link>
+              </DropdownMenu.Item>
+            </>
+          )}
           <DropdownMenu.Separator style={{ height: 1, background: 'rgba(255 255 255 / 0.06)', margin: '4px 0' }} />
           <DropdownMenu.Item
             onSelect={() => { void onSignOut() }}

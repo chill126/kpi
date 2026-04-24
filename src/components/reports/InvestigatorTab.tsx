@@ -51,7 +51,11 @@ export function InvestigatorTab() {
   const { studies } = useStudies()
 
   const currentWeek = useMemo(() => getWeekStart(new Date()), [])
-  const thirtyDaysAgoMs = useMemo(() => Date.now() - 30 * 24 * 60 * 60 * 1000, [])
+  const thirtyDaysAgoStr = useMemo(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 30)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }, [])
 
   const clinicalInvestigators = useMemo(
     () => investigators.filter((inv) => inv.role === 'PI' || inv.role === 'Sub-I'),
@@ -72,10 +76,10 @@ export function InvestigatorTab() {
           (v) =>
             v.investigatorId === inv.id &&
             v.completedDate !== null &&
-            new Date(v.completedDate).getTime() >= thirtyDaysAgoMs,
+            v.completedDate >= thirtyDaysAgoStr,
         ).length
         const assessmentsCount = assessments.filter(
-          (a) => a.investigatorId === inv.id && new Date(a.date).getTime() >= thirtyDaysAgoMs,
+          (a) => a.investigatorId === inv.id && a.date >= thirtyDaysAgoStr,
         ).length
         const assignedStudyNames = studies
           .filter((s) => s.assignedInvestigators.some((ai) => ai.investigatorId === inv.id))
@@ -88,14 +92,20 @@ export function InvestigatorTab() {
           assignedStudyNames,
         }
       }),
-    [clinicalInvestigators, visits, assessments, studies, currentWeek, thirtyDaysAgoMs],
+    [clinicalInvestigators, visits, assessments, studies, currentWeek, thirtyDaysAgoStr],
   )
 
+  function csvCell(value: string | number): string {
+    const str = String(value)
+    const safe = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str
+    return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
+  }
+
   function downloadCsv() {
-    const header = ['Investigator', 'Utilization %', 'Visits (30d)', 'Assessments (30d)'].join(',')
+    const header = ['Investigator', 'Utilization %', 'Visits (30d)', 'Assessments (30d)'].map(csvCell).join(',')
     const rows = cards.map(
       ({ investigator, utilizationPct, visitsCount, assessmentsCount }) =>
-        [investigator.name, `${utilizationPct}%`, visitsCount, assessmentsCount].join(','),
+        [investigator.name, `${utilizationPct}%`, visitsCount, assessmentsCount].map(csvCell).join(','),
     )
     const csv = [header, ...rows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })

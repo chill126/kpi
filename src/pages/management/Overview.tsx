@@ -154,9 +154,13 @@ export function Overview() {
     [studies],
   )
 
+  const piSubIInvestigators = useMemo(
+    () => investigators.filter((inv) => inv.role === 'PI' || inv.role === 'Sub-I'),
+    [investigators],
+  )
+
   const utilizationData = useMemo(
-    () => investigators
-      .filter((inv) => inv.role === 'PI' || inv.role === 'Sub-I')
+    () => piSubIInvestigators
       .map((inv) => {
         const m = computeWeekMetrics(inv.id, inv.weeklyCapacityHours * 60, visits, assessments, weekStart)
         return {
@@ -166,7 +170,7 @@ export function Overview() {
           capacityHours: inv.weeklyCapacityHours,
         }
       }),
-    [investigators, visits, assessments, weekStart],
+    [piSubIInvestigators, visits, assessments, weekStart],
   )
 
   const siteCapacityPct = useMemo(() => {
@@ -213,8 +217,8 @@ export function Overview() {
   )
 
   const forecastData = useMemo(
-    () => computeCapacityForecast(investigators, visits, assessments, 4),
-    [investigators, visits, assessments],
+    () => computeCapacityForecast(piSubIInvestigators, visits, assessments, 4),
+    [piSubIInvestigators, visits, assessments],
   )
 
   function renderTile(id: OverviewTileId): React.ReactNode {
@@ -387,7 +391,7 @@ export function Overview() {
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14 }}>
             <Panel title="Investigator Utilization — This Week">
               {utilizationData.length === 0 ? (
-                <EmptyState title="No investigators found" body="Add an investigator on the Investigators page." />
+                <EmptyState title="No staff found" body="Add a staff member on the Staff page." />
               ) : (
                 <HUDBarChart
                   data={utilizationForChart}

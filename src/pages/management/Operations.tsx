@@ -26,9 +26,9 @@ const PERIODS: Array<{ key: PeriodKey; label: string }> = [
 type GranularityKey = 'day' | 'week' | 'month'
 
 const GRANULARITIES: Array<{ key: GranularityKey; label: string }> = [
-  { key: 'day', label: 'Day' },
-  { key: 'week', label: 'Week' },
-  { key: 'month', label: 'Month' },
+  { key: 'day', label: 'Today' },
+  { key: 'week', label: '7d' },
+  { key: 'month', label: 'All' },
 ]
 
 function PeriodSelector({ value, onChange }: { value: PeriodKey; onChange: (p: PeriodKey) => void }) {

@@ -11,18 +11,23 @@ import { Users } from 'lucide-react'
 const BACK_WEEKS = 10
 const AHEAD_WEEKS = 2
 
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function buildWeekRange(backWeeks: number, aheadWeeks: number): string[] {
   const today = new Date()
-  const day = today.getUTCDay()
+  const day = today.getDay()
   const diff = day === 0 ? -6 : 1 - day
   const currentMonday = new Date(today)
-  currentMonday.setUTCDate(today.getUTCDate() + diff)
+  currentMonday.setDate(today.getDate() + diff)
+  currentMonday.setHours(0, 0, 0, 0)
 
   const weeks: string[] = []
   for (let i = -backWeeks; i <= aheadWeeks; i++) {
     const d = new Date(currentMonday)
-    d.setUTCDate(currentMonday.getUTCDate() + i * 7)
-    weeks.push(d.toISOString().split('T')[0])
+    d.setDate(currentMonday.getDate() + i * 7)
+    weeks.push(localDateStr(d))
   }
   return weeks
 }
@@ -36,11 +41,12 @@ function cellStyle(pct: number): React.CSSProperties {
 
 function isCurrentWeek(ws: string): boolean {
   const today = new Date()
-  const day = today.getUTCDay()
+  const day = today.getDay()
   const diff = day === 0 ? -6 : 1 - day
   const monday = new Date(today)
-  monday.setUTCDate(today.getUTCDate() + diff)
-  return ws === monday.toISOString().split('T')[0]
+  monday.setDate(today.getDate() + diff)
+  monday.setHours(0, 0, 0, 0)
+  return ws === localDateStr(monday)
 }
 
 export function WorkloadPlanner() {
@@ -52,11 +58,12 @@ export function WorkloadPlanner() {
 
   const currentWeekStr = useMemo(() => {
     const today = new Date()
-    const day = today.getUTCDay()
+    const day = today.getDay()
     const diff = day === 0 ? -6 : 1 - day
     const monday = new Date(today)
-    monday.setUTCDate(today.getUTCDate() + diff)
-    return monday.toISOString().split('T')[0]
+    monday.setDate(today.getDate() + diff)
+    monday.setHours(0, 0, 0, 0)
+    return localDateStr(monday)
   }, [])
 
   const grid = useMemo(
