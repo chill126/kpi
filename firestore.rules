@@ -99,7 +99,7 @@ service cloud.firestore {
 
     match /auditLog/{docId} {
       allow read: if isManagement();
-      allow create: if isAuthenticated()
+      allow create: if (isAuthenticated() && request.resource.data.uid == request.auth.uid)
         || (request.resource.data.action == 'auth.sign_in_failed'
            && request.resource.data.uid == null);
     }

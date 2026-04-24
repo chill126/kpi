@@ -33,10 +33,11 @@ describe('firestore.rules — observability collections', () => {
     expect(section).not.toContain('allow read: if isAuthenticated()')
   })
 
-  it('auditLog allows create for authenticated users', () => {
+  it('auditLog allows create for authenticated users with matching uid', () => {
     const idx = rules.indexOf('match /auditLog/{docId}')
     const section = rules.slice(idx, idx + 300)
-    expect(section).toContain('allow create: if isAuthenticated()')
+    expect(section).toContain('isAuthenticated()')
+    expect(section).toContain('request.resource.data.uid == request.auth.uid')
   })
 
   it('auditLog allows unauthenticated create for sign_in_failed action', () => {

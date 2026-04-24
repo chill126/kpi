@@ -21,10 +21,11 @@ export async function signIn(email: string, password: string): Promise<void> {
 
 export async function signOut(): Promise<void> {
   const user = auth.currentUser
-  await firebaseSignOut(auth)
+  // Audit write must precede token revocation — Firestore rejects writes after signOut
   if (user) {
-    writeAuditLog(user.uid, user.email ?? '', 'auth.sign_out').catch(console.error)
+    await writeAuditLog(user.uid, user.email ?? '', 'auth.sign_out').catch(console.error)
   }
+  await firebaseSignOut(auth)
 }
 
 export async function getAppUser(user: User): Promise<AppUser | null> {
