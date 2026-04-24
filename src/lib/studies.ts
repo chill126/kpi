@@ -113,10 +113,10 @@ export async function updateStudyStatus(
   })
   const user = auth.currentUser
   if (user) {
-    writeAuditLog(user.uid, user.email ?? '', 'study.update', {
+    writeAuditLog(user.uid, user.email ?? '', 'study.status_change', {
       targetCollection: 'studies',
       targetId: studyId,
-      meta: { status },
+      meta: { status, ...(note ? { note } : {}) },
     }).catch(console.error)
   }
 }
