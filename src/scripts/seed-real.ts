@@ -11,8 +11,8 @@
  *
  * Run with: npx tsx src/scripts/seed-real.ts
  */
-import * as admin from 'firebase-admin'
-import * as XLSX from 'xlsx'
+import admin from 'firebase-admin'
+import XLSX from 'xlsx'
 import * as fs from 'fs'
 import * as path from 'path'
 import { config } from 'dotenv'
