@@ -1,14 +1,21 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 import path from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    ...(process.env.SENTRY_AUTH_TOKEN
+      ? [sentryVitePlugin({ authToken: process.env.SENTRY_AUTH_TOKEN, org: '<org>', project: '<project>' })]
+      : []),
+  ],
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
   build: {
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks: (id) => {
@@ -29,8 +36,5 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
-    alias: {
-      '@sentry/react': path.resolve(__dirname, 'src/lib/__mocks__/@sentry/react.ts'),
-    },
   },
 })
