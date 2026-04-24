@@ -29,5 +29,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
+    alias: {
+      '@sentry/react': path.resolve(__dirname, 'src/lib/__mocks__/@sentry/react.ts'),
+    },
   },
 })
