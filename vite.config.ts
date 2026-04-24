@@ -7,8 +7,12 @@ import path from 'path'
 export default defineConfig({
   plugins: [
     react(),
-    ...(process.env.SENTRY_AUTH_TOKEN
-      ? [sentryVitePlugin({ authToken: process.env.SENTRY_AUTH_TOKEN, org: '<org>', project: '<project>' })]
+    ...(process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT
+      ? [sentryVitePlugin({
+          authToken: process.env.SENTRY_AUTH_TOKEN,
+          org: process.env.SENTRY_ORG,
+          project: process.env.SENTRY_PROJECT,
+        })]
       : []),
   ],
   resolve: {
