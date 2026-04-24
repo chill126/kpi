@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react'
+import { captureError } from '@/lib/monitoring'
 
 interface Props {
   children: ReactNode
@@ -25,6 +26,7 @@ export class ChunkErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: unknown): void {
+    captureError(error, { category: 'render', critical: false })
     // For chunk-load errors (stale index.html referencing old asset hashes after a
     // deploy), auto-reload once per session so the user doesn't have to click
     // Reload manually. The sessionStorage flag prevents infinite reload loops
