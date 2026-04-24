@@ -26,7 +26,7 @@ describe('captureError', () => {
     captureError(err, { category: 'auth', critical: true })
     expect(addDoc).toHaveBeenCalledWith(
       'errorLog',
-      expect.objectContaining({ level: 'critical', category: 'auth', message: 'boom' }),
+      expect.objectContaining({ level: 'critical', category: 'auth', message: 'boom', timestamp: 'SERVER_TIMESTAMP' }),
     )
   })
 
@@ -44,7 +44,7 @@ describe('captureError', () => {
     captureError('string error', { category: 'firestore', critical: true })
     expect(addDoc).toHaveBeenCalledWith(
       'errorLog',
-      expect.objectContaining({ message: 'string error' }),
+      expect.objectContaining({ message: 'string error', timestamp: 'SERVER_TIMESTAMP' }),
     )
   })
 

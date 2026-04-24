@@ -16,7 +16,7 @@ export function captureError(
       message: err instanceof Error ? err.message : String(err),
       context: options.context ?? {},
       timestamp: serverTimestamp(),
-    })
+    }).catch((e: unknown) => console.error('[monitoring] errorLog write failed', e))
   }
 }
 
