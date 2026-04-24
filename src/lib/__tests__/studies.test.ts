@@ -18,7 +18,8 @@ vi.mock('firebase/firestore', () => ({
   arrayUnion: vi.fn((val) => ({ __arrayUnion: val })),
 }))
 
-vi.mock('@/lib/firebase', () => ({ db: {} }))
+vi.mock('@/lib/firebase', () => ({ db: {}, auth: { currentUser: null } }))
+vi.mock('@/lib/monitoring', () => ({ writeAuditLog: vi.fn(() => Promise.resolve()) }))
 
 import * as firestore from 'firebase/firestore'
 

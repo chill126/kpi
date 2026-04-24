@@ -1,5 +1,6 @@
 import { addDoc, collection, doc, getDoc, onSnapshot, query, updateDoc } from 'firebase/firestore'
-import { db } from './firebase'
+import { db, auth } from './firebase'
+import { writeAuditLog } from './monitoring'
 import type { Site } from '@/types'
 
 function toSite(id: string, data: Record<string, unknown>): Site {
@@ -17,6 +18,13 @@ export async function updateSite(
   updates: Partial<Omit<Site, 'id'>>,
 ): Promise<void> {
   await updateDoc(doc(db, 'sites', siteId), updates as Record<string, unknown>)
+  const user = auth.currentUser
+  if (user) {
+    writeAuditLog(user.uid, user.email ?? '', 'site.update', {
+      targetCollection: 'sites',
+      targetId: siteId,
+    }).catch(console.error)
+  }
 }
 
 export function subscribeSite(
@@ -33,6 +41,13 @@ export function subscribeSite(
 
 export async function createSite(data: Omit<Site, 'id'>): Promise<string> {
   const ref = await addDoc(collection(db, 'sites'), data)
+  const user = auth.currentUser
+  if (user) {
+    writeAuditLog(user.uid, user.email ?? '', 'site.create', {
+      targetCollection: 'sites',
+      targetId: ref.id,
+    }).catch(console.error)
+  }
   return ref.id
 }
 

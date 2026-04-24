@@ -6,7 +6,8 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore'
-import { db } from './firebase'
+import { db, auth } from './firebase'
+import { writeAuditLog } from './monitoring'
 import type { AppUser } from '@/types'
 
 function toAppUser(uid: string, data: Record<string, unknown>): AppUser {
@@ -43,4 +44,11 @@ export async function updateUser(
   updates: Partial<Omit<AppUser, 'uid'>>,
 ): Promise<void> {
   await updateDoc(doc(db, 'users', uid), updates as Record<string, unknown>)
+  const user = auth.currentUser
+  if (user) {
+    writeAuditLog(user.uid, user.email ?? '', 'user.update', {
+      targetCollection: 'users',
+      targetId: uid,
+    }).catch(console.error)
+  }
 }

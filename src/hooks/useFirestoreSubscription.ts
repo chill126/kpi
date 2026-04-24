@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { captureError } from '@/lib/monitoring'
 
 /** Sliding window for rate-limit tracking */
 const WINDOW_MS = 60_000
@@ -107,6 +108,7 @@ export function useFirestoreSubscription<T>(
         `[${label}] Circuit opened — rate limit exceeded: ${count} snapshots in 60s (max ${rateLimit}). ` +
         `Subscription paused for ${cooldownMs / 1_000}s then auto-retrying.`
       console.error(msg)
+      captureError(new Error(msg), { category: 'firestore', critical: true })
       setError(new Error(msg))
 
       cooldownTimerRef.current = setTimeout(() => {
@@ -141,6 +143,7 @@ export function useFirestoreSubscription<T>(
       },
       (err) => {
         if (!cancelled) {
+          captureError(err, { category: 'firestore', critical: true })
           setError(err)
           setLoading(false)
         }

@@ -83,13 +83,25 @@ service cloud.firestore {
     }
 
     match /capacityConfig/{docId} {
-      allow read: if isAuthenticated();
-      allow write: if isManagement();
+      allow read, write: if isManagement();
     }
 
     match /boardSessions/{docId} {
       allow read: if isAuthenticated() && (isManagement() || isSameSite(resource.data.siteId));
-      allow write: if isManagement();
+      allow create: if isManagement() && request.resource.data.keys().hasAll(['siteId', 'sessionDate']);
+      allow update, delete: if isManagement();
+    }
+
+    match /errorLog/{docId} {
+      allow read: if isManagement();
+      allow create: if isAuthenticated();
+    }
+
+    match /auditLog/{docId} {
+      allow read: if isManagement();
+      allow create: if (isAuthenticated() && request.resource.data.uid == request.auth.uid)
+        || (request.resource.data.action == 'auth.sign_in_failed'
+           && request.resource.data.uid == null);
     }
   }
 }

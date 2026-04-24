@@ -9,7 +9,8 @@ import {
   orderBy,
   arrayUnion,
 } from 'firebase/firestore'
-import { db } from './firebase'
+import { db, auth } from './firebase'
+import { writeAuditLog } from './monitoring'
 import type { Study, StudyStatus, StudyStatusHistoryEntry, EnrollmentData } from '@/types'
 
 function toStudy(id: string, data: Record<string, unknown>): Study {
@@ -69,6 +70,14 @@ export async function createStudy(data: Omit<Study, 'id'>): Promise<string> {
     },
     statusHistory: data.statusHistory ?? [],
   })
+  const user = auth.currentUser
+  if (user) {
+    writeAuditLog(user.uid, user.email ?? '', 'study.create', {
+      targetCollection: 'studies',
+      targetId: ref.id,
+      meta: { studyName: data.name },
+    }).catch(console.error)
+  }
   return ref.id
 }
 
@@ -77,6 +86,13 @@ export async function updateStudy(
   updates: Partial<Omit<Study, 'id'>>,
 ): Promise<void> {
   await updateDoc(doc(db, 'studies', studyId), updates as Record<string, unknown>)
+  const user = auth.currentUser
+  if (user) {
+    writeAuditLog(user.uid, user.email ?? '', 'study.update', {
+      targetCollection: 'studies',
+      targetId: studyId,
+    }).catch(console.error)
+  }
 }
 
 export async function updateStudyStatus(
@@ -95,6 +111,14 @@ export async function updateStudyStatus(
     status,
     statusHistory: arrayUnion(entry),
   })
+  const user = auth.currentUser
+  if (user) {
+    writeAuditLog(user.uid, user.email ?? '', 'study.status_change', {
+      targetCollection: 'studies',
+      targetId: studyId,
+      meta: { status, ...(note ? { note } : {}) },
+    }).catch(console.error)
+  }
 }
 
 export async function cloneStudy(study: Study, newName: string): Promise<string> {
@@ -109,6 +133,14 @@ export async function cloneStudy(study: Study, newName: string): Promise<string>
     startDate: '',
     expectedEndDate: '',
   })
+  const user = auth.currentUser
+  if (user) {
+    writeAuditLog(user.uid, user.email ?? '', 'study.create', {
+      targetCollection: 'studies',
+      targetId: ref.id,
+      meta: { studyName: newName, clonedFrom: study.id },
+    }).catch(console.error)
+  }
   return ref.id
 }
 
@@ -117,4 +149,11 @@ export async function updateEnrollmentData(
   data: EnrollmentData,
 ): Promise<void> {
   await updateDoc(doc(db, 'studies', studyId), { enrollmentData: data })
+  const user = auth.currentUser
+  if (user) {
+    writeAuditLog(user.uid, user.email ?? '', 'study.update', {
+      targetCollection: 'studies',
+      targetId: studyId,
+    }).catch(console.error)
+  }
 }
