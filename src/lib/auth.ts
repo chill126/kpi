@@ -5,14 +5,26 @@ import {
 } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, db } from './firebase'
+import { captureError, writeAuditLog } from './monitoring'
 import type { AppUser, Role } from '@/types'
 
 export async function signIn(email: string, password: string): Promise<void> {
-  await signInWithEmailAndPassword(auth, email, password)
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password)
+    writeAuditLog(cred.user.uid, cred.user.email ?? '', 'auth.sign_in').catch(console.error)
+  } catch (err) {
+    captureError(err, { category: 'auth', critical: true, context: { email } })
+    writeAuditLog(null, email, 'auth.sign_in_failed', { meta: { error: String(err) } }).catch(console.error)
+    throw err
+  }
 }
 
 export async function signOut(): Promise<void> {
+  const user = auth.currentUser
   await firebaseSignOut(auth)
+  if (user) {
+    writeAuditLog(user.uid, user.email ?? '', 'auth.sign_out').catch(console.error)
+  }
 }
 
 export async function getAppUser(user: User): Promise<AppUser | null> {
