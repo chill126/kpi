@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Panel } from '@/components/hud/Panel'
 import { Tile } from '@/components/hud/Tile'
 import { Skeleton } from '@/components/hud/Skeleton'
@@ -168,10 +169,29 @@ const tdMutedStyle: React.CSSProperties = {
   color: 'var(--text-secondary)',
 }
 
+type RangeMode = '30d' | '90d' | '6m' | 'all'
+
+const RANGE_OPTIONS: { value: RangeMode; label: string }[] = [
+  { value: '30d', label: '30 days' },
+  { value: '90d', label: '90 days' },
+  { value: '6m',  label: '6 months' },
+  { value: 'all', label: 'All time' },
+]
+
+function cutoffDate(mode: RangeMode): Date | null {
+  if (mode === 'all') return null
+  const now = new Date()
+  if (mode === '30d') return new Date(now.setDate(now.getDate() - 30))
+  if (mode === '90d') return new Date(now.setDate(now.getDate() - 90))
+  if (mode === '6m')  return new Date(now.setMonth(now.getMonth() - 6))
+  return null
+}
+
 export function VisitQualityTab() {
   const { visits, loading: visitsLoading } = useSiteVisits()
   const { studies, loading: studiesLoading } = useStudies()
   const { investigators, loading: investigatorsLoading } = useInvestigators()
+  const [rangeMode, setRangeMode] = useState<RangeMode>('all')
 
   const loading = visitsLoading || studiesLoading || investigatorsLoading
 
@@ -190,7 +210,12 @@ export function VisitQualityTab() {
     )
   }
 
-  const historical = visits.filter((v) => v.status !== 'scheduled')
+  const cutoff = cutoffDate(rangeMode)
+  const rangedVisits = cutoff
+    ? visits.filter((v) => new Date(v.scheduledDate) >= cutoff)
+    : visits
+
+  const historical = rangedVisits.filter((v) => v.status !== 'scheduled')
   const total = historical.length
   const completed = historical.filter((v) => v.status === 'completed').length
   const missed = historical.filter((v) => v.status === 'missed').length
@@ -201,12 +226,35 @@ export function VisitQualityTab() {
   const missedPct = hasHistory ? (missed / total) * 100 : 0
   const noShowPct = hasHistory ? (noShow / total) * 100 : 0
 
-  const studyRows = buildStudyRows(visits, studies)
-  const investigatorRows = buildInvestigatorRows(visits, investigators)
-  const durationRows = buildDurationRows(visits, studies)
+  const studyRows = buildStudyRows(rangedVisits, studies)
+  const investigatorRows = buildInvestigatorRows(rangedVisits, investigators)
+  const durationRows = buildDurationRows(rangedVisits, studies)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Range selector */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {RANGE_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => setRangeMode(opt.value)}
+            style={{
+              padding: '4px 12px', borderRadius: 99, fontSize: 12, cursor: 'pointer',
+              border: rangeMode === opt.value
+                ? '1px solid rgba(30 120 255 / 0.5)'
+                : '1px solid rgba(255 255 255 / 0.10)',
+              background: rangeMode === opt.value
+                ? 'rgba(30 120 255 / 0.15)'
+                : 'rgba(255 255 255 / 0.04)',
+              color: rangeMode === opt.value ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              fontWeight: rangeMode === opt.value ? 500 : 400,
+              transition: 'all 150ms',
+            }}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
       {/* Section 1 — Site-wide tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         <Tile

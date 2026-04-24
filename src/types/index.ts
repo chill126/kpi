@@ -164,6 +164,7 @@ export interface Study {
   expectedEndDate: string
   visitSchedule: VisitScheduleEntry[]
   assessmentBattery: Record<string, string[]>
+  scaleDurations?: Record<string, Record<string, number>>
   adminOverride: AdminOverride
   parsedFromProtocol: boolean
   enrollmentData: EnrollmentData
@@ -216,7 +217,7 @@ export interface DelegationLog {
 export interface Import {
   id: string
   siteId: string
-  type: 'clinical_conductor' | 'advarra_ereg' | 'enrollment_snapshot' | 'protocol_pdf' | 'k2_board_export'
+  type: 'clinical_conductor' | 'advarra_ereg' | 'enrollment_snapshot' | 'enrollment_data_update' | 'protocol_pdf' | 'k2_board_export'
   uploadedBy: string
   uploadedAt: string
   rowCount: number

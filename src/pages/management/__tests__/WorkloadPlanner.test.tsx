@@ -34,10 +34,10 @@ describe('WorkloadPlanner', () => {
     expect(screen.getByText('Dr. Wilson')).toBeInTheDocument()
   })
 
-  it('renders 13 week columns (10 back + current + 2 ahead)', () => {
+  it('renders 52 week columns (~10 months back + current + ~2 months ahead)', () => {
     render(<WorkloadPlanner />)
     const cells = screen.getAllByText(/\d{2}-\d{2}/)
-    expect(cells.length).toBe(13)
+    expect(cells.length).toBe(52)
   })
 
   it('renders dash cells when no visits are scheduled', () => {

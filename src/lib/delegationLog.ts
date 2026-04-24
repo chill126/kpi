@@ -33,6 +33,23 @@ export function subscribeDelegationLog(
   )
 }
 
+export function subscribeSiteDelegationLogs(
+  siteId: string,
+  onData: (entries: DelegationLog[]) => void,
+  onError: (err: Error) => void,
+): () => void {
+  const q = query(
+    collection(db, 'delegationLog'),
+    where('siteId', '==', siteId),
+    orderBy('effectiveDate', 'desc'),
+  )
+  return onSnapshot(
+    q,
+    (snap) => onData(snap.docs.map((d) => toDelegationLog(d.id, d.data()))),
+    onError,
+  )
+}
+
 export async function createDelegationEntry(
   data: Omit<DelegationLog, 'id'>,
 ): Promise<string> {

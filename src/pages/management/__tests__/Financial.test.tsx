@@ -70,7 +70,7 @@ describe('Financial', () => {
 
   it('shows the "not set" placeholder when contract value is absent', () => {
     render(<Financial />)
-    expect(screen.getByText(/not set/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/not set/i).length).toBeGreaterThan(0)
   })
 
   it('shows the contract value when it is set', () => {

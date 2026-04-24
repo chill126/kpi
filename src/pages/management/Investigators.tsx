@@ -4,6 +4,7 @@ import { useInvestigators } from '@/hooks/useInvestigators'
 import { useSiteVisits } from '@/hooks/useSiteVisits'
 import { useSiteAssessments } from '@/hooks/useSiteAssessments'
 import { useStudies } from '@/hooks/useStudies'
+import { useSiteDelegationLogs } from '@/hooks/useSiteDelegationLogs'
 import { useAuth } from '@/hooks/useAuth'
 import { useSite } from '@/hooks/useSite'
 import {
@@ -32,7 +33,7 @@ import { Panel } from '@/components/hud/Panel'
 import { Tile } from '@/components/hud/Tile'
 import { EmptyState } from '@/components/hud/EmptyState'
 import { HUDLineChart } from '@/components/hud/charts/HUDLineChart'
-import type { Investigator, InvestigatorRole, Study, Visit, Assessment } from '@/types'
+import type { Investigator, InvestigatorRole, Study, Visit, Assessment, DelegationLog } from '@/types'
 
 interface InvestigatorForm {
   name: string
@@ -83,11 +84,13 @@ function InvestigatorDetail({
   visits,
   assessments,
   studies,
+  delegationLogs,
 }: {
   investigator: Investigator
   visits: Visit[]
   assessments: Assessment[]
   studies: Study[]
+  delegationLogs: DelegationLog[]
 }) {
   const capacityMinutes = investigator.weeklyCapacityHours * 60
   const history = useMemo(
@@ -158,6 +161,48 @@ function InvestigatorDetail({
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     {role && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{role}</span>}
                     <StatusBadge status={s.status} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {delegationLogs.length > 0 && (
+        <div>
+          <p style={{ fontSize: 10.5, fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-label)', marginBottom: 8, marginTop: 0 }}>
+            Delegation Log
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {delegationLogs.map((log) => {
+              const study = studies.find((s) => s.id === log.studyId)
+              return (
+                <div key={log.id} style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255 255 255 / 0.03)', border: '1px solid rgba(255 255 255 / 0.07)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+                      {study?.name ?? log.studyId}
+                    </span>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                      Effective {log.effectiveDate}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {log.delegatedTasks.map((task) => (
+                      <span
+                        key={task}
+                        style={{
+                          fontSize: 11,
+                          padding: '2px 8px',
+                          borderRadius: 9999,
+                          background: 'rgba(30 120 255 / 0.12)',
+                          color: 'var(--accent-primary)',
+                          border: '1px solid rgba(30 120 255 / 0.25)',
+                        }}
+                      >
+                        {task}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )
@@ -318,6 +363,7 @@ export function Investigators() {
   const { visits } = useSiteVisits()
   const { assessments } = useSiteAssessments()
   const { studies } = useStudies()
+  const { logs: delegationLogs } = useSiteDelegationLogs()
   const { role } = useAuth()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
@@ -398,7 +444,7 @@ export function Investigators() {
                   width: '100%', textAlign: 'left', padding: '12px 14px',
                   borderRadius: 10,
                   border: isSelected ? '1px solid var(--accent-primary)' : '1px solid rgba(255 255 255 / 0.08)',
-                  background: isSelected ? 'rgba(114 90 193 / 0.10)' : 'rgba(255 255 255 / 0.03)',
+                  background: isSelected ? 'rgba(30 120 255 / 0.10)' : 'rgba(255 255 255 / 0.03)',
                   cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6,
                 }}
               >
@@ -449,6 +495,7 @@ export function Investigators() {
                   visits={visits}
                   assessments={assessments}
                   studies={studies}
+                  delegationLogs={delegationLogs.filter((l) => l.investigatorId === selectedInv.id)}
                 />
               </Panel>
             </div>

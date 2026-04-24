@@ -18,23 +18,25 @@ import type { ParsedProtocol } from '@/lib/protocolParser'
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** When provided, the study is pre-selected and the selector is hidden */
+  studyId?: string
 }
 
 const selectClass =
   'w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100'
 
-export function ProtocolPdfImportDialog({ open, onOpenChange }: Props) {
+export function ProtocolPdfImportDialog({ open, onOpenChange, studyId: preselectedStudyId }: Props) {
   const { studies } = useStudies()
   const { user } = useAuth()
   const { siteId } = useSite()
 
-  const [selectedStudyId, setSelectedStudyId] = useState<string>('')
+  const [selectedStudyId, setSelectedStudyId] = useState<string>(preselectedStudyId ?? '')
   const [error, setError] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
   const [applying, setApplying] = useState(false)
 
   function reset() {
-    setSelectedStudyId('')
+    setSelectedStudyId(preselectedStudyId ?? '')
     setError(null)
     setSummary(null)
     setApplying(false)
@@ -105,28 +107,37 @@ export function ProtocolPdfImportDialog({ open, onOpenChange }: Props) {
             Select a study, then upload the protocol PDF. The parsed visit schedule and assessment battery will be applied to the study.
           </p>
 
-          <div>
-            <label
-              htmlFor="protocol-study"
-              className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block"
-            >
-              Study
-            </label>
-            <select
-              id="protocol-study"
-              aria-label="Select study"
-              value={selectedStudyId}
-              onChange={(e) => setSelectedStudyId(e.target.value)}
-              className={selectClass}
-            >
-              <option value="">Select a study…</option>
-              {studies.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {preselectedStudyId ? (
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              Study:{' '}
+              <strong style={{ color: 'var(--text-primary)' }}>
+                {studies.find((s) => s.id === preselectedStudyId)?.name ?? preselectedStudyId}
+              </strong>
+            </p>
+          ) : (
+            <div>
+              <label
+                htmlFor="protocol-study"
+                className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block"
+              >
+                Study
+              </label>
+              <select
+                id="protocol-study"
+                aria-label="Select study"
+                value={selectedStudyId}
+                onChange={(e) => setSelectedStudyId(e.target.value)}
+                className={selectClass}
+              >
+                <option value="">Select a study…</option>
+                {studies.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
             <ProtocolUpload onParsed={handleParsed} onError={handleError} />

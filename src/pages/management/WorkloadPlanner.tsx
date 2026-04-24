@@ -8,8 +8,8 @@ import { Skeleton } from '@/components/hud/Skeleton'
 import { EmptyState } from '@/components/hud/EmptyState'
 import { Users } from 'lucide-react'
 
-const BACK_WEEKS = 10
-const AHEAD_WEEKS = 2
+const BACK_WEEKS = 43  // ~10 months
+const AHEAD_WEEKS = 8   // ~2 months
 
 function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -109,7 +109,7 @@ export function WorkloadPlanner() {
           Capacity Planner
         </h1>
         <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
-          10 weeks of actuals · current week · 2 weeks forecast
+          ~10 months of actuals · current week · 2 months forecast
         </p>
       </div>
 
@@ -154,7 +154,7 @@ export function WorkloadPlanner() {
                           color: current ? 'var(--accent-primary)' : isPast ? 'var(--text-muted)' : 'var(--text-label)',
                           fontWeight: current ? 700 : 500,
                           borderBottom: '1px solid rgba(255 255 255 / 0.08)',
-                          borderRight: current ? '2px solid rgba(var(--accent-primary-rgb, 114 90 193) / 0.4)' : undefined,
+                          borderRight: current ? '2px solid rgba(var(--accent-primary-rgb, 30 120 255) / 0.4)' : undefined,
                         }}
                       >
                         {ws.slice(5)}
@@ -187,7 +187,7 @@ export function WorkloadPlanner() {
                           style={{
                             padding: 3,
                             textAlign: 'center',
-                            borderRight: current ? '2px solid rgba(var(--accent-primary-rgb, 114 90 193) / 0.4)' : undefined,
+                            borderRight: current ? '2px solid rgba(var(--accent-primary-rgb, 30 120 255) / 0.4)' : undefined,
                           }}
                         >
                           <span

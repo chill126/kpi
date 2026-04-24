@@ -8,6 +8,7 @@ import { updateUser } from '@/lib/users'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { HUDSelect } from '@/components/hud/HUDSelect'
 import { Skeleton } from '@/components/hud/Skeleton'
 import { Panel } from '@/components/hud/Panel'
 import { EmptyState } from '@/components/hud/EmptyState'
@@ -32,16 +33,6 @@ const TIMEZONES = [
   'Pacific/Honolulu',
 ] as const
 
-const HUD_SELECT_STYLE: React.CSSProperties = {
-  height: 36,
-  background: 'rgba(255 255 255 / 0.06)',
-  border: '1px solid rgba(255 255 255 / 0.12)',
-  borderRadius: 8,
-  color: 'var(--text-primary)',
-  padding: '0 10px',
-  fontSize: 13,
-  width: '100%',
-}
 
 const TILE_DISPLAY: Record<OverviewTileId, { label: string; description: string }> = {
   'capacity': { label: 'Capacity', description: 'Average site utilization this week' },
@@ -136,18 +127,12 @@ function SiteEditDialog({ site, open, onOpenChange }: SiteEditDialogProps) {
 
           <div className="space-y-1">
             <Label htmlFor="edit-site-timezone">Timezone</Label>
-            <select
+            <HUDSelect
               id="edit-site-timezone"
               value={form.timezone}
-              onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-              style={HUD_SELECT_STYLE}
-            >
-              {TIMEZONES.map((tz) => (
-                <option key={tz} value={tz}>
-                  {tz}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setForm({ ...form, timezone: v })}
+              options={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
+            />
           </div>
 
           <div className="flex items-center gap-2">
@@ -192,20 +177,13 @@ function ActiveSiteSelector() {
       <label htmlFor="active-site-select" style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
         Viewing site
       </label>
-      <select
+      <HUDSelect
         id="active-site-select"
         aria-label="Viewing site"
         value={siteId}
-        onChange={(e) => setActiveSite(e.target.value)}
-        className="glass"
-        style={HUD_SELECT_STYLE}
-      >
-        {sites.map((site) => (
-          <option key={site.id} value={site.id}>
-            {site.name}
-          </option>
-        ))}
-      </select>
+        onChange={setActiveSite}
+        options={sites.map((site) => ({ value: site.id, label: site.name }))}
+      />
     </div>
   )
 }
@@ -269,7 +247,7 @@ function SiteConfigurationTab() {
                       <div className="flex items-center gap-2">
                         <span>{site.name}</span>
                         {site.id === activeSiteId && (
-                          <span style={{ fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 99, background: 'rgba(114 90 193 / 0.15)', color: 'var(--accent-primary)', border: '1px solid rgba(114 90 193 / 0.3)' }}>
+                          <span style={{ fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 99, background: 'rgba(30 120 255 / 0.15)', color: 'var(--accent-primary)', border: '1px solid rgba(30 120 255 / 0.3)' }}>
                             current
                           </span>
                         )}
@@ -359,14 +337,12 @@ function AddSiteCard() {
           </div>
           <div className="space-y-1">
             <Label htmlFor="new-site-timezone">Timezone</Label>
-            <select
+            <HUDSelect
               id="new-site-timezone"
               value={form.timezone}
-              onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-              style={HUD_SELECT_STYLE}
-            >
-              {TIMEZONES.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
-            </select>
+              onChange={(v) => setForm({ ...form, timezone: v })}
+              options={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
+            />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => { setOpen(false); setForm(BLANK_SITE_FORM) }}>Cancel</Button>
@@ -453,15 +429,15 @@ function UserEditDialog({
 
           <div className="space-y-1">
             <Label htmlFor="user-role">Role</Label>
-            <select
+            <HUDSelect
               id="user-role"
               value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-              style={HUD_SELECT_STYLE}
-            >
-              <option value="management">management</option>
-              <option value="staff">staff</option>
-            </select>
+              onChange={(v) => setRole(v as Role)}
+              options={[
+                { value: 'management', label: 'management' },
+                { value: 'staff', label: 'staff' },
+              ]}
+            />
           </div>
 
           <div className="space-y-2">
@@ -511,7 +487,7 @@ function UserEditDialog({
 function RoleBadge({ role }: { role: Role }) {
   const style: React.CSSProperties =
     role === 'management'
-      ? { display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 99, background: 'rgba(114 90 193 / 0.15)', color: 'var(--accent-primary)', border: '1px solid rgba(114 90 193 / 0.3)' }
+      ? { display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 99, background: 'rgba(30 120 255 / 0.15)', color: 'var(--accent-primary)', border: '1px solid rgba(30 120 255 / 0.3)' }
       : { display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 99, background: 'rgba(255 255 255 / 0.06)', color: 'var(--text-secondary)', border: '1px solid rgba(255 255 255 / 0.10)' }
   return <span style={style}>{role}</span>
 }

@@ -62,7 +62,7 @@ export function MyStudies() {
                 onClick={() => setActiveStudyId(study.id)}
                 style={
                   (selected?.id ?? myStudies[0]?.id) === study.id
-                    ? { width: '100%', textAlign: 'left', borderRadius: 8, padding: 12, border: '1px solid var(--accent-primary)', background: 'rgba(114 90 193 / 0.10)', cursor: 'pointer' }
+                    ? { width: '100%', textAlign: 'left', borderRadius: 8, padding: 12, border: '1px solid var(--accent-primary)', background: 'rgba(30 120 255 / 0.10)', cursor: 'pointer' }
                     : { width: '100%', textAlign: 'left', borderRadius: 8, padding: 12, border: '1px solid rgba(255 255 255 / 0.08)', background: 'transparent', cursor: 'pointer' }
                 }
               >

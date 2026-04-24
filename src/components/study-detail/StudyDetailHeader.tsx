@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { StudyStatusToggle } from '@/components/studies/StudyStatusToggle'
 import { StudyCloneButton } from '@/components/studies/StudyCloneButton'
 import { StudyForm } from '@/components/studies/StudyForm'
-import { Progress } from '@/components/ui/progress'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { useSite } from '@/hooks/useSite'
 import type { Investigator, Study } from '@/types'
@@ -23,64 +23,71 @@ export function StudyDetailHeader({ study, investigators }: Props) {
 
   const pi = investigators.find((i) => i.id === study.piId)
   const enrolled = study.enrollmentData?.randomizations ?? 0
-  const pct =
-    study.targetEnrollment > 0 ? Math.round((enrolled / study.targetEnrollment) * 100) : 0
+  const pct = study.targetEnrollment > 0 ? Math.round((enrolled / study.targetEnrollment) * 100) : 0
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6 space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{study.name}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {study.sponsor}
-            {study.sponsorProtocolId ? ` · ${study.sponsorProtocolId}` : ''}
+    <div className="glass" style={{ borderRadius: 14, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+              {study.name}
+            </h1>
+            <StatusBadge status={study.status} />
+          </div>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
+            {study.sponsor}{study.sponsorProtocolId ? ` · ${study.sponsorProtocolId}` : ''}
           </p>
         </div>
 
         {role === 'management' && user && (
-          <div className="flex items-center gap-2 shrink-0">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <StudyStatusToggle study={study} currentUser={user} />
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
               <Pencil size={14} className="mr-1.5" aria-hidden="true" />
               Edit
             </Button>
-            <StudyCloneButton
-              study={study}
-              onCloned={(id) => navigate(`/studies/${id}`)}
-            />
+            <StudyCloneButton study={study} onCloned={(id) => navigate(`/studies/${id}`)} />
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-        <div>
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Phase</p>
-          <p className="mt-0.5 text-slate-700 dark:text-slate-200">{study.phase}</p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Area</p>
-          <p className="mt-0.5 text-slate-700 dark:text-slate-200">{study.therapeuticArea}</p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">PI</p>
-          <p className="mt-0.5 text-slate-700 dark:text-slate-200">{pi?.name ?? '—'}</p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Dates</p>
-          <p className="mt-0.5 text-slate-700 dark:text-slate-200">
-            {study.startDate || '—'} → {study.expectedEndDate || '—'}
-          </p>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        {[
+          { label: 'Phase',      value: study.phase },
+          { label: 'Indication', value: study.therapeuticArea },
+          { label: 'PI',         value: pi?.name ?? '—' },
+          { label: 'Dates',      value: `${study.startDate || '—'} → ${study.expectedEndDate || '—'}` },
+        ].map(({ label, value }) => (
+          <div key={label}>
+            <div style={{ fontSize: 10.5, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-label)', marginBottom: 2 }}>
+              {label}
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{value}</div>
+          </div>
+        ))}
       </div>
 
-      <div className="space-y-1">
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>Enrollment</span>
-          <span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 10.5, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-label)' }}>
+            Enrollment
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
             {enrolled} / {study.targetEnrollment} ({pct}%)
           </span>
         </div>
-        <Progress value={pct} className="h-2" />
+        <div style={{ height: 6, background: 'rgba(255 255 255 / 0.08)', borderRadius: 9999, overflow: 'hidden' }}>
+          <div
+            style={{
+              height: '100%',
+              width: `${Math.min(pct, 100)}%`,
+              borderRadius: 9999,
+              background: pct >= 100 ? 'var(--signal-good)' : pct >= 75 ? 'var(--signal-warn)' : 'var(--accent-primary)',
+              transition: 'width 0.3s ease',
+            }}
+          />
+        </div>
       </div>
 
       {role === 'management' && user && (

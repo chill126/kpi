@@ -7,7 +7,6 @@ import { StudyTable } from '@/components/studies/StudyTable'
 import { StudyFilters, type StudyFilterState } from '@/components/studies/StudyFilters'
 import { StudyForm } from '@/components/studies/StudyForm'
 import { StudyComparison } from '@/components/studies/StudyComparison'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/hud/Skeleton'
 import { Plus, GitCompareArrows } from 'lucide-react'
 
@@ -35,20 +34,41 @@ export function Studies() {
             {studies.length} {studies.length === 1 ? 'study' : 'studies'} at this site
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {selectedIds.length === 2 && (
-            <Button variant="outline" size="sm" onClick={() => setCompareOpen(true)}>
-              <GitCompareArrows size={14} className="mr-1.5" aria-hidden="true" />
+            <button
+              onClick={() => setCompareOpen(true)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                height: 34, padding: '0 12px', borderRadius: 8,
+                background: 'rgba(255 255 255 / 0.06)',
+                border: '1px solid rgba(255 255 255 / 0.14)',
+                color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255 255 255 / 0.10)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255 255 255 / 0.06)' }}
+            >
+              <GitCompareArrows size={14} aria-hidden="true" />
               Compare
-            </Button>
+            </button>
           )}
-          <Button
+          <button
             onClick={() => setFormOpen(true)}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              height: 34, padding: '0 14px', borderRadius: 8,
+              background: 'var(--accent-primary)',
+              border: 'none',
+              color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
           >
-            <Plus size={16} className="mr-1.5" aria-hidden="true" />
+            <Plus size={15} aria-hidden="true" />
             Add Study
-          </Button>
+          </button>
         </div>
       </div>
 

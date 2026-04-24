@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  AreaChart, Area, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine, Legend,
 } from 'recharts'
 import { FORECAST_CONFIG } from '@/lib/forecast-config'
@@ -11,6 +13,8 @@ interface Props {
   investigators: Investigator[]
   onSave: () => void
   saving: boolean
+  sensitivityUp?: SimulationResult | null
+  sensitivityDown?: SimulationResult | null
 }
 
 const COLORS = ['#818cf8', '#34d399', '#fbbf24', '#f472b6', '#22d3ee']
@@ -30,7 +34,9 @@ function VerdictBadge({ verdict }: { verdict: FeasibilityVerdict }) {
   )
 }
 
-export function SimulationOutput({ result, investigators, onSave, saving }: Props) {
+export function SimulationOutput({ result, investigators, onSave, saving, sensitivityUp, sensitivityDown }: Props) {
+  const [showSensitivity, setShowSensitivity] = useState(false)
+
   if (!result) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 256, fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '0 24px' }}>
@@ -41,11 +47,18 @@ export function SimulationOutput({ result, investigators, onSave, saving }: Prop
 
   const invMap = Object.fromEntries(investigators.map((i) => [i.id, i]))
 
+  const hasSensitivity = Boolean(sensitivityUp && sensitivityDown)
+
+  // Build chart data — base always included, sensitivity lines included when toggled on
   const chartData = Array.from({ length: FORECAST_CONFIG.SIMULATOR_WEEKS }, (_, w) => {
     const entry: Record<string, string | number> = { week: `W${w + 1}` }
     for (const [invId, simResult] of Object.entries(result.byInvestigator)) {
       const name = invMap[invId]?.name ?? invId
       entry[name] = simResult.weeklyUtilizationPct[w] ?? 0
+      if (showSensitivity && sensitivityUp && sensitivityDown) {
+        entry[`${name} +20%`] = sensitivityUp.byInvestigator[invId]?.weeklyUtilizationPct[w] ?? 0
+        entry[`${name} -20%`] = sensitivityDown.byInvestigator[invId]?.weeklyUtilizationPct[w] ?? 0
+      }
     }
     return entry
   })
@@ -88,36 +101,109 @@ export function SimulationOutput({ result, investigators, onSave, saving }: Prop
 
       {/* Utilization chart */}
       <div style={{ borderRadius: 8, border: '1px solid rgba(255 255 255 / 0.08)', padding: 16 }}>
-        <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-          {FORECAST_CONFIG.SIMULATOR_WEEKS}-week utilization projection
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+            {FORECAST_CONFIG.SIMULATOR_WEEKS}-week utilization projection
+          </p>
+          {hasSensitivity && (
+            <button
+              onClick={() => setShowSensitivity((v) => !v)}
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                padding: '3px 10px',
+                borderRadius: 6,
+                border: `1px solid ${showSensitivity ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.12)'}`,
+                background: showSensitivity ? 'rgba(99,102,241,0.15)' : 'transparent',
+                color: showSensitivity ? '#818cf8' : 'var(--text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              {showSensitivity ? 'Hide sensitivity' : 'Show sensitivity (±20%)'}
+            </button>
+          )}
+        </div>
+
         <ResponsiveContainer width="100%" height={220}>
-          <AreaChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-            <XAxis dataKey="week" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)' }} interval={3} />
-            <YAxis unit="%" domain={[0, 110]} tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.4)' }} />
-            <Tooltip
-              contentStyle={{ background: 'rgba(12,12,28,0.95)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, fontSize: 12 }}
-              formatter={(v) => [`${Number(v)}%`, '']}
-            />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <ReferenceLine y={FORECAST_CONFIG.WARNING_THRESHOLD_PCT} stroke="rgba(217,119,6,0.6)" strokeDasharray="4 2" />
-            <ReferenceLine y={FORECAST_CONFIG.CRITICAL_THRESHOLD_PCT} stroke="rgba(220,38,38,0.6)" strokeDasharray="4 2" />
-            {Object.keys(result.byInvestigator).map((invId, idx) => {
-              const name = invMap[invId]?.name ?? invId
-              return (
-                <Area
-                  key={invId}
-                  type="monotone"
-                  dataKey={name}
-                  stroke={COLORS[idx % COLORS.length]}
-                  fill={COLORS[idx % COLORS.length]}
-                  fillOpacity={0.08}
-                  strokeWidth={2}
-                />
-              )
-            })}
-          </AreaChart>
+          {showSensitivity ? (
+            <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <XAxis dataKey="week" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)' }} interval={3} />
+              <YAxis unit="%" domain={[0, 110]} tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.4)' }} />
+              <Tooltip
+                contentStyle={{ background: 'rgba(12,12,28,0.95)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, fontSize: 12 }}
+                formatter={(v) => [`${Number(v)}%`, '']}
+              />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <ReferenceLine y={FORECAST_CONFIG.WARNING_THRESHOLD_PCT} stroke="rgba(217,119,6,0.6)" strokeDasharray="4 2" />
+              <ReferenceLine y={FORECAST_CONFIG.CRITICAL_THRESHOLD_PCT} stroke="rgba(220,38,38,0.6)" strokeDasharray="4 2" />
+              {Object.keys(result.byInvestigator).map((invId, idx) => {
+                const name = invMap[invId]?.name ?? invId
+                const color = COLORS[idx % COLORS.length]
+                return [
+                  <Line
+                    key={`${invId}-base`}
+                    type="monotone"
+                    dataKey={name}
+                    stroke={color}
+                    strokeWidth={2}
+                    dot={false}
+                    name={name}
+                  />,
+                  <Line
+                    key={`${invId}-up`}
+                    type="monotone"
+                    dataKey={`${name} +20%`}
+                    stroke={color}
+                    strokeWidth={1}
+                    strokeDasharray="5 3"
+                    dot={false}
+                    name={`${name} +20%`}
+                    opacity={0.55}
+                  />,
+                  <Line
+                    key={`${invId}-down`}
+                    type="monotone"
+                    dataKey={`${name} -20%`}
+                    stroke={color}
+                    strokeWidth={1}
+                    strokeDasharray="5 3"
+                    dot={false}
+                    name={`${name} -20%`}
+                    opacity={0.55}
+                  />,
+                ]
+              })}
+            </LineChart>
+          ) : (
+            <AreaChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <XAxis dataKey="week" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)' }} interval={3} />
+              <YAxis unit="%" domain={[0, 110]} tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.4)' }} />
+              <Tooltip
+                contentStyle={{ background: 'rgba(12,12,28,0.95)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, fontSize: 12 }}
+                formatter={(v) => [`${Number(v)}%`, '']}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <ReferenceLine y={FORECAST_CONFIG.WARNING_THRESHOLD_PCT} stroke="rgba(217,119,6,0.6)" strokeDasharray="4 2" />
+              <ReferenceLine y={FORECAST_CONFIG.CRITICAL_THRESHOLD_PCT} stroke="rgba(220,38,38,0.6)" strokeDasharray="4 2" />
+              {Object.keys(result.byInvestigator).map((invId, idx) => {
+                const name = invMap[invId]?.name ?? invId
+                return (
+                  <Area
+                    key={invId}
+                    type="monotone"
+                    dataKey={name}
+                    stroke={COLORS[idx % COLORS.length]}
+                    fill={COLORS[idx % COLORS.length]}
+                    fillOpacity={0.08}
+                    strokeWidth={2}
+                  />
+                )
+              })}
+            </AreaChart>
+          )}
         </ResponsiveContainer>
       </div>
 

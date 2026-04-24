@@ -4,46 +4,77 @@ interface Props {
   status: StudyStatus | string | null | undefined
 }
 
-const STATUS_CONFIG: Record<StudyStatus, { label: string; className: string }> = {
+const STATUS_CONFIG: Record<StudyStatus, { label: string; style: React.CSSProperties }> = {
   pending: {
     label: 'Pending',
-    className: 'bg-purple-50 text-purple-700 border border-purple-200',
+    style: {
+      background: 'rgba(30 120 255 / 0.15)',
+      color: 'var(--accent-primary)',
+      border: '1px solid rgba(30 120 255 / 0.3)',
+    },
   },
   enrolling: {
     label: 'Enrolling',
-    className: 'bg-green-50 text-green-700 border border-green-200',
+    style: {
+      background: 'rgba(52 211 153 / 0.15)',
+      color: 'var(--signal-good)',
+      border: '1px solid rgba(52 211 153 / 0.3)',
+    },
   },
   paused: {
     label: 'Paused',
-    className: 'bg-amber-50 text-amber-700 border border-amber-200',
+    style: {
+      background: 'rgba(245 158 11 / 0.15)',
+      color: 'var(--signal-warn)',
+      border: '1px solid rgba(245 158 11 / 0.3)',
+    },
   },
   open: {
     label: 'Open',
-    className: 'bg-blue-50 text-blue-700 border border-blue-200',
+    style: {
+      background: 'rgba(99 149 255 / 0.15)',
+      color: 'var(--accent-info)',
+      border: '1px solid rgba(99 149 255 / 0.3)',
+    },
   },
   completed: {
     label: 'Completed',
-    className: 'bg-slate-100 text-slate-600 border border-slate-200',
+    style: {
+      background: 'rgba(255 255 255 / 0.06)',
+      color: 'var(--text-muted)',
+      border: '1px solid rgba(255 255 255 / 0.10)',
+    },
   },
 }
 
-const UNKNOWN_CONFIG = {
-  label: 'Unknown',
-  className: 'bg-slate-100 text-slate-500 border border-slate-200',
+const UNKNOWN_STYLE: React.CSSProperties = {
+  background: 'rgba(255 255 255 / 0.06)',
+  color: 'var(--text-muted)',
+  border: '1px solid rgba(255 255 255 / 0.10)',
 }
 
 function labelForUnknown(raw: unknown): string {
-  if (typeof raw !== 'string' || raw.length === 0) return UNKNOWN_CONFIG.label
-  return raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  if (typeof raw !== 'string' || raw.length === 0) return 'Unknown'
+  return raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 export function StatusBadge({ status }: Props) {
   const config = (status && STATUS_CONFIG[status as StudyStatus]) || {
     label: labelForUnknown(status),
-    className: UNKNOWN_CONFIG.className,
+    style: UNKNOWN_STYLE,
   }
   return (
-    <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${config.className}`}>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        fontSize: 11,
+        fontWeight: 500,
+        padding: '2px 8px',
+        borderRadius: 9999,
+        ...config.style,
+      }}
+    >
       {config.label}
     </span>
   )

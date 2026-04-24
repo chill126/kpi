@@ -147,7 +147,7 @@ describe('SiteSummaryTab', () => {
     expect(screen.queryByText(/no deviations recorded/i)).not.toBeInTheDocument()
     // Status summary row should appear (getAllByText handles the Tile label + row span match)
     expect(screen.getAllByText(/open/i).length).toBeGreaterThan(0)
-    expect(screen.getByText(/pi_reviewed/i)).toBeInTheDocument()
+    expect(screen.getByText(/PI Reviewed/i)).toBeInTheDocument()
     expect(screen.getByText(/closed/i)).toBeInTheDocument()
   })
 })

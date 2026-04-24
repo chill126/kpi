@@ -582,9 +582,9 @@ export function Operations() {
                       <td style={{ padding: '8px 12px 8px 0' }}>
                         <span style={{
                           fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 99,
-                          background: entry.type === 'Visit' ? 'rgba(114 90 193 / 0.15)' : 'rgba(22 163 74 / 0.12)',
+                          background: entry.type === 'Visit' ? 'rgba(30 120 255 / 0.15)' : 'rgba(22 163 74 / 0.12)',
                           color: entry.type === 'Visit' ? 'var(--accent-primary)' : 'var(--signal-good)',
-                          border: entry.type === 'Visit' ? '1px solid rgba(114 90 193 / 0.3)' : '1px solid rgba(22 163 74 / 0.25)',
+                          border: entry.type === 'Visit' ? '1px solid rgba(30 120 255 / 0.3)' : '1px solid rgba(22 163 74 / 0.25)',
                         }}>
                           {entry.type}
                         </span>

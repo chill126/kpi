@@ -1,66 +1,109 @@
 import { useState } from 'react'
+import { Select as RadixSelect } from 'radix-ui'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { Investigator, Study, StudyStatus } from '@/types'
-import { StatusBadge } from '@/components/shared/StatusBadge'
 import { updateStudyStatus } from '@/lib/studies'
 import { useAuth } from '@/hooks/useAuth'
 import type { StudyFilterState } from './StudyFilters'
 
 const STATUS_OPTIONS: StudyStatus[] = ['pending', 'enrolling', 'paused', 'open', 'completed']
 
-const STATUS_SELECT_STYLE: Record<StudyStatus, React.CSSProperties> = {
-  pending:   { color: '#7c3aed', background: 'rgba(139 92 246 / 0.10)', border: '1px solid rgba(139 92 246 / 0.25)' },
-  enrolling: { color: '#15803d', background: 'rgba(22 163 74 / 0.10)',  border: '1px solid rgba(22 163 74 / 0.25)' },
-  paused:    { color: '#b45309', background: 'rgba(217 119 6 / 0.10)',  border: '1px solid rgba(217 119 6 / 0.25)' },
-  open:      { color: '#1d4ed8', background: 'rgba(59 130 246 / 0.10)', border: '1px solid rgba(59 130 246 / 0.25)' },
-  completed: { color: '#64748b', background: 'rgba(100 116 139 / 0.10)', border: '1px solid rgba(100 116 139 / 0.20)' },
+const STATUS_STYLES: Record<StudyStatus, React.CSSProperties> = {
+  pending:   { background: 'rgba(30 120 255 / 0.15)', color: 'var(--accent-primary)', border: '1px solid rgba(30 120 255 / 0.3)' },
+  enrolling: { background: 'rgba(52 211 153 / 0.15)', color: 'var(--signal-good)',     border: '1px solid rgba(52 211 153 / 0.3)' },
+  paused:    { background: 'rgba(245 158 11 / 0.15)',  color: 'var(--signal-warn)',     border: '1px solid rgba(245 158 11 / 0.3)' },
+  open:      { background: 'rgba(99 149 255 / 0.15)',  color: 'var(--accent-info)',     border: '1px solid rgba(99 149 255 / 0.3)' },
+  completed: { background: 'rgba(255 255 255 / 0.06)', color: 'var(--text-muted)',      border: '1px solid rgba(255 255 255 / 0.10)' },
 }
 
-function InlineStatusSelect({ study }: { study: Study }) {
+const STATUS_LABELS: Record<StudyStatus, string> = {
+  pending: 'Pending', enrolling: 'Enrolling', paused: 'Paused', open: 'Open', completed: 'Completed',
+}
+
+function StudyStatusPill({ study }: { study: Study }) {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
+  const canEdit = user?.role === 'management'
+  const style = STATUS_STYLES[study.status as StudyStatus] ?? STATUS_STYLES.completed
+  const label = STATUS_LABELS[study.status as StudyStatus] ?? study.status
 
-  if (!user || user.role !== 'management') {
-    return <StatusBadge status={study.status} />
-  }
-
-  async function handleChange(next: StudyStatus) {
-    if (next === study.status || saving) return
+  async function handleChange(next: string) {
+    if (next === study.status || saving || !user) return
     setSaving(true)
     try {
-      await updateStudyStatus(study.id, next, user!.uid)
+      await updateStudyStatus(study.id, next as StudyStatus, user.uid)
     } finally {
       setSaving(false)
     }
   }
 
-  const style = STATUS_SELECT_STYLE[study.status as StudyStatus] ?? STATUS_SELECT_STYLE.completed
+  if (!canEdit) {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 9999, ...style }}>
+        {label}
+      </span>
+    )
+  }
 
   return (
-    <select
-      value={study.status}
-      disabled={saving}
-      onChange={(e) => void handleChange(e.target.value as StudyStatus)}
-      aria-label={`Status for ${study.name}`}
-      style={{
-        ...style,
-        fontSize: 11,
-        fontWeight: 500,
-        padding: '2px 6px',
-        borderRadius: 9999,
-        cursor: 'pointer',
-        outline: 'none',
-        appearance: 'none',
-        WebkitAppearance: 'none',
-        opacity: saving ? 0.6 : 1,
-      }}
-    >
-      {STATUS_OPTIONS.map((s) => (
-        <option key={s} value={s}>
-          {s.charAt(0).toUpperCase() + s.slice(1)}
-        </option>
-      ))}
-    </select>
+    <RadixSelect.Root value={study.status} onValueChange={(v) => void handleChange(v)} disabled={saving}>
+      <RadixSelect.Trigger
+        aria-label={`Status for ${study.name}`}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          fontSize: 11, fontWeight: 500, padding: '2px 6px 2px 8px',
+          borderRadius: 9999, cursor: 'pointer', outline: 'none',
+          opacity: saving ? 0.6 : 1, fontFamily: 'inherit',
+          ...style,
+        }}
+      >
+        <RadixSelect.Value>{label}</RadixSelect.Value>
+        <RadixSelect.Icon style={{ display: 'flex' }}>
+          <ChevronDown size={10} />
+        </RadixSelect.Icon>
+      </RadixSelect.Trigger>
+      <RadixSelect.Portal>
+        <RadixSelect.Content
+          position="popper"
+          sideOffset={4}
+          style={{
+            zIndex: 60, minWidth: 140,
+            background: 'oklch(0.13 0.020 275)',
+            border: '1px solid rgba(255 255 255 / 0.12)',
+            borderRadius: 10,
+            boxShadow: '0 8px 32px rgba(0 0 0 / 0.5)',
+            overflow: 'hidden',
+          }}
+        >
+          <RadixSelect.Viewport style={{ padding: 4 }}>
+            {STATUS_OPTIONS.map((s) => (
+              <RadixSelect.Item
+                key={s}
+                value={s}
+                data-hud-select-item=""
+                style={{
+                  display: 'flex', alignItems: 'center',
+                  padding: '8px 10px', borderRadius: 6,
+                  fontSize: 13, color: 'var(--text-primary)',
+                  cursor: 'pointer', outline: 'none', userSelect: 'none',
+                }}
+              >
+                <RadixSelect.ItemText>{STATUS_LABELS[s]}</RadixSelect.ItemText>
+              </RadixSelect.Item>
+            ))}
+          </RadixSelect.Viewport>
+        </RadixSelect.Content>
+      </RadixSelect.Portal>
+    </RadixSelect.Root>
   )
+}
+
+function applyFilters(studies: Study[], filters: StudyFilterState): Study[] {
+  return studies.filter((s) => {
+    if (filters.status !== 'all' && s.status !== filters.status) return false
+    if (filters.therapeuticArea && !s.therapeuticArea.toLowerCase().includes(filters.therapeuticArea.toLowerCase())) return false
+    return true
+  })
 }
 
 interface Props {
@@ -72,26 +115,7 @@ interface Props {
   onViewDetail: (studyId: string) => void
 }
 
-function applyFilters(studies: Study[], filters: StudyFilterState): Study[] {
-  return studies.filter((s) => {
-    if (filters.status !== 'all' && s.status !== filters.status) return false
-    if (
-      filters.therapeuticArea &&
-      !s.therapeuticArea.toLowerCase().includes(filters.therapeuticArea.toLowerCase())
-    )
-      return false
-    return true
-  })
-}
-
-export function StudyTable({
-  studies,
-  investigators,
-  filters,
-  selectedIds,
-  onSelectChange,
-  onViewDetail,
-}: Props) {
+export function StudyTable({ studies, investigators, filters, selectedIds, onSelectChange, onViewDetail }: Props) {
   const invMap = Object.fromEntries(investigators.map((i) => [i.id, i]))
   const filtered = applyFilters(studies, filters)
 
@@ -103,96 +127,105 @@ export function StudyTable({
     }
   }
 
-  return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-      <table className="w-full text-sm">
-        <thead className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-          <tr>
-            <th className="w-10 px-4 py-3 text-left">
-              <span className="sr-only">Select</span>
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Study
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Sponsor
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Status
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Area
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Phase
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-              PI
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Enrolled
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-          {filtered.length === 0 && (
-            <tr>
-              <td colSpan={8} className="px-4 py-8 text-center text-slate-400 text-sm">
-                No studies match the current filters.
-              </td>
-            </tr>
-          )}
-          {filtered.map((study) => {
-            const pi = invMap[study.piId]
-            const enrolled = study.enrollmentData?.randomizations ?? 0
-            const pct =
-              study.targetEnrollment > 0
-                ? Math.round((enrolled / study.targetEnrollment) * 100)
-                : 0
-            const isSelected = selectedIds.includes(study.id)
+  if (filtered.length === 0) {
+    return (
+      <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+        No studies match the current filters.
+      </div>
+    )
+  }
 
-            return (
-              <tr
-                key={study.id}
-                className={`hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${isSelected ? 'bg-teal-50 dark:bg-teal-900/20' : ''}`}
-              >
-                <td className="px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleSelect(study.id)}
-                    aria-label={`Select ${study.name}`}
-                    className="rounded border-slate-300"
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {filtered.map((study) => {
+        const pi = invMap[study.piId]
+        const enrolled = study.enrollmentData?.randomizations ?? 0
+        const pct = study.targetEnrollment > 0 ? Math.round((enrolled / study.targetEnrollment) * 100) : 0
+        const isSelected = selectedIds.includes(study.id)
+
+        return (
+          <div
+            key={study.id}
+            className="glass"
+            style={{
+              borderRadius: 12,
+              padding: '14px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              outline: isSelected ? '2px solid var(--accent-primary)' : undefined,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => toggleSelect(study.id)}
+              aria-label={`Select ${study.name}`}
+              style={{ width: 16, height: 16, accentColor: 'var(--accent-primary)', flexShrink: 0, cursor: 'pointer' }}
+            />
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => onViewDetail(study.id)}
+                  style={{
+                    background: 'none', border: 'none', padding: 0,
+                    fontSize: 14, fontWeight: 600, color: 'var(--text-primary)',
+                    cursor: 'pointer', textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent-primary)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
+                >
+                  {study.name}
+                </button>
+                <StudyStatusPill study={study} />
+              </div>
+
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                <span>{study.sponsor}</span>
+                {study.sponsorProtocolId && <> · <span>{study.sponsorProtocolId}</span></>}
+                {study.phase && <> · <span>{study.phase}</span></>}
+                {study.therapeuticArea && <> · <span>{study.therapeuticArea}</span></>}
+                {pi && <> · PI: <span>{pi.name}</span></>}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ flex: 1, maxWidth: 200, height: 4, background: 'rgba(255 255 255 / 0.08)', borderRadius: 9999, overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${Math.min(pct, 100)}%`,
+                      borderRadius: 9999,
+                      background: pct >= 100 ? 'var(--signal-good)' : pct >= 75 ? 'var(--signal-warn)' : 'var(--accent-primary)',
+                    }}
                   />
-                </td>
-                <td className="px-4 py-3">
-                  <button
-                    onClick={() => onViewDetail(study.id)}
-                    className="font-medium text-slate-900 dark:text-slate-100 hover:text-teal-600 dark:hover:text-teal-400 text-left"
-                  >
-                    {study.name}
-                  </button>
-                </td>
-                <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{study.sponsor}</td>
-                <td className="px-4 py-3">
-                  <InlineStatusSelect study={study} />
-                </td>
-                <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                  {study.therapeuticArea}
-                </td>
-                <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{study.phase}</td>
-                <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                  {pi?.name ?? '—'}
-                </td>
-                <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-700 dark:text-slate-300">
-                  {`${enrolled}/${study.targetEnrollment} `}
-                  <span className="text-slate-400 text-xs">{`${pct}%`}</span>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+                </div>
+                <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                  {enrolled}/{study.targetEnrollment}{' '}
+                  <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>{pct}%</span>
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => onViewDetail(study.id)}
+              aria-label={`View ${study.name}`}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '6px 12px', borderRadius: 8,
+                background: 'rgba(255 255 255 / 0.06)',
+                border: '1px solid rgba(255 255 255 / 0.10)',
+                color: 'var(--text-secondary)', fontSize: 12,
+                cursor: 'pointer', flexShrink: 0,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255 255 255 / 0.10)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255 255 255 / 0.06)' }}
+            >
+              View <ChevronRight size={14} />
+            </button>
+          </div>
+        )
+      })}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { Label } from '@/components/ui/label'
+import { HUDSelect } from '@/components/hud/HUDSelect'
 import type { StudyStatus } from '@/types'
 
 export interface StudyFilterState {
@@ -33,47 +33,48 @@ const INDICATION_OPTIONS = [
 
 export function StudyFilters({ filters, onChange }: Props) {
   return (
-    <div className="flex flex-wrap gap-3 items-end">
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="filter-status" className="text-xs font-medium text-slate-500">
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-label)' }}>
           Status
-        </Label>
-        <select
-          id="filter-status"
-          aria-label="Status"
-          value={filters.status}
-          onChange={(e) => onChange({ ...filters, status: e.target.value as StudyFilterState['status'] })}
-          className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
-        >
-          {STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        </span>
+        <div style={{ width: 160 }}>
+          <HUDSelect
+            id="filter-status"
+            aria-label="Status"
+            value={filters.status}
+            onChange={(v) => onChange({ ...filters, status: v as StudyFilterState['status'] })}
+            options={STATUS_OPTIONS}
+          />
+        </div>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="filter-area" className="text-xs font-medium text-slate-500">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-label)' }}>
           Indication
-        </Label>
-        <select
-          id="filter-area"
-          aria-label="Therapeutic Area"
-          value={filters.therapeuticArea}
-          onChange={(e) => onChange({ ...filters, therapeuticArea: e.target.value })}
-          className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
-        >
-          {INDICATION_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+        </span>
+        <div style={{ width: 180 }}>
+          <HUDSelect
+            id="filter-area"
+            aria-label="Therapeutic Area"
+            value={filters.therapeuticArea}
+            onChange={(v) => onChange({ ...filters, therapeuticArea: v })}
+            options={INDICATION_OPTIONS}
+          />
+        </div>
       </div>
 
       {(filters.status !== 'all' || filters.therapeuticArea) && (
         <button
           onClick={() => onChange({ status: 'all', therapeuticArea: '' })}
-          className="h-9 px-3 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline"
+          style={{
+            height: 36, padding: '0 12px',
+            background: 'none', border: 'none',
+            color: 'var(--text-muted)', fontSize: 13,
+            cursor: 'pointer', textDecoration: 'underline',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)' }}
         >
           Clear filters
         </button>

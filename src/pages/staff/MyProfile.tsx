@@ -20,9 +20,9 @@ function RoleBadge({ role }: { role: Role }) {
           fontWeight: 500,
           padding: '3px 10px',
           borderRadius: 99,
-          background: 'rgba(114 90 193 / 0.15)',
+          background: 'rgba(30 120 255 / 0.15)',
           color: 'var(--accent-primary)',
-          border: '1px solid rgba(114 90 193 / 0.3)',
+          border: '1px solid rgba(30 120 255 / 0.3)',
         }
       : {
           display: 'inline-flex',

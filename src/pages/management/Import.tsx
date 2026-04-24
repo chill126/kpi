@@ -10,12 +10,14 @@ import { AdvarraImportDialog } from '@/components/imports/AdvarraImportDialog'
 import { EnrollmentSnapshotImportDialog } from '@/components/imports/EnrollmentSnapshotImportDialog'
 import { ProtocolPdfImportDialog } from '@/components/imports/ProtocolPdfImportDialog'
 import { K2BoardImportDialog } from '@/components/imports/K2BoardImportDialog'
+import { EnrollmentDataImportDialog } from '@/components/imports/EnrollmentDataImportDialog'
 import type { Import as ImportRecord } from '@/types'
 
 type DialogKey =
   | 'clinical_conductor'
   | 'advarra_ereg'
   | 'enrollment_snapshot'
+  | 'enrollment_data_update'
   | 'protocol_pdf'
   | 'k2_board_export'
   | null
@@ -41,9 +43,15 @@ const CARDS: CardConfig[] = [
     icon: FileSpreadsheet,
   },
   {
+    key: 'enrollment_data_update',
+    title: 'Enrollment Numbers',
+    description: 'Update study enrollment counts (prescreens, screens, randomizations, active, completions) from a spreadsheet.',
+    icon: FileSpreadsheet,
+  },
+  {
     key: 'enrollment_snapshot',
     title: 'Enrollment Snapshots',
-    description: 'Import historical enrollment snapshots for a study.',
+    description: 'Import historical enrollment snapshots for burndown charts.',
     icon: FileSpreadsheet,
   },
   {
@@ -63,6 +71,7 @@ const CARDS: CardConfig[] = [
 const TYPE_LABELS: Record<ImportRecord['type'], string> = {
   clinical_conductor: 'Clinical Conductor',
   advarra_ereg: 'Advarra e-Reg',
+  enrollment_data_update: 'Enrollment Numbers',
   enrollment_snapshot: 'Enrollment Snapshots',
   protocol_pdf: 'Protocol PDF',
   k2_board_export: 'k2 Board Session',
@@ -144,7 +153,7 @@ export function Import() {
             style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}
           >
             <div className="flex items-start gap-3">
-              <div style={{ borderRadius: 8, background: 'rgba(114 90 193 / 0.15)', padding: 8, color: 'var(--accent-primary)' }}>
+              <div style={{ borderRadius: 8, background: 'rgba(30 120 255 / 0.15)', padding: 8, color: 'var(--accent-primary)' }}>
                 <Icon size={20} aria-hidden="true" />
               </div>
               <div className="min-w-0">
@@ -239,6 +248,10 @@ export function Import() {
       <K2BoardImportDialog
         open={openDialog === 'k2_board_export'}
         onOpenChange={(next) => setOpenDialog(next ? 'k2_board_export' : null)}
+      />
+      <EnrollmentDataImportDialog
+        open={openDialog === 'enrollment_data_update'}
+        onOpenChange={(next) => setOpenDialog(next ? 'enrollment_data_update' : null)}
       />
     </div>
   )

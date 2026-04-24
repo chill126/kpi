@@ -1,9 +1,9 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStudy } from '@/hooks/useStudy'
 import { useInvestigators } from '@/hooks/useInvestigators'
 import { useAuth } from '@/hooks/useAuth'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { HUDTabBar } from '@/components/hud/TabBar'
 import { StudyDetailHeader } from '@/components/study-detail/StudyDetailHeader'
 import { VisitScheduleTab } from '@/components/study-detail/VisitScheduleTab'
 import { AssessmentBatteryTab } from '@/components/study-detail/AssessmentBatteryTab'
@@ -12,7 +12,20 @@ import { EnrollmentTab } from '@/components/study-detail/EnrollmentTab'
 import { DelegationLogTab } from '@/components/study-detail/DelegationLogTab'
 import { ContractTab } from '@/components/study-detail/ContractTab'
 import { DeviationsTab } from '@/components/study-detail/DeviationsTab'
+import { ProtocolTab } from '@/components/study-detail/ProtocolTab'
 import { ChevronLeft } from 'lucide-react'
+
+const BASE_TABS = [
+  { value: 'visit-schedule',     label: 'Visit Schedule' },
+  { value: 'assessment-battery', label: 'Assessments' },
+  { value: 'protocol',           label: 'Protocol' },
+  { value: 'investigators',      label: 'Investigators' },
+  { value: 'enrollment',         label: 'Enrollment' },
+  { value: 'delegation-log',     label: 'Delegation Log' },
+  { value: 'deviations',         label: 'Deviations' },
+]
+
+const CONTRACT_TAB = { value: 'contract', label: 'Contract' }
 
 export function StudyDetail() {
   const { id } = useParams<{ id: string }>()
@@ -20,8 +33,10 @@ export function StudyDetail() {
   const { study, loading } = useStudy(id ?? '')
   const { investigators } = useInvestigators()
   const { role } = useAuth()
+  const [activeTab, setActiveTab] = useState('visit-schedule')
 
   const canEdit = role === 'management'
+  const tabs = canEdit ? [...BASE_TABS, CONTRACT_TAB] : BASE_TABS
 
   if (loading) {
     return (
@@ -50,70 +65,37 @@ export function StudyDetail() {
   }
 
   return (
-    <div className="space-y-6">
-      <Button
-        variant="ghost"
-        size="sm"
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <button
         onClick={() => navigate('/studies')}
-        className="text-slate-500 hover:text-slate-700 -ml-2"
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          background: 'none', border: 'none', padding: 0,
+          fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer',
+          alignSelf: 'flex-start',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
       >
-        <ChevronLeft size={16} aria-hidden="true" className="mr-1" />
+        <ChevronLeft size={14} aria-hidden="true" />
         Studies
-      </Button>
+      </button>
 
       <StudyDetailHeader study={study} investigators={investigators} />
 
-      <Tabs defaultValue="visit-schedule">
-        <TabsList
-          className="border-b w-full justify-start rounded-none bg-transparent h-auto p-0 gap-0"
-          style={{ borderColor: 'rgba(255 255 255 / 0.08)' }}
-        >
-          {[
-            'visit-schedule',
-            'assessment-battery',
-            'investigators',
-            'enrollment',
-            'delegation-log',
-            'deviations',
-            ...(canEdit ? ['contract'] : []),
-          ].map((tab) => (
-            <TabsTrigger
-              key={tab}
-              value={tab}
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none pb-3 px-4 text-sm font-medium capitalize"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              {tab.replace(/-/g, ' ')}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <div className="pt-6">
-          <TabsContent value="visit-schedule">
-            <VisitScheduleTab study={study} canEdit={canEdit} />
-          </TabsContent>
-          <TabsContent value="assessment-battery">
-            <AssessmentBatteryTab study={study} canEdit={canEdit} />
-          </TabsContent>
-          <TabsContent value="investigators">
-            <InvestigatorsTab study={study} investigators={investigators} canEdit={canEdit} />
-          </TabsContent>
-          <TabsContent value="enrollment">
-            <EnrollmentTab study={study} canEdit={canEdit} />
-          </TabsContent>
-          <TabsContent value="delegation-log">
-            <DelegationLogTab studyId={study.id} investigators={investigators} canEdit={canEdit} />
-          </TabsContent>
-          <TabsContent value="deviations">
-            <DeviationsTab studyId={study.id} canManage={canEdit} />
-          </TabsContent>
-          {canEdit && (
-            <TabsContent value="contract">
-              <ContractTab study={study} canEdit={canEdit} />
-            </TabsContent>
-          )}
+      <div>
+        <HUDTabBar tabs={tabs} value={activeTab} onChange={setActiveTab} />
+        <div style={{ paddingTop: 24 }}>
+          {activeTab === 'visit-schedule'     && <VisitScheduleTab study={study} canEdit={canEdit} />}
+          {activeTab === 'assessment-battery' && <AssessmentBatteryTab study={study} canEdit={canEdit} />}
+          {activeTab === 'protocol'           && <ProtocolTab study={study} canEdit={canEdit} />}
+          {activeTab === 'investigators'      && <InvestigatorsTab study={study} investigators={investigators} canEdit={canEdit} />}
+          {activeTab === 'enrollment'         && <EnrollmentTab study={study} canEdit={canEdit} />}
+          {activeTab === 'delegation-log'     && <DelegationLogTab studyId={study.id} investigators={investigators} canEdit={canEdit} />}
+          {activeTab === 'deviations'         && <DeviationsTab studyId={study.id} canManage={canEdit} />}
+          {activeTab === 'contract' && canEdit && <ContractTab study={study} canEdit={canEdit} />}
         </div>
-      </Tabs>
+      </div>
     </div>
   )
 }

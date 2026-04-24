@@ -11,6 +11,7 @@ import { ScreenFailureReasonChart } from '@/components/enrollment/ScreenFailureR
 import { CrossStudyComparisonPanel } from '@/components/enrollment/CrossStudyComparisonPanel'
 import { EnrollmentBurndownChart } from '@/components/enrollment/EnrollmentBurndownChart'
 import { SnapshotImportDialog } from '@/components/enrollment/SnapshotImportDialog'
+import { HUDSelect } from '@/components/hud/HUDSelect'
 import { HUDTabBar } from '@/components/hud/TabBar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/hud/Skeleton'
@@ -109,18 +110,12 @@ export function Enrollment() {
         <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', flexShrink: 0 }} className="mb-1 block">
           Study
         </label>
-        <select
+        <HUDSelect
           aria-label="Select study"
           value={effectiveStudyId}
-          onChange={(e) => setSelectedStudyId(e.target.value)}
-          style={{ height: 36, background: 'rgba(255 255 255 / 0.06)', border: '1px solid rgba(255 255 255 / 0.12)', borderRadius: 8, color: 'var(--text-primary)', padding: '0 10px', fontSize: 13, width: '100%' }}
-        >
-          {studies.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
+          onChange={setSelectedStudyId}
+          options={studies.map((s) => ({ value: s.id, label: s.name }))}
+        />
       </div>
 
       <HUDTabBar

@@ -83,6 +83,14 @@ export function SiteSummaryTab() {
     0,
   )
   const totalTarget = studies.reduce((sum, s) => sum + s.targetEnrollment, 0)
+  const enrollPct = totalTarget > 0 ? Math.round((totalEnrolled / totalTarget) * 100) : 0
+  const enrollSignal: 'good' | 'warn' | 'alert' | 'neutral' =
+    totalTarget === 0 ? 'neutral' : enrollPct >= 80 ? 'good' : enrollPct >= 50 ? 'warn' : 'alert'
+
+  const totalMilestones = studies.reduce(
+    (sum, s) => sum + (s.contract?.milestones?.length ?? 0),
+    0,
+  )
 
   const totalScreens = studies.reduce(
     (sum, s) => sum + s.enrollmentData.screens,
@@ -159,9 +167,9 @@ export function SiteSummaryTab() {
         />
         <Tile
           label="Site Enrolled"
-          value={totalEnrolled}
-          sub={`of ${totalTarget} target`}
-          signal="neutral"
+          value={totalTarget === 0 ? '—' : `${enrollPct}%`}
+          sub={`${totalEnrolled} / ${totalTarget} participants`}
+          signal={enrollSignal}
         />
         <Tile
           label="Screen→Rand"
@@ -181,7 +189,7 @@ export function SiteSummaryTab() {
         />
         <Tile
           label="Milestones Achieved"
-          value={milestonesAchieved}
+          value={totalMilestones === 0 ? '—' : `${milestonesAchieved} / ${totalMilestones}`}
           signal={milestonesSignal}
         />
       </div>
@@ -343,15 +351,15 @@ export function SiteSummaryTab() {
               }}
             >
               <span>
-                open{' '}
+                Open{' '}
                 <strong style={{ color: 'var(--signal-alert)' }}>{openDevCount}</strong>
               </span>
               <span>
-                pi_reviewed{' '}
+                PI Reviewed{' '}
                 <strong style={{ color: 'var(--signal-warn)' }}>{piReviewedCount}</strong>
               </span>
               <span>
-                closed{' '}
+                Closed{' '}
                 <strong style={{ color: 'var(--text-muted)' }}>{closedCount}</strong>
               </span>
             </div>

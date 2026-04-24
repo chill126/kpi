@@ -146,7 +146,7 @@ describe('Settings', () => {
     ).toBeInTheDocument()
     expect(screen.getByLabelText(/site name/i)).toHaveValue('Tampa Research')
     expect(screen.getByLabelText(/location/i)).toHaveValue('Tampa, FL')
-    expect(screen.getByLabelText(/timezone/i)).toHaveValue('America/New_York')
+    expect(screen.getByLabelText(/timezone/i)).toHaveTextContent('America/New_York')
     expect(screen.getByLabelText(/active/i)).toBeChecked()
   })
 

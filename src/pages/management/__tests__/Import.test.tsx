@@ -122,10 +122,11 @@ describe('Import', () => {
     expect(screen.getByRole('heading', { name: /^import$/i })).toBeInTheDocument()
   })
 
-  it('renders all four import type cards', () => {
+  it('renders all import type cards', () => {
     render(<Import />)
     expect(screen.getByText('Clinical Conductor')).toBeInTheDocument()
     expect(screen.getByText('Advarra e-Reg')).toBeInTheDocument()
+    expect(screen.getByText('Enrollment Numbers')).toBeInTheDocument()
     expect(screen.getByText('Enrollment Snapshots')).toBeInTheDocument()
     expect(screen.getByText('Protocol PDF')).toBeInTheDocument()
   })
@@ -179,8 +180,8 @@ describe('Import', () => {
     const user = userEvent.setup()
     render(<Import />)
     const importButtons = screen.getAllByRole('button', { name: /^import$/i })
-    // Protocol PDF is the 4th card.
-    await user.click(importButtons[3])
+    // Protocol PDF is the 5th card (Enrollment Numbers added at position 3).
+    await user.click(importButtons[4])
     const dialog = await screen.findByRole('dialog', { name: /import protocol pdf/i })
     expect(dialog).toBeInTheDocument()
     expect(screen.getByLabelText(/select study/i)).toBeInTheDocument()

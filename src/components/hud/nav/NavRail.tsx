@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+import { Settings } from 'lucide-react'
 import { NavGroup } from './NavGroup'
 import { NavItem } from './NavItem'
 import { SiteSwitcher } from './SiteSwitcher'
@@ -64,14 +66,32 @@ export function NavRail({ role, user, onSignOut, onSettings }: Props) {
           </NavGroup>
         ))}
       </div>
-      <div style={{ borderTop: '1px solid rgba(255 255 255 / 0.06)', padding: '8px 6px 0' }}>
-        <UserChip
-          displayName={user.displayName}
-          email={user.email}
-          role={user.role}
-          onSignOut={onSignOut}
-          onSettings={onSettings}
-        />
+      <div style={{ borderTop: '1px solid rgba(255 255 255 / 0.06)', padding: '8px 6px 0', display: 'flex', alignItems: 'center', gap: 2 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <UserChip
+            displayName={user.displayName}
+            email={user.email}
+            role={user.role}
+            onSignOut={onSignOut}
+            onSettings={onSettings}
+          />
+        </div>
+        {role === 'management' && (
+          <Link
+            to="/settings"
+            aria-label="Settings"
+            className="hud-focus-ring"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+              color: 'var(--text-muted)', textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255 255 255 / 0.06)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
+          >
+            <Settings size={16} />
+          </Link>
+        )}
       </div>
     </aside>
   )

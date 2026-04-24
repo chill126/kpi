@@ -189,12 +189,18 @@ export function Overview() {
     [activeStudies],
   )
 
-  const totalTarget = useMemo(
-    () => activeStudies.reduce((s, st) => s + (st.targetEnrollment ?? 0), 0),
+  const totalScreens = useMemo(
+    () => activeStudies.reduce((s, st) => s + (st.enrollmentData?.screens ?? 0), 0),
     [activeStudies],
   )
-
-  const enrollPct = totalTarget === 0 ? 0 : Math.round((totalParticipants / totalTarget) * 100)
+  const totalRands = useMemo(
+    () => activeStudies.reduce((s, st) => s + (st.enrollmentData?.randomizations ?? 0), 0),
+    [activeStudies],
+  )
+  const totalCompletions = useMemo(
+    () => activeStudies.reduce((s, st) => s + (st.enrollmentData?.completions ?? 0), 0),
+    [activeStudies],
+  )
 
   const todayActivityCount = useMemo(() => {
     const todayVisits = visits.filter((v) => v.scheduledDate === todayStr).length
@@ -247,13 +253,32 @@ export function Overview() {
         )
       case 'enrollment':
         return (
-          <Tile
-            label="Enrollment"
-            value={enrollPct}
-            suffix="%"
-            sub="of YTD target"
-            signal={enrollPct >= 100 ? 'good' : enrollPct >= 80 ? 'neutral' : 'warn'}
-          />
+          <div
+            className="glass"
+            style={{ borderRadius: 14, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10, height: '100%' }}
+          >
+            <span style={{ fontSize: 10.5, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-label)' }}>
+              Enrollment
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px' }}>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: 'var(--text-primary)' }}>{totalScreens}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Screened</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: 'var(--text-primary)' }}>{totalRands}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Randomized</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: 'var(--signal-good)' }}>{totalParticipants}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Active</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: 'var(--text-secondary)' }}>{totalCompletions}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Completed</div>
+              </div>
+            </div>
+          </div>
         )
       case 'today-activity':
         return (
