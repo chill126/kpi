@@ -221,7 +221,7 @@ function InvestigatorFormDialog({ open, onOpenChange, initial }: InvestigatorFor
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit Investigator' : 'Add Investigator'}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit Staff Member' : 'Add Staff Member'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -369,10 +369,10 @@ export function Investigators() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>
-            Investigators
+            Staff
           </h1>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
-            {investigators.length} investigators · current week utilization
+            {investigators.length} staff members · current week utilization
           </p>
         </div>
         {isManagement && (
@@ -380,7 +380,7 @@ export function Investigators() {
             onClick={() => setCreateOpen(true)}
             style={{ background: 'var(--accent-primary)', border: 'none', color: 'oklch(0.09 0.015 275)' }}
           >
-            Add Investigator
+            Add Staff Member
           </Button>
         )}
       </div>

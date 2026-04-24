@@ -80,7 +80,6 @@ function applyFilters(studies: Study[], filters: StudyFilterState): Study[] {
       !s.therapeuticArea.toLowerCase().includes(filters.therapeuticArea.toLowerCase())
     )
       return false
-    if (filters.piId && s.piId !== filters.piId) return false
     return true
   })
 }

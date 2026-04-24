@@ -26,7 +26,7 @@ export const managementPages: CommandItem[] = [
   { id: 'what-if',       title: 'What-If',            keywords: ['what if','simulate','scenario'],                  icon: Sparkles,        route: '/what-if',        roles: ['management'] },
   { id: 'reports',       title: 'Reports',            keywords: ['reports','export','utilization report'],          icon: FileBarChart,    route: '/reports',        roles: ['management'] },
   { id: 'studies',       title: 'Studies',            keywords: ['studies','trials','protocols'],                   icon: FolderKanban,    route: '/studies',        roles: ['management'] },
-  { id: 'investigators', title: 'Investigators',      keywords: ['investigators','pi','doctors','staff'],           icon: Users,           route: '/investigators',  roles: ['management'] },
+  { id: 'staff',         title: 'Staff',              keywords: ['investigators','pi','doctors','staff','coordinators','raters'], icon: Users,           route: '/staff',          roles: ['management'] },
   { id: 'financial',     title: 'Financial',          keywords: ['financial','revenue','milestones','contract'],    icon: DollarSign,      route: '/financial',      roles: ['management'] },
   { id: 'import',        title: 'Import',             keywords: ['import','csv','upload','conductor','advarra'],    icon: Upload,          route: '/import',         roles: ['management'] },
   { id: 'settings',      title: 'Settings',           keywords: ['settings','site','users'],                        icon: Settings,        route: '/settings',       roles: ['management'] },

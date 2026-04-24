@@ -51,7 +51,7 @@ beforeEach(() => {
 describe('Investigators', () => {
   it('renders the page heading', () => {
     render(<Investigators />)
-    expect(screen.getByRole('heading', { name: /investigators/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /staff/i })).toBeInTheDocument()
   })
 
   it('renders each investigator name', () => {

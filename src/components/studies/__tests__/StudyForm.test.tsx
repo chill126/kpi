@@ -72,7 +72,7 @@ describe('StudyForm', () => {
 
     await userEvent.type(screen.getByLabelText(/study name/i), 'Study Beta')
     await userEvent.type(screen.getByLabelText(/sponsor/i), 'Pharma Corp')
-    await userEvent.type(screen.getByLabelText(/therapeutic area/i), 'Neurology')
+    await userEvent.selectOptions(screen.getByLabelText(/therapeutic area/i), 'Neurology')
     await userEvent.click(screen.getByRole('button', { name: /save/i }))
 
     await waitFor(() => {

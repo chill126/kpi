@@ -1,3 +1,4 @@
+import { Fragment, useState } from 'react'
 import { Panel } from '@/components/hud/Panel'
 import { Tile } from '@/components/hud/Tile'
 import { Skeleton } from '@/components/hud/Skeleton'
@@ -10,6 +11,13 @@ import { useInvestigators } from '@/hooks/useInvestigators'
 import { useSiteAssessments } from '@/hooks/useSiteAssessments'
 import { getWeekStart, computeWeekMetrics } from '@/lib/capacity'
 import type { StudyStatus } from '@/types'
+
+const STATUS_GROUPS = [
+  { key: 'enrolling', label: 'Enrolling' },
+  { key: 'open', label: 'Open' },
+  { key: 'paused', label: 'Paused' },
+  { key: 'completed', label: 'Completed' },
+] as const
 
 const STATUS_STYLE: Record<string, React.CSSProperties> = {
   pending: { color: 'var(--accent-primary)', background: 'rgba(139 92 246 / 0.12)', border: '1px solid rgba(139 92 246 / 0.25)' },
@@ -32,6 +40,13 @@ export function SiteSummaryTab() {
   const { investigators, loading: loadingInvestigators } = useInvestigators()
   const { assessments, loading: loadingAssessments } = useSiteAssessments()
 
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    enrolling: true,
+    open: true,
+    paused: false,
+    completed: false,
+  })
+
   const isLoading =
     loadingStudies || loadingDeviations || loadingVisits || loadingInvestigators || loadingAssessments
 
@@ -51,7 +66,7 @@ export function SiteSummaryTab() {
 
   // --- Computed values ---
   const activeStudies = studies.filter(
-    (s) => s.status === 'enrolling' || s.status === 'paused',
+    (s) => s.status === 'enrolling' || s.status === 'open',
   )
 
   const totalEnrolled = studies.reduce(
@@ -194,64 +209,99 @@ export function SiteSummaryTab() {
               </tr>
             </thead>
             <tbody>
-              {studies.map((study) => {
-                const enrolled = study.enrollmentData.randomizations
-                const target = study.targetEnrollment
-                const pct = target > 0 ? Math.round((enrolled / target) * 100) : 0
-                const sig = enrollmentSignal(pct)
-                const pctColor =
-                  sig === 'good'
-                    ? 'var(--signal-good)'
-                    : sig === 'warn'
-                    ? 'var(--signal-warn)'
-                    : 'var(--signal-alert)'
-                const statusStyle = STATUS_STYLE[study.status as StudyStatus] ?? STATUS_STYLE.completed
-
+              {STATUS_GROUPS.map((group) => {
+                const groupStudies = studies.filter((s) => s.status === group.key)
+                if (groupStudies.length === 0) return null
+                const isOpen = openSections[group.key]
                 return (
-                  <tr
-                    key={study.id}
-                    style={{ borderBottom: '1px solid rgba(255 255 255 / 0.05)' }}
-                  >
-                    <td style={{ padding: '8px 10px', color: 'var(--text-primary)' }}>
-                      {study.name}
-                    </td>
-                    <td
-                      style={{
-                        padding: '8px 10px',
-                        textAlign: 'right',
-                        color: 'var(--text-secondary)',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
+                  <Fragment key={group.key}>
+                    <tr
+                      onClick={() =>
+                        setOpenSections((prev) => ({ ...prev, [group.key]: !prev[group.key] }))
+                      }
+                      style={{ cursor: 'pointer', background: 'rgba(255 255 255 / 0.03)' }}
                     >
-                      {enrolled} / {target}
-                    </td>
-                    <td
-                      style={{
-                        padding: '8px 10px',
-                        textAlign: 'right',
-                        fontWeight: 600,
-                        color: pctColor,
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    >
-                      {pct}%
-                    </td>
-                    <td style={{ padding: '8px 10px', textAlign: 'right' }}>
-                      <span
+                      <td
+                        colSpan={4}
                         style={{
-                          ...statusStyle,
-                          display: 'inline-block',
-                          padding: '2px 8px',
-                          borderRadius: 4,
+                          padding: '10px 10px',
+                          color: 'var(--text-label)',
                           fontSize: 11,
-                          fontWeight: 500,
-                          letterSpacing: '0.04em',
+                          fontWeight: 600,
+                          letterSpacing: '0.12em',
+                          textTransform: 'uppercase',
                         }}
                       >
-                        {study.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                  </tr>
+                        <span style={{ marginRight: 8 }}>{isOpen ? '▼' : '▶'}</span>
+                        {group.label}{' '}
+                        <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                          ({groupStudies.length})
+                        </span>
+                      </td>
+                    </tr>
+                    {isOpen &&
+                      groupStudies.map((study) => {
+                        const enrolled = study.enrollmentData.randomizations
+                        const target = study.targetEnrollment
+                        const pct = target > 0 ? Math.round((enrolled / target) * 100) : 0
+                        const sig = enrollmentSignal(pct)
+                        const pctColor =
+                          sig === 'good'
+                            ? 'var(--signal-good)'
+                            : sig === 'warn'
+                            ? 'var(--signal-warn)'
+                            : 'var(--signal-alert)'
+                        const statusStyle =
+                          STATUS_STYLE[study.status as StudyStatus] ?? STATUS_STYLE.completed
+
+                        return (
+                          <tr
+                            key={study.id}
+                            style={{ borderBottom: '1px solid rgba(255 255 255 / 0.05)' }}
+                          >
+                            <td style={{ padding: '8px 10px', color: 'var(--text-primary)' }}>
+                              {study.name}
+                            </td>
+                            <td
+                              style={{
+                                padding: '8px 10px',
+                                textAlign: 'right',
+                                color: 'var(--text-secondary)',
+                                fontVariantNumeric: 'tabular-nums',
+                              }}
+                            >
+                              {enrolled} / {target}
+                            </td>
+                            <td
+                              style={{
+                                padding: '8px 10px',
+                                textAlign: 'right',
+                                fontWeight: 600,
+                                color: pctColor,
+                                fontVariantNumeric: 'tabular-nums',
+                              }}
+                            >
+                              {pct}%
+                            </td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right' }}>
+                              <span
+                                style={{
+                                  ...statusStyle,
+                                  display: 'inline-block',
+                                  padding: '2px 8px',
+                                  borderRadius: 4,
+                                  fontSize: 11,
+                                  fontWeight: 500,
+                                  letterSpacing: '0.04em',
+                                }}
+                              >
+                                {study.status.replace('_', ' ')}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                  </Fragment>
                 )
               })}
             </tbody>

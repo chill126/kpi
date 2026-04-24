@@ -64,6 +64,7 @@ export function AppRouter() {
               <Route element={<RoleRoute allowedRole="management" />}>
                 <Route path="/" element={<Overview />} />
                 <Route path="/investigators" element={<Investigators />} />
+                <Route path="/staff" element={<Investigators />} />
                 <Route path="/studies" element={<Studies />} />
                 <Route path="/enrollment" element={<Enrollment />} />
                 <Route path="/workload" element={<WorkloadPlanner />} />

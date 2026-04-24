@@ -1,4 +1,3 @@
-import { BrandLockup } from './BrandLockup'
 import { NavGroup } from './NavGroup'
 import { NavItem } from './NavItem'
 import { SiteSwitcher } from './SiteSwitcher'
@@ -9,14 +8,15 @@ interface Props {
   role: Role
   user: { displayName: string; email: string; role: string }
   onSignOut: () => void | Promise<void>
+  onSettings?: () => void
 }
 
 const managementGroups: Array<{ label: string; ids: string[] }> = [
   { label: 'Command',  ids: ['overview'] },
-  { label: 'Operate',  ids: ['workload', 'enrollment', 'deviations', 'operations'] },
+  { label: 'Operate',  ids: ['operations', 'workload', 'enrollment', 'deviations'] },
   { label: 'Plan',     ids: ['forecast', 'what-if', 'reports'] },
-  { label: 'Catalog',  ids: ['studies', 'investigators', 'financial'] },
-  { label: 'System',   ids: ['import', 'settings'] },
+  { label: 'Catalog',  ids: ['studies', 'staff', 'financial'] },
+  { label: 'System',   ids: ['import'] },
 ]
 
 const staffGroups: Array<{ label: string; ids: string[] }> = [
@@ -37,7 +37,7 @@ function renderItem(item: CommandItem): React.ReactNode {
   )
 }
 
-export function NavRail({ role, user, onSignOut }: Props) {
+export function NavRail({ role, user, onSignOut, onSettings }: Props) {
   const pages = role === 'management' ? managementPages : staffPages
   const groups = role === 'management' ? managementGroups : staffGroups
   const byId = new Map(pages.map(p => [p.id, p] as const))
@@ -51,9 +51,6 @@ export function NavRail({ role, user, onSignOut }: Props) {
         padding: '14px 0 10px',
       }}
     >
-      <div style={{ padding: '0 18px 6px' }}>
-        <BrandLockup mode="sidebar" />
-      </div>
       <div style={{ padding: '0 10px 10px' }}>
         <SiteSwitcher role={role} />
       </div>
@@ -73,6 +70,7 @@ export function NavRail({ role, user, onSignOut }: Props) {
           email={user.email}
           role={user.role}
           onSignOut={onSignOut}
+          onSettings={onSettings}
         />
       </div>
     </aside>

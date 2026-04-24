@@ -43,7 +43,7 @@ const study: Study = {
   statusHistory: [],
 }
 
-const noFilters: StudyFilterState = { status: 'all', therapeuticArea: '', piId: '' }
+const noFilters: StudyFilterState = { status: 'all', therapeuticArea: '' }
 
 const renderTable = (filters = noFilters) =>
   render(
@@ -72,7 +72,7 @@ describe('StudyTable', () => {
   })
 
   it('filters out studies that do not match status filter', () => {
-    renderTable({ status: 'paused', therapeuticArea: '', piId: '' })
+    renderTable({ status: 'paused', therapeuticArea: '' })
     expect(screen.queryByText('Study Alpha')).not.toBeInTheDocument()
   })
 

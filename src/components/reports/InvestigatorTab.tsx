@@ -2,42 +2,107 @@ import { useMemo } from 'react'
 import { useInvestigators } from '@/hooks/useInvestigators'
 import { useSiteVisits } from '@/hooks/useSiteVisits'
 import { useSiteAssessments } from '@/hooks/useSiteAssessments'
-import { recentWeekStarts, computeWeekMetrics } from '@/lib/capacity'
+import { useStudies } from '@/hooks/useStudies'
+import { getWeekStart, computeWeekMetrics } from '@/lib/capacity'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/hud/Skeleton'
 import { Panel } from '@/components/hud/Panel'
 
-const NUM_WEEKS = 26
+const labelStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: 10.5,
+  fontWeight: 500,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: 'var(--text-label)',
+}
+
+const valueStyle: React.CSSProperties = {
+  margin: '2px 0 0',
+  fontSize: 18,
+  fontWeight: 600,
+  fontVariantNumeric: 'tabular-nums',
+  color: 'var(--text-primary)',
+}
+
+function CapacityBar({ pct }: { pct: number }) {
+  const capped = Math.min(pct, 100)
+  const color =
+    pct >= 90 ? 'var(--signal-alert)' : pct >= 75 ? 'var(--signal-warn)' : 'var(--signal-good)'
+  return (
+    <div style={{ height: 4, borderRadius: 2, background: 'rgba(255 255 255 / 0.08)', overflow: 'hidden' }}>
+      <div
+        style={{
+          height: 4,
+          borderRadius: 2,
+          width: `${capped}%`,
+          background: color,
+          transition: 'width 0.3s',
+        }}
+      />
+    </div>
+  )
+}
 
 export function InvestigatorTab() {
   const { investigators, loading } = useInvestigators()
   const { visits } = useSiteVisits()
   const { assessments } = useSiteAssessments()
+  const { studies } = useStudies()
 
-  const weekStarts = useMemo(() => recentWeekStarts(NUM_WEEKS).reverse(), [])
+  const currentWeek = useMemo(() => getWeekStart(new Date()), [])
+  const thirtyDaysAgoMs = useMemo(() => Date.now() - 30 * 24 * 60 * 60 * 1000, [])
 
-  const grid = useMemo(
+  const clinicalInvestigators = useMemo(
+    () => investigators.filter((inv) => inv.role === 'PI' || inv.role === 'Sub-I'),
+    [investigators],
+  )
+
+  const cards = useMemo(
     () =>
-      investigators.map((inv) => ({
-        investigator: inv,
-        weeks: weekStarts.map((ws) =>
-          computeWeekMetrics(inv.id, inv.weeklyCapacityHours * 60, visits, assessments, ws),
-        ),
-      })),
-    [investigators, visits, assessments, weekStarts],
+      clinicalInvestigators.map((inv) => {
+        const metrics = computeWeekMetrics(
+          inv.id,
+          inv.weeklyCapacityHours * 60,
+          visits,
+          assessments,
+          currentWeek,
+        )
+        const visitsCount = visits.filter(
+          (v) =>
+            v.investigatorId === inv.id &&
+            v.completedDate !== null &&
+            new Date(v.completedDate).getTime() >= thirtyDaysAgoMs,
+        ).length
+        const assessmentsCount = assessments.filter(
+          (a) => a.investigatorId === inv.id && new Date(a.date).getTime() >= thirtyDaysAgoMs,
+        ).length
+        const assignedStudyNames = studies
+          .filter((s) => s.assignedInvestigators.some((ai) => ai.investigatorId === inv.id))
+          .map((s) => s.name)
+        return {
+          investigator: inv,
+          utilizationPct: metrics.utilizationPct,
+          visitsCount,
+          assessmentsCount,
+          assignedStudyNames,
+        }
+      }),
+    [clinicalInvestigators, visits, assessments, studies, currentWeek, thirtyDaysAgoMs],
   )
 
   function downloadCsv() {
-    const header = ['Investigator', ...weekStarts].join(',')
-    const rows = grid.map(({ investigator: inv, weeks }) =>
-      [inv.name, ...weeks.map((m) => `${m.utilizationPct}%`)].join(','),
+    const header = ['Investigator', 'Utilization %', 'Visits (30d)', 'Assessments (30d)'].join(',')
+    const rows = cards.map(
+      ({ investigator, utilizationPct, visitsCount, assessmentsCount }) =>
+        [investigator.name, `${utilizationPct}%`, visitsCount, assessmentsCount].join(','),
     )
     const csv = [header, ...rows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `utilization-report-${new Date().toISOString().split('T')[0]}.csv`
+    a.download = `investigator-report-${new Date().toISOString().split('T')[0]}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -54,101 +119,107 @@ export function InvestigatorTab() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 16 }}>
       <Panel
-        title="Utilization Heatmap — Last 26 Weeks"
+        title="Investigator Report"
         action={
           <Button variant="outline" size="sm" onClick={downloadCsv}>
             Download CSV
           </Button>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead style={{ borderBottom: '1px solid rgba(255 255 255 / 0.08)' }}>
-              <tr>
-                <th
-                  className="sticky left-0"
+        {cards.length === 0 ? (
+          <p style={{ padding: '32px 0', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
+            No investigators found.
+          </p>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: 16,
+            }}
+          >
+            {cards.map(({ investigator: inv, utilizationPct, visitsCount, assessmentsCount, assignedStudyNames }) => {
+              const utilizationColor =
+                utilizationPct >= 90
+                  ? 'var(--signal-alert)'
+                  : utilizationPct >= 75
+                  ? 'var(--signal-warn)'
+                  : 'var(--signal-good)'
+              return (
+                <div
+                  key={inv.id}
+                  className="glass"
                   style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontSize: 11,
-                    fontWeight: 500,
-                    color: 'var(--text-label)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    width: 160,
-                    background: 'var(--color-canvas-raised)',
+                    padding: 20,
+                    borderRadius: 14,
+                    border: '1px solid rgba(255 255 255 / 0.08)',
                   }}
                 >
-                  Investigator
-                </th>
-                {weekStarts.map((ws) => (
-                  <th
-                    key={ws}
+                  <div
                     style={{
-                      padding: '12px 4px',
-                      textAlign: 'center',
-                      fontSize: 11,
-                      fontWeight: 500,
-                      color: 'var(--text-muted)',
-                      width: 56,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      marginBottom: 16,
                     }}
                   >
-                    {ws.slice(5)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {grid.map(({ investigator: inv, weeks }) => (
-                <tr key={inv.id} style={{ borderTop: '1px solid rgba(255 255 255 / 0.05)' }}>
-                  <td
-                    className="sticky left-0"
-                    style={{ padding: '8px 16px', background: 'var(--color-canvas-raised)' }}
+                    <div>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>
+                        {inv.name}
+                      </p>
+                      <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
+                        {inv.credentials} · {inv.role}
+                      </p>
+                    </div>
+                    <span style={{ fontSize: 20, fontWeight: 700, color: utilizationColor }}>
+                      {utilizationPct}%
+                    </span>
+                  </div>
+                  <CapacityBar pct={utilizationPct} />
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: 10,
+                      marginTop: 14,
+                    }}
                   >
-                    <p style={{ margin: 0, fontWeight: 500, color: 'var(--text-primary)' }}>{inv.name}</p>
-                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 11 }}>{inv.weeklyCapacityHours}h</p>
-                  </td>
-                  {weeks.map((m) => (
-                    <td key={m.weekStart} style={{ padding: '2px', textAlign: 'center' }}>
-                      <span
-                        style={{
-                          display: 'block',
-                          borderRadius: 4,
-                          fontSize: 11,
-                          fontWeight: 500,
-                          fontFeatureSettings: '"tnum"',
-                          padding: '4px 2px',
-                          background:
-                            m.utilizationPct >= 90 ? 'rgba(220, 38, 38, 0.20)'
-                            : m.utilizationPct >= 75 ? 'rgba(217, 119, 6, 0.20)'
-                            : m.utilizationPct > 0   ? 'rgba(22, 163, 74, 0.15)'
-                            : 'rgba(255, 255, 255, 0.04)',
-                          color:
-                            m.utilizationPct >= 90 ? 'var(--signal-alert)'
-                            : m.utilizationPct >= 75 ? 'var(--signal-warn)'
-                            : m.utilizationPct > 0   ? 'var(--signal-good)'
-                            : 'var(--text-muted)',
-                        }}
-                      >
-                        {m.utilizationPct}%
-                      </span>
-                    </td>
-                  ))}
-                </tr>
-              ))}
-              {investigators.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={NUM_WEEKS + 1}
-                    style={{ padding: '32px 0', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}
-                  >
-                    No investigators found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    <div>
+                      <p style={labelStyle}>Visits (30d)</p>
+                      <p style={valueStyle}>{visitsCount}</p>
+                    </div>
+                    <div>
+                      <p style={labelStyle}>Assessments (30d)</p>
+                      <p style={valueStyle}>{assessmentsCount}</p>
+                    </div>
+                  </div>
+                  {assignedStudyNames.length > 0 && (
+                    <div style={{ marginTop: 14 }}>
+                      <p style={labelStyle}>Delegated Studies</p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                        {assignedStudyNames.map((name) => (
+                          <span
+                            key={name}
+                            style={{
+                              fontSize: 11,
+                              padding: '2px 8px',
+                              borderRadius: 99,
+                              background: 'rgba(255 255 255 / 0.06)',
+                              color: 'var(--text-secondary)',
+                              border: '1px solid rgba(255 255 255 / 0.10)',
+                            }}
+                          >
+                            {name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </Panel>
     </div>
   )

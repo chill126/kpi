@@ -19,7 +19,6 @@ export function Studies() {
   const [filters, setFilters] = useState<StudyFilterState>({
     status: 'all',
     therapeuticArea: '',
-    piId: '',
   })
   const [formOpen, setFormOpen] = useState(false)
   const [compareOpen, setCompareOpen] = useState(false)
@@ -53,7 +52,7 @@ export function Studies() {
         </div>
       </div>
 
-      <StudyFilters filters={filters} onChange={setFilters} investigators={investigators} />
+      <StudyFilters filters={filters} onChange={setFilters} />
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

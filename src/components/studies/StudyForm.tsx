@@ -22,6 +22,16 @@ interface Props {
 }
 
 const PHASES: StudyPhase[] = ['Phase I', 'Phase II', 'Phase III', 'Phase IV', 'Observational']
+const INDICATION_OPTIONS = [
+  { value: '', label: 'Select indication…' },
+  { value: 'Psychiatry', label: 'Psychiatry' },
+  { value: 'Neurology', label: 'Neurology' },
+  { value: 'Dermatology', label: 'Dermatology' },
+  { value: 'General Medicine', label: 'General Medicine' },
+  { value: 'Cardiology', label: 'Cardiology' },
+  { value: 'Oncology', label: 'Oncology' },
+  { value: 'Other', label: 'Other' },
+]
 const STATUSES: StudyStatus[] = ['pending', 'enrolling', 'paused', 'open', 'completed']
 
 interface FormState {
@@ -229,11 +239,16 @@ export function StudyForm({ open, onOpenChange, study, investigators, siteId, on
 
           <div className="space-y-1">
             <Label htmlFor="sf-area">Therapeutic Area *</Label>
-            <Input
+            <select
               id="sf-area"
               value={form.therapeuticArea}
               onChange={(e) => set('therapeuticArea', e.target.value)}
-            />
+              className={selectClass}
+            >
+              {INDICATION_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
             {errors.therapeuticArea && (
               <p className="text-xs text-red-600">{errors.therapeuticArea}</p>
             )}

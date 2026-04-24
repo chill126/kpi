@@ -8,18 +8,20 @@ import { Skeleton } from '@/components/hud/Skeleton'
 import { EmptyState } from '@/components/hud/EmptyState'
 import { Users } from 'lucide-react'
 
-const NUM_WEEKS = 8
+const BACK_WEEKS = 10
+const AHEAD_WEEKS = 2
 
-function nextWeekStarts(n: number): string[] {
+function buildWeekRange(backWeeks: number, aheadWeeks: number): string[] {
   const today = new Date()
   const day = today.getUTCDay()
   const diff = day === 0 ? -6 : 1 - day
-  const monday = new Date(today)
-  monday.setUTCDate(today.getUTCDate() + diff)
+  const currentMonday = new Date(today)
+  currentMonday.setUTCDate(today.getUTCDate() + diff)
+
   const weeks: string[] = []
-  for (let i = 0; i < n; i++) {
-    const d = new Date(monday)
-    d.setUTCDate(monday.getUTCDate() + i * 7)
+  for (let i = -backWeeks; i <= aheadWeeks; i++) {
+    const d = new Date(currentMonday)
+    d.setUTCDate(currentMonday.getUTCDate() + i * 7)
     weeks.push(d.toISOString().split('T')[0])
   }
   return weeks
@@ -46,17 +48,33 @@ export function WorkloadPlanner() {
   const { visits } = useSiteVisits()
   const { assessments } = useSiteAssessments()
 
-  const weekStarts = useMemo(() => nextWeekStarts(NUM_WEEKS), [])
+  const weekStarts = useMemo(() => buildWeekRange(BACK_WEEKS, AHEAD_WEEKS), [])
+
+  const currentWeekStr = useMemo(() => {
+    const today = new Date()
+    const day = today.getUTCDay()
+    const diff = day === 0 ? -6 : 1 - day
+    const monday = new Date(today)
+    monday.setUTCDate(today.getUTCDate() + diff)
+    return monday.toISOString().split('T')[0]
+  }, [])
 
   const grid = useMemo(
     () =>
       investigators.map((inv) => ({
         investigator: inv,
         weeks: weekStarts.map((ws) =>
-          computeWeekMetrics(inv.id, inv.weeklyCapacityHours * 60, visits, assessments, ws, ['scheduled', 'completed']),
+          computeWeekMetrics(
+            inv.id,
+            inv.weeklyCapacityHours * 60,
+            visits,
+            assessments,
+            ws,
+            ws < currentWeekStr ? ['completed'] : ['scheduled', 'completed'],
+          ),
         ),
       })),
-    [investigators, visits, assessments, weekStarts],
+    [investigators, visits, assessments, weekStarts, currentWeekStr],
   )
 
   if (loading) {
@@ -84,11 +102,11 @@ export function WorkloadPlanner() {
           Capacity Planner
         </h1>
         <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
-          Scheduled investigator load for the next {NUM_WEEKS} weeks — spot over-commitment before it happens.
+          10 weeks of actuals · current week · 2 weeks forecast
         </p>
       </div>
 
-      <Panel title="Upcoming Capacity" action={legend}>
+      <Panel title="Capacity Heatmap" action={legend}>
         {investigators.length === 0 ? (
           <EmptyState
             icon={<Users size={28} />}
@@ -117,6 +135,7 @@ export function WorkloadPlanner() {
                   </th>
                   {weekStarts.map((ws) => {
                     const current = isCurrentWeek(ws)
+                    const isPast = ws < currentWeekStr
                     return (
                       <th
                         key={ws}
@@ -125,9 +144,10 @@ export function WorkloadPlanner() {
                           textAlign: 'center',
                           width: 64,
                           fontSize: 10.5,
-                          color: current ? 'var(--accent-primary)' : 'var(--text-label)',
+                          color: current ? 'var(--accent-primary)' : isPast ? 'var(--text-muted)' : 'var(--text-label)',
                           fontWeight: current ? 700 : 500,
                           borderBottom: '1px solid rgba(255 255 255 / 0.08)',
+                          borderRight: current ? '2px solid rgba(var(--accent-primary-rgb, 114 90 193) / 0.4)' : undefined,
                         }}
                       >
                         {ws.slice(5)}
@@ -152,22 +172,32 @@ export function WorkloadPlanner() {
                         {inv.weeklyCapacityHours}h/wk
                       </p>
                     </td>
-                    {weeks.map((m) => (
-                      <td key={m.weekStart} style={{ padding: 3, textAlign: 'center' }}>
-                        <span
+                    {weeks.map((m) => {
+                      const current = isCurrentWeek(m.weekStart)
+                      return (
+                        <td
+                          key={m.weekStart}
                           style={{
-                            display: 'block',
-                            padding: '5px 2px',
-                            fontSize: 11,
-                            fontWeight: 500,
-                            fontFeatureSettings: '"tnum"',
-                            ...cellStyle(m.utilizationPct),
+                            padding: 3,
+                            textAlign: 'center',
+                            borderRight: current ? '2px solid rgba(var(--accent-primary-rgb, 114 90 193) / 0.4)' : undefined,
                           }}
                         >
-                          {m.utilizationPct > 0 ? `${m.utilizationPct}%` : '—'}
-                        </span>
-                      </td>
-                    ))}
+                          <span
+                            style={{
+                              display: 'block',
+                              padding: '5px 2px',
+                              fontSize: 11,
+                              fontWeight: 500,
+                              fontFeatureSettings: '"tnum"',
+                              ...cellStyle(m.utilizationPct),
+                            }}
+                          >
+                            {m.utilizationPct > 0 ? `${m.utilizationPct}%` : '—'}
+                          </span>
+                        </td>
+                      )
+                    })}
                   </tr>
                 ))}
               </tbody>
@@ -181,8 +211,8 @@ export function WorkloadPlanner() {
         style={{ borderRadius: 10, padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}
       >
         <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>How to read this:</strong>{' '}
-        Each cell shows how much of an investigator's weekly capacity is already committed by scheduled visits.
-        A dashed cell means no visits are scheduled yet for that week — use the{' '}
+        Past cells show completed visit hours. Current and future cells show scheduled load.
+        A dashed cell means no visits are recorded for that week — use the{' '}
         <strong style={{ color: 'var(--text-primary)' }}>What-If Simulator</strong> to model the impact of adding a new study.
       </div>
     </div>

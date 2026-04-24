@@ -1,17 +1,14 @@
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import type { Investigator, StudyStatus } from '@/types'
+import type { StudyStatus } from '@/types'
 
 export interface StudyFilterState {
   status: StudyStatus | 'all'
   therapeuticArea: string
-  piId: string
 }
 
 interface Props {
   filters: StudyFilterState
   onChange: (filters: StudyFilterState) => void
-  investigators: Investigator[]
 }
 
 const STATUS_OPTIONS: { value: StudyStatus | 'all'; label: string }[] = [
@@ -23,7 +20,18 @@ const STATUS_OPTIONS: { value: StudyStatus | 'all'; label: string }[] = [
   { value: 'completed', label: 'Completed' },
 ]
 
-export function StudyFilters({ filters, onChange, investigators }: Props) {
+const INDICATION_OPTIONS = [
+  { value: '', label: 'All Indications' },
+  { value: 'Psychiatry', label: 'Psychiatry' },
+  { value: 'Neurology', label: 'Neurology' },
+  { value: 'Dermatology', label: 'Dermatology' },
+  { value: 'General Medicine', label: 'General Medicine' },
+  { value: 'Cardiology', label: 'Cardiology' },
+  { value: 'Oncology', label: 'Oncology' },
+  { value: 'Other', label: 'Other' },
+]
+
+export function StudyFilters({ filters, onChange }: Props) {
   return (
     <div className="flex flex-wrap gap-3 items-end">
       <div className="flex flex-col gap-1">
@@ -47,39 +55,24 @@ export function StudyFilters({ filters, onChange, investigators }: Props) {
 
       <div className="flex flex-col gap-1">
         <Label htmlFor="filter-area" className="text-xs font-medium text-slate-500">
-          Therapeutic Area
-        </Label>
-        <Input
-          id="filter-area"
-          placeholder="Therapeutic area…"
-          value={filters.therapeuticArea}
-          onChange={(e) => onChange({ ...filters, therapeuticArea: e.target.value })}
-          className="h-9 w-48"
-        />
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="filter-pi" className="text-xs font-medium text-slate-500">
-          PI
+          Indication
         </Label>
         <select
-          id="filter-pi"
-          value={filters.piId}
-          onChange={(e) => onChange({ ...filters, piId: e.target.value })}
+          id="filter-area"
+          aria-label="Therapeutic Area"
+          value={filters.therapeuticArea}
+          onChange={(e) => onChange({ ...filters, therapeuticArea: e.target.value })}
           className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
         >
-          <option value="">All PIs</option>
-          {investigators.map((inv) => (
-            <option key={inv.id} value={inv.id}>
-              {inv.name}
-            </option>
+          {INDICATION_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
       </div>
 
-      {(filters.status !== 'all' || filters.therapeuticArea || filters.piId) && (
+      {(filters.status !== 'all' || filters.therapeuticArea) && (
         <button
-          onClick={() => onChange({ status: 'all', therapeuticArea: '', piId: '' })}
+          onClick={() => onChange({ status: 'all', therapeuticArea: '' })}
           className="h-9 px-3 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline"
         >
           Clear filters

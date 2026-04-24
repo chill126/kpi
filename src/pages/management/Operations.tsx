@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Activity, CalendarDays } from 'lucide-react'
 import { useBoardSessions } from '@/hooks/useBoardSessions'
 import { useK2BoardToday } from '@/hooks/useK2BoardToday'
@@ -13,6 +13,92 @@ import { HUDLineChart } from '@/components/hud/charts/HUDLineChart'
 import { EmptyState } from '@/components/hud/EmptyState'
 import { ErrorState } from '@/components/hud/ErrorState'
 import { Skeleton } from '@/components/hud/Skeleton'
+
+type PeriodKey = '1m' | '3m' | '6m' | 'ytd'
+
+const PERIODS: Array<{ key: PeriodKey; label: string }> = [
+  { key: '1m', label: '1M' },
+  { key: '3m', label: '3M' },
+  { key: '6m', label: '6M' },
+  { key: 'ytd', label: 'YTD' },
+]
+
+type GranularityKey = 'day' | 'week' | 'month'
+
+const GRANULARITIES: Array<{ key: GranularityKey; label: string }> = [
+  { key: 'day', label: 'Day' },
+  { key: 'week', label: 'Week' },
+  { key: 'month', label: 'Month' },
+]
+
+function PeriodSelector({ value, onChange }: { value: PeriodKey; onChange: (p: PeriodKey) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: 2 }}>
+      {PERIODS.map(p => (
+        <button
+          key={p.key}
+          onClick={() => onChange(p.key)}
+          style={{
+            padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 500,
+            background: value === p.key ? 'var(--accent-primary)' : 'rgba(255 255 255 / 0.06)',
+            color: value === p.key ? 'oklch(0.09 0.015 275)' : 'var(--text-secondary)',
+            border: 'none', cursor: 'pointer',
+          }}
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function GranularitySelector({ value, onChange }: { value: GranularityKey; onChange: (g: GranularityKey) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: 2 }}>
+      {GRANULARITIES.map(g => (
+        <button
+          key={g.key}
+          onClick={() => onChange(g.key)}
+          style={{
+            padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 500,
+            background: value === g.key ? 'var(--accent-primary)' : 'rgba(255 255 255 / 0.06)',
+            color: value === g.key ? 'oklch(0.09 0.015 275)' : 'var(--text-secondary)',
+            border: 'none', cursor: 'pointer',
+          }}
+        >
+          {g.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function filterByPeriod<T extends { sessionDate: string }>(sessions: T[], period: PeriodKey): T[] {
+  const now = new Date()
+  let cutoff: Date
+  if (period === '1m') cutoff = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
+  else if (period === '3m') cutoff = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
+  else if (period === '6m') cutoff = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate())
+  else {
+    cutoff = new Date(now.getFullYear(), 0, 1)
+  }
+  const cutoffStr = cutoff.toISOString().split('T')[0]
+  return sessions.filter(s => s.sessionDate >= cutoffStr)
+}
+
+function filterByGranularity<T extends { sessionDate: string }>(sessions: T[], granularity: GranularityKey): T[] {
+  const now = new Date()
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  if (granularity === 'day') {
+    return sessions.filter(s => s.sessionDate === todayStr)
+  }
+  if (granularity === 'week') {
+    const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7)
+    const cutoffStr = cutoff.toISOString().split('T')[0]
+    return sessions.filter(s => s.sessionDate >= cutoffStr)
+  }
+  return sessions
+}
 
 const STATUS_LABELS: Record<string, string> = {
   scheduled: 'Scheduled',
@@ -50,24 +136,31 @@ export function Operations() {
   const { sessions, loading: sessionsLoading, error: sessionsError, circuitOpen: sessionsCircuitOpen } = useBoardSessions()
   const { entries, loading: boardLoading, error: boardError, circuitOpen: boardCircuitOpen } = useK2BoardToday()
 
+  // ── Time range / granularity state ───────────────────────────────────────
+  const [period, setPeriod] = useState<PeriodKey>('3m')
+  const [arrivalGranularity, setArrivalGranularity] = useState<GranularityKey>('month')
+  const [investigatorGranularity, setInvestigatorGranularity] = useState<GranularityKey>('month')
+
   // ── Historical derived data ──────────────────────────────────────────────
-  const chronological = useMemo(() => [...sessions].reverse(), [sessions])
+  const filteredSessions = useMemo(() => filterByPeriod(sessions, period), [sessions, period])
+
+  const chronological = useMemo(() => [...filteredSessions].reverse(), [filteredSessions])
 
   const { aggregateScheduled, aggregateNoShows } = useMemo(() => ({
-    aggregateScheduled: sessions.reduce((s, x) => s + x.metrics.totalScheduled, 0),
-    aggregateNoShows: sessions.reduce((s, x) => s + x.metrics.noShows, 0),
-  }), [sessions])
+    aggregateScheduled: filteredSessions.reduce((s, x) => s + x.metrics.totalScheduled, 0),
+    aggregateNoShows: filteredSessions.reduce((s, x) => s + x.metrics.noShows, 0),
+  }), [filteredSessions])
 
   const avgNoShowPct = aggregateScheduled > 0
     ? Math.round(aggregateNoShows / aggregateScheduled * 100)
     : null
 
   const avgDurationMin = useMemo(() => {
-    const withDuration = sessions.filter(s => s.metrics.avgVisitDurationMin !== null)
+    const withDuration = filteredSessions.filter(s => s.metrics.avgVisitDurationMin !== null)
     if (withDuration.length === 0) return null
     const total = withDuration.reduce((s, x) => s + (x.metrics.avgVisitDurationMin ?? 0), 0)
     return Math.round(total / withDuration.length)
-  }, [sessions])
+  }, [filteredSessions])
 
   const noShowRateData = useMemo(() =>
     chronological.map(s => ({
@@ -87,8 +180,9 @@ export function Operations() {
   )
 
   const byStudyData = useMemo(() => {
+    const scoped = filterByGranularity(sessions, arrivalGranularity)
     const map: Record<string, number> = {}
-    for (const s of sessions) {
+    for (const s of scoped) {
       for (const [study, m] of Object.entries(s.metrics.byStudy ?? {})) {
         map[study] = (map[study] ?? 0) + m.arrivals
       }
@@ -97,11 +191,12 @@ export function Operations() {
       .map(([study, arrivals]) => ({ study, arrivals }))
       .sort((a, b) => b.arrivals - a.arrivals)
       .slice(0, 10)
-  }, [sessions])
+  }, [sessions, arrivalGranularity])
 
   const byInvestigatorData = useMemo(() => {
+    const scoped = filterByGranularity(sessions, investigatorGranularity)
     const map: Record<string, number> = {}
-    for (const s of sessions) {
+    for (const s of scoped) {
       for (const [name, m] of Object.entries(s.metrics.byInvestigator ?? {})) {
         map[name] = (map[name] ?? 0) + m.visits
       }
@@ -109,7 +204,7 @@ export function Operations() {
     return Object.entries(map)
       .map(([name, visits]) => ({ name, visits }))
       .sort((a, b) => b.visits - a.visits)
-  }, [sessions])
+  }, [sessions, investigatorGranularity])
 
   // ── Live today derived data ──────────────────────────────────────────────
   const statusCounts = useMemo(() => {
@@ -202,6 +297,68 @@ export function Operations() {
         </p>
       </div>
 
+      {/* ── Section B: Live Today ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={SECTION_LABEL_STYLE}>Live Today — k2 Board</div>
+
+        <Panel
+          title="Participant Flow"
+          action={
+            entries.length > 0 ? (
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                {entries.length} total · {activeCount} active
+              </span>
+            ) : undefined
+          }
+        >
+          {boardCircuitOpen && (
+            <div style={{
+              background: 'rgba(245 158 11 / 0.12)',
+              border: '1px solid rgba(245 158 11 / 0.35)',
+              borderRadius: 8, padding: '10px 14px', marginBottom: 14,
+              fontSize: 13, color: 'var(--signal-warn)',
+            }}>
+              ▲ Live subscription paused — snapshot rate exceeded. Auto-retrying in ~2 min.
+            </div>
+          )}
+
+          {boardLoading && !boardCircuitOpen ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} className="glass" style={{ height: 72 }} />
+              ))}
+            </div>
+          ) : boardError && !boardCircuitOpen ? (
+            <ErrorState message={boardError.message} />
+          ) : entries.length === 0 ? (
+            <EmptyState
+              icon={<Activity size={28} />}
+              title="No participants yet today"
+              body="Entries will appear here as participants check in on the k2 board."
+            />
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+              {Object.entries(STATUS_LABELS).map(([status, label]) => {
+                const count = statusCounts[status] ?? 0
+                if (count === 0) return null
+                return (
+                  <Tile
+                    key={status}
+                    label={label}
+                    value={count}
+                    signal={
+                      status === 'no_show' ? 'alert'
+                      : status === 'discharge_ready' ? 'warn'
+                      : 'neutral'
+                    }
+                  />
+                )
+              })}
+            </div>
+          )}
+        </Panel>
+      </div>
+
       {/* ── Section A: Historical ── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={SECTION_LABEL_STYLE}>Historical — Board Sessions</div>
@@ -258,7 +415,10 @@ export function Operations() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <Panel title="No-Show Rate Over Time">
+              <Panel
+                title="No-Show Rate Over Time"
+                action={<PeriodSelector value={period} onChange={setPeriod} />}
+              >
                 {noShowRateData.length < 2 ? (
                   <EmptyState title="Not enough sessions" body="Need at least 2 sessions for trend data." />
                 ) : (
@@ -270,7 +430,10 @@ export function Operations() {
                   />
                 )}
               </Panel>
-              <Panel title="Avg Visit Duration Over Time">
+              <Panel
+                title="Avg Visit Duration Over Time"
+                action={<PeriodSelector value={period} onChange={setPeriod} />}
+              >
                 {durationData.length < 2 ? (
                   <EmptyState title="Not enough data" body="Need at least 2 sessions with duration data." />
                 ) : (
@@ -285,14 +448,20 @@ export function Operations() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <Panel title="Arrivals by Study">
+              <Panel
+                title="Arrivals by Study"
+                action={<GranularitySelector value={arrivalGranularity} onChange={setArrivalGranularity} />}
+              >
                 {byStudyData.length === 0 ? (
                   <EmptyState title="No study data" />
                 ) : (
                   <HUDBarChart data={byStudyData} xKey="study" yKey="arrivals" />
                 )}
               </Panel>
-              <Panel title="Visits by Investigator">
+              <Panel
+                title="Visits by Investigator"
+                action={<GranularitySelector value={investigatorGranularity} onChange={setInvestigatorGranularity} />}
+              >
                 {byInvestigatorData.length === 0 ? (
                   <EmptyState title="No investigator data" />
                 ) : (
@@ -434,67 +603,6 @@ export function Operations() {
         </Panel>
       </div>
 
-      {/* ── Section B: Live Today ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={SECTION_LABEL_STYLE}>Live Today — k2 Board</div>
-
-        <Panel
-          title="Participant Flow"
-          action={
-            entries.length > 0 ? (
-              <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-                {entries.length} total · {activeCount} active
-              </span>
-            ) : undefined
-          }
-        >
-          {boardCircuitOpen && (
-            <div style={{
-              background: 'rgba(245 158 11 / 0.12)',
-              border: '1px solid rgba(245 158 11 / 0.35)',
-              borderRadius: 8, padding: '10px 14px', marginBottom: 14,
-              fontSize: 13, color: 'var(--signal-warn)',
-            }}>
-              ▲ Live subscription paused — snapshot rate exceeded. Auto-retrying in ~2 min.
-            </div>
-          )}
-
-          {boardLoading && !boardCircuitOpen ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-              {[0, 1, 2, 3].map(i => (
-                <div key={i} className="glass" style={{ height: 72 }} />
-              ))}
-            </div>
-          ) : boardError && !boardCircuitOpen ? (
-            <ErrorState message={boardError.message} />
-          ) : entries.length === 0 ? (
-            <EmptyState
-              icon={<Activity size={28} />}
-              title="No participants yet today"
-              body="Entries will appear here as participants check in on the k2 board."
-            />
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
-              {Object.entries(STATUS_LABELS).map(([status, label]) => {
-                const count = statusCounts[status] ?? 0
-                if (count === 0) return null
-                return (
-                  <Tile
-                    key={status}
-                    label={label}
-                    value={count}
-                    signal={
-                      status === 'no_show' ? 'alert'
-                      : status === 'discharge_ready' ? 'warn'
-                      : 'neutral'
-                    }
-                  />
-                )
-              })}
-            </div>
-          )}
-        </Panel>
-      </div>
     </div>
   )
 }

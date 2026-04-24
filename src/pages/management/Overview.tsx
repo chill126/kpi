@@ -155,15 +155,17 @@ export function Overview() {
   )
 
   const utilizationData = useMemo(
-    () => investigators.map((inv) => {
-      const m = computeWeekMetrics(inv.id, inv.weeklyCapacityHours * 60, visits, assessments, weekStart)
-      return {
-        name: inv.name,
-        utilization: m.utilizationPct,
-        totalHours: +(m.totalMinutes / 60).toFixed(1),
-        capacityHours: inv.weeklyCapacityHours,
-      }
-    }),
+    () => investigators
+      .filter((inv) => inv.role === 'PI' || inv.role === 'Sub-I')
+      .map((inv) => {
+        const m = computeWeekMetrics(inv.id, inv.weeklyCapacityHours * 60, visits, assessments, weekStart)
+        return {
+          name: inv.name,
+          utilization: m.utilizationPct,
+          totalHours: +(m.totalMinutes / 60).toFixed(1),
+          capacityHours: inv.weeklyCapacityHours,
+        }
+      }),
     [investigators, visits, assessments, weekStart],
   )
 
@@ -302,10 +304,7 @@ export function Overview() {
         overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0,
       }}>Management Overview</h1>
 
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-label)' }}>
-          K2 · Tampa
-        </div>
+      <header style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
         <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
           {user?.displayName ?? ''} · Week {weekNumber(new Date(weekStart))}
         </div>
