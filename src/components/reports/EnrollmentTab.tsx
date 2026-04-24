@@ -10,8 +10,8 @@ import type { Study, ScreenFailure } from '@/types'
 const STATUS_ORDER: Record<string, number> = {
   enrolling: 0,
   paused: 1,
-  maintenance: 2,
-  on_hold: 3,
+  open: 2,
+  pending: 3,
   completed: 4,
 }
 

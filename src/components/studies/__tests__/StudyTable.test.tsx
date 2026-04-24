@@ -3,6 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi } from 'vitest'
 import { StudyTable } from '@/components/studies/StudyTable'
+
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: vi.fn(() => ({ user: null, loading: false })),
+}))
 import type { Study, Investigator } from '@/types'
 import type { StudyFilterState } from '@/components/studies/StudyFilters'
 

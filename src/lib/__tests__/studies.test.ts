@@ -86,14 +86,14 @@ describe('updateStudyStatus', () => {
 })
 
 describe('cloneStudy', () => {
-  it('creates a new study with reset enrollment and On Hold status', async () => {
+  it('creates a new study with reset enrollment and Pending status', async () => {
     vi.mocked(firestore.addDoc).mockResolvedValue({ id: 'cloned-id' } as any)
 
     const id = await cloneStudy({ id: 'orig', ...mockStudy }, 'Study Alpha (Copy)')
 
     expect(id).toBe('cloned-id')
     const callArg = vi.mocked(firestore.addDoc).mock.calls[0][1] as any
-    expect(callArg.status).toBe('on_hold')
+    expect(callArg.status).toBe('pending')
     expect(callArg.name).toBe('Study Alpha (Copy)')
     expect(callArg.enrollmentData.randomizations).toBe(0)
   })

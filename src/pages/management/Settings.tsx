@@ -45,7 +45,7 @@ const HUD_SELECT_STYLE: React.CSSProperties = {
 
 const TILE_DISPLAY: Record<OverviewTileId, { label: string; description: string }> = {
   'capacity': { label: 'Capacity', description: 'Average site utilization this week' },
-  'studies': { label: 'Studies', description: 'Active enrolling or maintenance studies' },
+  'studies': { label: 'Studies', description: 'Active enrolling or open studies' },
   'alerts': { label: 'Alerts', description: 'Investigators at or above capacity threshold' },
   'enrollment': { label: 'Enrollment', description: 'Randomizations as % of YTD target' },
   'today-activity': { label: "Today's Activity", description: 'Visits and assessments logged today' },

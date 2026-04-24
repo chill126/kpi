@@ -126,7 +126,7 @@ export async function cloneStudy(study: Study, newName: string): Promise<string>
   const ref = await addDoc(collection(db, 'studies'), {
     ...data,
     name: newName,
-    status: 'on_hold' as StudyStatus,
+    status: 'pending' as StudyStatus,
     enrollmentData: { prescreens: 0, screens: 0, randomizations: 0, active: 0, completions: 0 },
     statusHistory: [],
     parsedFromProtocol: false,

@@ -10,10 +10,10 @@ interface Props {
 }
 
 const STATUS_OPTIONS: StudyStatus[] = [
+  'pending',
   'enrolling',
   'paused',
-  'maintenance',
-  'on_hold',
+  'open',
   'completed',
 ]
 

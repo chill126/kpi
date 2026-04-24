@@ -150,7 +150,7 @@ export function Overview() {
   }, [])
 
   const activeStudies = useMemo(
-    () => studies.filter((s) => s.status === 'enrolling' || s.status === 'maintenance'),
+    () => studies.filter((s) => s.status === 'enrolling' || s.status === 'open'),
     [studies],
   )
 
@@ -229,7 +229,7 @@ export function Overview() {
           />
         )
       case 'studies':
-        return <Tile label="Studies" value={activeStudies.length} sub="enrolling or maintenance" signal="neutral" />
+        return <Tile label="Studies" value={activeStudies.length} sub="enrolling or open" signal="neutral" />
       case 'alerts':
         return (
           <Tile

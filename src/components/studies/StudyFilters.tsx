@@ -16,10 +16,10 @@ interface Props {
 
 const STATUS_OPTIONS: { value: StudyStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All Statuses' },
+  { value: 'pending', label: 'Pending' },
   { value: 'enrolling', label: 'Enrolling' },
   { value: 'paused', label: 'Paused' },
-  { value: 'maintenance', label: 'Maintenance' },
-  { value: 'on_hold', label: 'On Hold' },
+  { value: 'open', label: 'Open' },
   { value: 'completed', label: 'Completed' },
 ]
 

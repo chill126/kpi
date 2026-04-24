@@ -121,7 +121,7 @@ const studies: SeedStudy[] = [
     sponsorProtocolId: 'PRX-8814-303',
     therapeuticArea: 'Psychiatry',
     phase: 'Phase III',
-    status: 'maintenance',
+    status: 'open',
   },
 ]
 

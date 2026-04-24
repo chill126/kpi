@@ -1,6 +1,67 @@
-import type { Investigator, Study } from '@/types'
+import { useState } from 'react'
+import type { Investigator, Study, StudyStatus } from '@/types'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { updateStudyStatus } from '@/lib/studies'
+import { useAuth } from '@/hooks/useAuth'
 import type { StudyFilterState } from './StudyFilters'
+
+const STATUS_OPTIONS: StudyStatus[] = ['pending', 'enrolling', 'paused', 'open', 'completed']
+
+const STATUS_SELECT_STYLE: Record<StudyStatus, React.CSSProperties> = {
+  pending:   { color: '#7c3aed', background: 'rgba(139 92 246 / 0.10)', border: '1px solid rgba(139 92 246 / 0.25)' },
+  enrolling: { color: '#15803d', background: 'rgba(22 163 74 / 0.10)',  border: '1px solid rgba(22 163 74 / 0.25)' },
+  paused:    { color: '#b45309', background: 'rgba(217 119 6 / 0.10)',  border: '1px solid rgba(217 119 6 / 0.25)' },
+  open:      { color: '#1d4ed8', background: 'rgba(59 130 246 / 0.10)', border: '1px solid rgba(59 130 246 / 0.25)' },
+  completed: { color: '#64748b', background: 'rgba(100 116 139 / 0.10)', border: '1px solid rgba(100 116 139 / 0.20)' },
+}
+
+function InlineStatusSelect({ study }: { study: Study }) {
+  const { user } = useAuth()
+  const [saving, setSaving] = useState(false)
+
+  if (!user || user.role !== 'management') {
+    return <StatusBadge status={study.status} />
+  }
+
+  async function handleChange(next: StudyStatus) {
+    if (next === study.status || saving) return
+    setSaving(true)
+    try {
+      await updateStudyStatus(study.id, next, user!.uid)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const style = STATUS_SELECT_STYLE[study.status as StudyStatus] ?? STATUS_SELECT_STYLE.completed
+
+  return (
+    <select
+      value={study.status}
+      disabled={saving}
+      onChange={(e) => void handleChange(e.target.value as StudyStatus)}
+      aria-label={`Status for ${study.name}`}
+      style={{
+        ...style,
+        fontSize: 11,
+        fontWeight: 500,
+        padding: '2px 6px',
+        borderRadius: 9999,
+        cursor: 'pointer',
+        outline: 'none',
+        appearance: 'none',
+        WebkitAppearance: 'none',
+        opacity: saving ? 0.6 : 1,
+      }}
+    >
+      {STATUS_OPTIONS.map((s) => (
+        <option key={s} value={s}>
+          {s.charAt(0).toUpperCase() + s.slice(1)}
+        </option>
+      ))}
+    </select>
+  )
+}
 
 interface Props {
   studies: Study[]
@@ -115,7 +176,7 @@ export function StudyTable({
                 </td>
                 <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{study.sponsor}</td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={study.status} />
+                  <InlineStatusSelect study={study} />
                 </td>
                 <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                   {study.therapeuticArea}

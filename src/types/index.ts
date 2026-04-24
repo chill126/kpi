@@ -52,7 +52,7 @@ export interface Investigator {
   boardName?: string
 }
 
-export type StudyStatus = 'enrolling' | 'paused' | 'maintenance' | 'completed' | 'on_hold'
+export type StudyStatus = 'pending' | 'enrolling' | 'paused' | 'open' | 'completed'
 export type StudyPhase = 'Phase I' | 'Phase II' | 'Phase III' | 'Phase IV' | 'Observational'
 
 export interface StudyInvestigator {

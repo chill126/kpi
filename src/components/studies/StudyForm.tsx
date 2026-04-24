@@ -22,7 +22,7 @@ interface Props {
 }
 
 const PHASES: StudyPhase[] = ['Phase I', 'Phase II', 'Phase III', 'Phase IV', 'Observational']
-const STATUSES: StudyStatus[] = ['enrolling', 'paused', 'maintenance', 'on_hold', 'completed']
+const STATUSES: StudyStatus[] = ['pending', 'enrolling', 'paused', 'open', 'completed']
 
 interface FormState {
   name: string

@@ -13,9 +13,9 @@ describe('StatusBadge', () => {
     expect(screen.getByText('Paused')).toBeInTheDocument()
   })
 
-  it('renders "On Hold" for on_hold status', () => {
-    render(<StatusBadge status="on_hold" />)
-    expect(screen.getByText('On Hold')).toBeInTheDocument()
+  it('renders "Open" for open status', () => {
+    render(<StatusBadge status="open" />)
+    expect(screen.getByText('Open')).toBeInTheDocument()
   })
 
   it('renders "Completed" for completed status', () => {
@@ -23,9 +23,9 @@ describe('StatusBadge', () => {
     expect(screen.getByText('Completed')).toBeInTheDocument()
   })
 
-  it('renders "Maintenance" for maintenance status', () => {
-    render(<StatusBadge status="maintenance" />)
-    expect(screen.getByText('Maintenance')).toBeInTheDocument()
+  it('renders "Pending" for pending status', () => {
+    render(<StatusBadge status="pending" />)
+    expect(screen.getByText('Pending')).toBeInTheDocument()
   })
 
   it('renders "Unknown" when status is undefined (bad data)', () => {

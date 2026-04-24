@@ -5,6 +5,10 @@ interface Props {
 }
 
 const STATUS_CONFIG: Record<StudyStatus, { label: string; className: string }> = {
+  pending: {
+    label: 'Pending',
+    className: 'bg-purple-50 text-purple-700 border border-purple-200',
+  },
   enrolling: {
     label: 'Enrolling',
     className: 'bg-green-50 text-green-700 border border-green-200',
@@ -13,12 +17,8 @@ const STATUS_CONFIG: Record<StudyStatus, { label: string; className: string }> =
     label: 'Paused',
     className: 'bg-amber-50 text-amber-700 border border-amber-200',
   },
-  on_hold: {
-    label: 'On Hold',
-    className: 'bg-red-50 text-red-700 border border-red-200',
-  },
-  maintenance: {
-    label: 'Maintenance',
+  open: {
+    label: 'Open',
     className: 'bg-blue-50 text-blue-700 border border-blue-200',
   },
   completed: {

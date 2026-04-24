@@ -12,11 +12,11 @@ import { getWeekStart, computeWeekMetrics } from '@/lib/capacity'
 import type { StudyStatus } from '@/types'
 
 const STATUS_STYLE: Record<string, React.CSSProperties> = {
+  pending: { color: 'var(--accent-primary)', background: 'rgba(139 92 246 / 0.12)', border: '1px solid rgba(139 92 246 / 0.25)' },
   enrolling: { color: 'var(--signal-good)', background: 'rgba(22 163 74 / 0.12)', border: '1px solid rgba(22 163 74 / 0.25)' },
   paused: { color: 'var(--signal-warn)', background: 'rgba(217 119 6 / 0.12)', border: '1px solid rgba(217 119 6 / 0.25)' },
+  open: { color: 'var(--accent-secondary)', background: 'rgba(59 130 246 / 0.12)', border: '1px solid rgba(59 130 246 / 0.25)' },
   completed: { color: 'var(--text-muted)', background: 'rgba(255 255 255 / 0.06)', border: '1px solid rgba(255 255 255 / 0.10)' },
-  maintenance: { color: 'var(--text-muted)', background: 'rgba(255 255 255 / 0.06)', border: '1px solid rgba(255 255 255 / 0.10)' },
-  on_hold: { color: 'var(--signal-alert)', background: 'rgba(220 38 38 / 0.12)', border: '1px solid rgba(220 38 38 / 0.25)' },
 }
 
 function enrollmentSignal(pct: number): 'good' | 'warn' | 'alert' {
