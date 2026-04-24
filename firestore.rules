@@ -91,5 +91,15 @@ service cloud.firestore {
       allow create: if isManagement() && request.resource.data.keys().hasAll(['siteId', 'sessionDate']);
       allow update, delete: if isManagement();
     }
+
+    match /errorLog/{docId} {
+      allow read: if isManagement();
+      allow create: if isAuthenticated();
+    }
+
+    match /auditLog/{docId} {
+      allow read: if isManagement();
+      allow create: if isAuthenticated();
+    }
   }
 }
