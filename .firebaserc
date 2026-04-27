@@ -1,5 +1,12 @@
 {
   "projects": {
     "default": "kpi-tracker-da9cf"
+  },
+  "targets": {
+    "kpi-tracker-da9cf": {
+      "hosting": {
+        "k2-tracker": ["k2-tracker"]
+      }
+    }
   }
 }

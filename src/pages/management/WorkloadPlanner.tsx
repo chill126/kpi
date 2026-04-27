@@ -138,7 +138,7 @@ export function WorkloadPlanner() {
                       position: 'sticky',
                       left: 0,
                       zIndex: 10,
-                      background: 'oklch(0.10 0.018 238)',
+                      background: 'var(--color-canvas)',
                     }}
                   >
                     Investigator
@@ -175,7 +175,7 @@ export function WorkloadPlanner() {
               <tbody>
                 {grid.map(({ investigator: inv, weeks }) => (
                   <tr key={inv.id} style={{ borderTop: '1px solid rgba(255 255 255 / 0.05)' }}>
-                    <td style={{ padding: '8px 12px 8px 0', position: 'sticky', left: 0, zIndex: 5, background: 'oklch(0.10 0.018 238)' }}>
+                    <td style={{ padding: '8px 12px 8px 0', position: 'sticky', left: 0, zIndex: 5, background: 'var(--color-canvas)' }}>
                       <p style={{ margin: 0, fontWeight: 500, fontSize: 13, color: 'var(--text-primary)' }}>
                         {inv.name}
                       </p>

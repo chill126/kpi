@@ -321,7 +321,7 @@ export function Overview() {
 
       <header style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
         <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-          {user?.displayName ?? ''} · Week {weekNumber(new Date(weekStart))}
+          {user?.displayName || user?.email || ''} · Week {weekNumber(new Date(weekStart))}
         </div>
       </header>
 

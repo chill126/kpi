@@ -10,7 +10,6 @@ interface Props {
   role: Role
   user: { displayName: string; email: string; role: string }
   onSignOut: () => void | Promise<void>
-  onSettings?: () => void
 }
 
 const managementGroups: Array<{ label: string; ids: string[] }> = [
@@ -39,7 +38,7 @@ function renderItem(item: CommandItem): React.ReactNode {
   )
 }
 
-export function NavRail({ role, user, onSignOut, onSettings }: Props) {
+export function NavRail({ role, user, onSignOut }: Props) {
   const pages = role === 'management' ? managementPages : staffPages
   const groups = role === 'management' ? managementGroups : staffGroups
   const byId = new Map(pages.map(p => [p.id, p] as const))
@@ -73,7 +72,6 @@ export function NavRail({ role, user, onSignOut, onSettings }: Props) {
             email={user.email}
             role={user.role}
             onSignOut={onSignOut}
-            onSettings={onSettings}
           />
         </div>
         {role === 'management' && (

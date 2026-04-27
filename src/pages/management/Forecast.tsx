@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { AlertCircle, AlertTriangle } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine, Legend,
@@ -239,7 +240,10 @@ export function Forecast() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: isCritical ? 'var(--signal-alert)' : 'var(--signal-warn)' }}>
-                  <span>{isCritical ? '!' : '▲'}</span>
+                  {isCritical
+                    ? <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                    : <AlertTriangle size={15} style={{ flexShrink: 0 }} />
+                  }
                   <span>
                     <strong>{a.name}</strong> projected to{' '}
                     {isCritical ? 'exceed 90%' : 'reach 75%'} capacity in ~{a.weeksOut} week
@@ -275,7 +279,7 @@ export function Forecast() {
                 fontSize: 12,
               }}
             />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: 11, color: chartPalette.axis, paddingTop: 8 }} />
             <ReferenceLine
               y={FORECAST_CONFIG.WARNING_THRESHOLD_PCT}
               stroke="#f59e0b"

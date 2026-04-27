@@ -7,11 +7,9 @@ interface Props {
   role: string
   email: string
   onSignOut: () => void | Promise<void>
-  onSettings?: () => void
 }
 
-export function UserChip({ displayName, role, email, onSignOut, onSettings }: Props) {
-  void onSettings
+export function UserChip({ displayName, role, email, onSignOut }: Props) {
   const initials = displayName
     .split(/\s+/)
     .filter(Boolean)
