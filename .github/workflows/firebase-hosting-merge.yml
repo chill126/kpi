@@ -39,3 +39,4 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KPI_TRACKER_DA9CF }}
           projectId: kpi-tracker-da9cf
           channelId: live
+          target: k2-tracker
