@@ -1,4 +1,5 @@
 import { TrendChip } from './TrendChip'
+import { ReportInfoIcon } from './ReportInfoIcon'
 import { useCountUp } from './hooks/useCountUp'
 import { usePrefersReducedMotion } from './hooks/usePrefersReducedMotion'
 
@@ -14,12 +15,13 @@ interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {
   signal?: Signal
   trend?: TrendProp
   variant?: 'default' | 'hero'
+  info?: string
 }
 
 export function Tile({
   label, value, suffix, sub,
   signal = 'neutral', trend, variant = 'default',
-  style, ...rest
+  info, style, ...rest
 }: Props) {
   const reduced = usePrefersReducedMotion()
   const numeric = typeof value === 'number' ? value : null
@@ -48,7 +50,7 @@ export function Tile({
         position: 'relative',
         padding: variant === 'hero' ? '18px 20px 20px' : '16px 18px 18px',
         boxShadow: variant === 'hero'
-          ? 'inset 0 0 0 1px oklch(0.72 0.17 295 / 0.35), inset 0 1px 0 rgba(255 255 255 / 0.08), 0 8px 32px rgba(0 0 0 / 0.35)'
+          ? 'inset 0 0 0 1px oklch(0.65 0.26 222 / 0.35), inset 0 1px 0 rgba(255 255 255 / 0.08), 0 8px 32px rgba(0 0 0 / 0.35)'
           : undefined,
         ...style,
       }}
@@ -58,6 +60,11 @@ export function Tile({
           <TrendChip signal={trend.direction === 'up' ? 'good' : 'alert'}>
             {trend.delta}
           </TrendChip>
+        </div>
+      )}
+      {info && (
+        <div style={{ position: 'absolute', top: 8, right: 8 }}>
+          <ReportInfoIcon info={info} />
         </div>
       )}
       <div style={{

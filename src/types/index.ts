@@ -1,9 +1,7 @@
 export type Role = 'management' | 'staff'
 
 export type OverviewTileId =
-  | 'capacity'
   | 'studies'
-  | 'alerts'
   | 'enrollment'
   | 'today-activity'
 
@@ -148,6 +146,16 @@ export interface StudyStatusHistoryEntry {
   note?: string
 }
 
+export interface StudyTeamContact {
+  id: string
+  role: string
+  name: string
+  email: string
+  phone: string
+  organization?: string
+  notes?: string
+}
+
 export interface Study {
   id: string
   name: string
@@ -171,6 +179,9 @@ export interface Study {
   statusHistory: StudyStatusHistoryEntry[]
   contract?: StudyContract
   customScreenFailureReasons?: string[]
+  teamContacts?: StudyTeamContact[]
+  primaryCoordinator?: string
+  backupCoordinator?: string
 }
 
 export type VisitStatus = 'scheduled' | 'completed' | 'missed' | 'no_show'
@@ -267,10 +278,15 @@ export interface HypotheticalStudy {
   assignedInvestigatorIds: string[]
   targetEnrollment: number
   enrollmentRamp: Record<number, number>  // week-from-start → cumulative participants
+  // Simple mode — auto-generates enrollmentRamp from rate + ramp-up period
+  simpleMode?: boolean
+  monthlyEnrollmentRate?: number
+  rampUpWeeks?: number
   avgInvestigatorMinutesPerVisit: number
-  avgAssessmentMinutesPerVisit: number
+  avgAssessmentMinutesPerVisit: number    // coordinator / rater time per visit
   visitsPerParticipantPerMonth: number
   estimatedContractValue: number
+  coordinatorCapacityHoursPerWeek?: number
   durationWeeks: number
   startDate: string                        // ISO date string
 }

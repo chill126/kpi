@@ -9,7 +9,7 @@ import { useSiteAssessments } from '@/hooks/useSiteAssessments'
 import { useStudies } from '@/hooks/useStudies'
 import { useWhatIfScenarios } from '@/hooks/useWhatIfScenarios'
 import { useSite } from '@/hooks/useSite'
-import { simulateStudyImpact } from '@/lib/capacity'
+import { simulateStudyImpact, findEarliestFeasibleStart } from '@/lib/capacity'
 import { saveWhatIfScenario, deleteWhatIfScenario } from '@/lib/whatif'
 import { FORECAST_CONFIG } from '@/lib/forecast-config'
 import { WhatIfForm } from '@/components/management/WhatIfForm'
@@ -24,10 +24,14 @@ function defaultStudy(): HypotheticalStudy {
     assignedInvestigatorIds: [],
     targetEnrollment: 0,
     enrollmentRamp: Object.fromEntries(FORECAST_CONFIG.RAMP_CHECKPOINTS.map((w) => [w, 0])),
+    simpleMode: true,
+    monthlyEnrollmentRate: 0,
+    rampUpWeeks: 4,
     avgInvestigatorMinutesPerVisit: 0,
     avgAssessmentMinutesPerVisit: 0,
     visitsPerParticipantPerMonth: 0,
     estimatedContractValue: 0,
+    coordinatorCapacityHoursPerWeek: 40,
     durationWeeks: 26,
     startDate: new Date().toISOString().split('T')[0],
   }
@@ -77,6 +81,7 @@ export function WhatIf() {
 
   const [study, setStudy] = useState<HypotheticalStudy>(defaultStudy)
   const [saving, setSaving] = useState(false)
+  const [compareIds, setCompareIds] = useState<Set<string>>(new Set())
 
   const loading = invLoading || studiesLoading
 
@@ -119,6 +124,11 @@ export function WhatIf() {
     )
   }, [study, assignedInvestigators, studies, visits, assessments])
 
+  const earliestFeasibleStart = useMemo(() => {
+    if (assignedInvestigators.length === 0) return null
+    return findEarliestFeasibleStart(study, assignedInvestigators, studies, visits, assessments)
+  }, [study, assignedInvestigators, studies, visits, assessments])
+
   const handleSave = async () => {
     if (!result) return
     setSaving(true)
@@ -135,7 +145,22 @@ export function WhatIf() {
 
   const handleDelete = async (id: string) => {
     await deleteWhatIfScenario(siteId, id)
+    setCompareIds((prev) => { const next = new Set(prev); next.delete(id); return next })
   }
+
+  const toggleCompare = (id: string) => {
+    setCompareIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else if (next.size < 2) {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const compareScenarios = scenarios.filter((s) => compareIds.has(s.id))
 
   // Scatter data: one point per saved scenario
   const scatterData = useMemo(
@@ -180,11 +205,13 @@ export function WhatIf() {
         <Panel title="Projection">
           <SimulationOutput
             result={result}
+            study={study}
             investigators={assignedInvestigators}
             onSave={handleSave}
             saving={saving}
             sensitivityUp={sensitivityUp}
             sensitivityDown={sensitivityDown}
+            earliestFeasibleStart={earliestFeasibleStart}
           />
         </Panel>
       </div>
@@ -196,7 +223,7 @@ export function WhatIf() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                  {['Scenario Name', 'Investigators', 'Peak Utilization', 'Est. Revenue', 'Verdict', 'Actions'].map((col) => (
+                  {['Compare', 'Scenario Name', 'Investigators', 'Peak Utilization', 'Est. Revenue', 'Verdict', 'Actions'].map((col) => (
                     <th
                       key={col}
                       style={{
@@ -224,6 +251,15 @@ export function WhatIf() {
                       key={s.id}
                       style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
                     >
+                      <td style={{ padding: '10px 12px' }}>
+                        <input
+                          type="checkbox"
+                          checked={compareIds.has(s.id)}
+                          onChange={() => toggleCompare(s.id)}
+                          disabled={!compareIds.has(s.id) && compareIds.size >= 2}
+                          style={{ accentColor: 'var(--accent-primary)', width: 14, height: 14, cursor: 'pointer' }}
+                        />
+                      </td>
                       <td style={{ padding: '10px 12px', fontWeight: 500, color: 'var(--text-primary)' }}>
                         {s.study.name || 'Untitled'}
                       </td>
@@ -336,6 +372,112 @@ export function WhatIf() {
               </ResponsiveContainer>
             </div>
           )}
+          {/* Scenario comparison panel — shown when exactly 2 selected */}
+          {compareScenarios.length === 2 && (() => {
+            const [a, b] = compareScenarios
+            const peakA = peakUtilization(a)
+            const peakB = peakUtilization(b)
+            const rows: Array<{ label: string; a: string; b: string; winner?: 'a' | 'b' | 'tie' }> = [
+              {
+                label: 'Overall Verdict',
+                a: a.result.overallVerdict,
+                b: b.result.overallVerdict,
+                winner:
+                  a.result.overallVerdict === b.result.overallVerdict
+                    ? 'tie'
+                    : a.result.overallVerdict === 'feasible'
+                    ? 'a'
+                    : b.result.overallVerdict === 'feasible'
+                    ? 'b'
+                    : a.result.overallVerdict === 'caution'
+                    ? 'a'
+                    : 'b',
+              },
+              {
+                label: 'Peak Utilization',
+                a: `${peakA}%`,
+                b: `${peakB}%`,
+                winner: peakA < peakB ? 'a' : peakA > peakB ? 'b' : 'tie',
+              },
+              {
+                label: 'Est. Revenue',
+                a: `$${a.result.estimatedRevenue.toLocaleString()}`,
+                b: `$${b.result.estimatedRevenue.toLocaleString()}`,
+                winner:
+                  a.result.estimatedRevenue > b.result.estimatedRevenue
+                    ? 'a'
+                    : a.result.estimatedRevenue < b.result.estimatedRevenue
+                    ? 'b'
+                    : 'tie',
+              },
+              {
+                label: 'Target Enrollment',
+                a: String(a.study.targetEnrollment),
+                b: String(b.study.targetEnrollment),
+              },
+              {
+                label: 'Duration',
+                a: `${a.study.durationWeeks} wks`,
+                b: `${b.study.durationWeeks} wks`,
+              },
+              {
+                label: 'Investigators',
+                a: String(a.study.assignedInvestigatorIds.length),
+                b: String(b.study.assignedInvestigatorIds.length),
+              },
+              {
+                label: 'Visits / pt / mo',
+                a: String(a.study.visitsPerParticipantPerMonth),
+                b: String(b.study.visitsPerParticipantPerMonth),
+              },
+            ]
+            const winColor = 'var(--accent-primary)'
+            const winBg = 'rgba(14,165,233,0.10)'
+            return (
+              <div style={{ marginTop: 24, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20 }}>
+                <p style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Side-by-Side Comparison
+                </p>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                      <th style={{ textAlign: 'left', padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-label)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Metric</th>
+                      <th style={{ textAlign: 'center', padding: '6px 12px', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {a.study.name || 'Scenario A'}
+                      </th>
+                      <th style={{ textAlign: 'center', padding: '6px 12px', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {b.study.name || 'Scenario B'}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.label} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>{row.label}</td>
+                        <td style={{
+                          padding: '8px 12px', textAlign: 'center', fontWeight: 600, fontVariantNumeric: 'tabular-nums',
+                          color: row.winner === 'a' ? winColor : 'var(--text-primary)',
+                          background: row.winner === 'a' ? winBg : 'transparent',
+                        }}>
+                          {row.a}
+                        </td>
+                        <td style={{
+                          padding: '8px 12px', textAlign: 'center', fontWeight: 600, fontVariantNumeric: 'tabular-nums',
+                          color: row.winner === 'b' ? winColor : 'var(--text-primary)',
+                          background: row.winner === 'b' ? winBg : 'transparent',
+                        }}>
+                          {row.b}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p style={{ marginTop: 8, fontSize: 11, color: 'var(--text-muted)' }}>
+                  Highlighted cells indicate the better value for that metric.
+                </p>
+              </div>
+            )
+          })()}
         </Panel>
       )}
     </div>

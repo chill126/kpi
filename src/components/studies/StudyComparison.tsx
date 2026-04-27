@@ -73,7 +73,7 @@ export function StudyComparison({ studyIds, studies, investigators, open, onOpen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto" style={{ width: 'min(95vw, 72rem)', maxWidth: 'min(95vw, 72rem)' }}>
         <DialogHeader>
           <DialogTitle>Study Comparison</DialogTitle>
         </DialogHeader>

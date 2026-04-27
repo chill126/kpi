@@ -541,6 +541,30 @@ export function Operations() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={SECTION_LABEL_STYLE}>Today's Data Entry</div>
 
+        {!sectionCLoading && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <Tile
+              label="Visits Logged"
+              value={todayEntries.filter((e) => e.type === 'Visit').length}
+              sub="completed today"
+              signal="neutral"
+            />
+            <Tile
+              label="Assessments Logged"
+              value={todayEntries.filter((e) => e.type === 'Assessment').length}
+              sub="completed today"
+              signal="neutral"
+            />
+            <Tile
+              label="Total Duration"
+              value={todayEntries.reduce((s, e) => s + e.duration, 0)}
+              suffix=" min"
+              sub="across all entries"
+              signal="neutral"
+            />
+          </div>
+        )}
+
         <Panel
           title="Logged Entries"
           action={

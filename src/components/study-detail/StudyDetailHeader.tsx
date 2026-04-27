@@ -52,12 +52,14 @@ export function StudyDetailHeader({ study, investigators }: Props) {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
         {[
-          { label: 'Phase',      value: study.phase },
-          { label: 'Indication', value: study.therapeuticArea },
-          { label: 'PI',         value: pi?.name ?? '—' },
-          { label: 'Dates',      value: `${study.startDate || '—'} → ${study.expectedEndDate || '—'}` },
+          { label: 'Phase',       value: study.phase },
+          { label: 'Indication',  value: study.therapeuticArea },
+          { label: 'PI',          value: pi?.name ?? '—' },
+          { label: 'Dates',       value: `${study.startDate || '—'} → ${study.expectedEndDate || '—'}` },
+          { label: 'Primary RC',  value: study.primaryCoordinator || '—' },
+          { label: 'Backup RC',   value: study.backupCoordinator || '—' },
         ].map(({ label, value }) => (
           <div key={label}>
             <div style={{ fontSize: 10.5, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-label)', marginBottom: 2 }}>

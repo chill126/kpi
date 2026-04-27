@@ -4,9 +4,7 @@ import { subscribeUser, updateUser } from '@/lib/users'
 import type { DashboardConfig, OverviewTileId } from '@/types'
 
 export const ALL_TILE_IDS: OverviewTileId[] = [
-  'capacity',
   'studies',
-  'alerts',
   'enrollment',
   'today-activity',
 ]

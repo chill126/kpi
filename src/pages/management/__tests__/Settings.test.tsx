@@ -14,11 +14,9 @@ vi.mock('@/hooks/useDashboardConfig', () => ({
   useDashboardConfig: vi.fn(),
   DEFAULT_DASHBOARD_CONFIG: {
     tiles: [
-      { id: 'capacity', visible: true, order: 0 },
-      { id: 'studies', visible: true, order: 1 },
-      { id: 'alerts', visible: true, order: 2 },
-      { id: 'enrollment', visible: true, order: 3 },
-      { id: 'today-activity', visible: true, order: 4 },
+      { id: 'studies', visible: true, order: 0 },
+      { id: 'enrollment', visible: true, order: 1 },
+      { id: 'today-activity', visible: true, order: 2 },
     ],
   },
 }))
@@ -109,11 +107,9 @@ beforeEach(() => {
   vi.mocked(dashboardConfigModule.useDashboardConfig).mockReturnValue({
     config: {
       tiles: [
-        { id: 'capacity' as const, visible: true, order: 0 },
-        { id: 'studies' as const, visible: true, order: 1 },
-        { id: 'alerts' as const, visible: true, order: 2 },
-        { id: 'enrollment' as const, visible: true, order: 3 },
-        { id: 'today-activity' as const, visible: true, order: 4 },
+        { id: 'studies' as const, visible: true, order: 0 },
+        { id: 'enrollment' as const, visible: true, order: 1 },
+        { id: 'today-activity' as const, visible: true, order: 2 },
       ],
     },
     saveConfig: vi.fn().mockResolvedValue(undefined),
@@ -239,8 +235,9 @@ describe('Settings — My Dashboard tab', () => {
   it('renders tile list when My Dashboard tab is active', async () => {
     render(<Settings />)
     await userEvent.click(screen.getByRole('tab', { name: /my dashboard/i }))
-    expect(screen.getByText('Capacity')).toBeInTheDocument()
-    expect(screen.getByLabelText(/move capacity up/i)).toBeInTheDocument()
+    expect(screen.getByText('Studies')).toBeInTheDocument()
+    // drag-to-reorder replaces up/down buttons; tiles are rendered as draggable rows
+    expect(screen.getByRole('checkbox', { name: /studies/i })).toBeInTheDocument()
   })
 
   it('calls saveConfig when tile visibility is toggled', async () => {
@@ -248,23 +245,21 @@ describe('Settings — My Dashboard tab', () => {
     vi.mocked(dashboardConfigModule.useDashboardConfig).mockReturnValue({
       config: {
         tiles: [
-          { id: 'capacity' as const, visible: true, order: 0 },
-          { id: 'studies' as const, visible: true, order: 1 },
-          { id: 'alerts' as const, visible: true, order: 2 },
-          { id: 'enrollment' as const, visible: true, order: 3 },
-          { id: 'today-activity' as const, visible: true, order: 4 },
+          { id: 'studies' as const, visible: true, order: 0 },
+          { id: 'enrollment' as const, visible: true, order: 1 },
+          { id: 'today-activity' as const, visible: true, order: 2 },
         ],
       },
       saveConfig,
     })
     render(<Settings />)
     await userEvent.click(screen.getByRole('tab', { name: /my dashboard/i }))
-    const capacityCheckbox = screen.getByRole('checkbox', { name: /capacity/i })
-    await userEvent.click(capacityCheckbox)
+    const studiesCheckbox = screen.getByRole('checkbox', { name: /studies/i })
+    await userEvent.click(studiesCheckbox)
     expect(saveConfig).toHaveBeenCalledWith(
       expect.objectContaining({
         tiles: expect.arrayContaining([
-          expect.objectContaining({ id: 'capacity', visible: false }),
+          expect.objectContaining({ id: 'studies', visible: false }),
         ]),
       }),
     )
@@ -274,7 +269,7 @@ describe('Settings — My Dashboard tab', () => {
     const saveConfig = vi.fn().mockResolvedValue(undefined)
     vi.mocked(dashboardConfigModule.useDashboardConfig).mockReturnValue({
       config: {
-        tiles: [{ id: 'capacity' as const, visible: false, order: 0 }],
+        tiles: [{ id: 'studies' as const, visible: false, order: 0 }],
       },
       saveConfig,
     })

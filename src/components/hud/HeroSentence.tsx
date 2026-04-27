@@ -28,13 +28,13 @@ export function heroLine(utilizations: number[]): HeroLineResult {
     prefix: 'Site is',
     emphasis: 'operating smoothly',
     emphasisSignal: 'good',
-    suffix: `— ${nearCap} near capacity this week.`,
+    suffix: `— ${nearCap} ${plural(nearCap, 'investigator')} near capacity.`,
   }
   return {
     prefix: 'Site is',
     emphasis: 'operating smoothly',
     emphasisSignal: 'good',
-    suffix: '— no capacity concerns this week.',
+    suffix: '',
   }
 }
 

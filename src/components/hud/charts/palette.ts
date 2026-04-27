@@ -1,6 +1,6 @@
 export const chartPalette = {
   series: [
-    'oklch(0.72 0.17 295)',
+    'oklch(0.65 0.26 222)',
     'oklch(0.80 0.12 220)',
     'oklch(0.78 0.15 162)',
     'oklch(0.79 0.16 82)',

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { ReportInfoIcon } from '@/components/hud/ReportInfoIcon'
 import { useInvestigators } from '@/hooks/useInvestigators'
 import { useSiteVisits } from '@/hooks/useSiteVisits'
 import { useSiteAssessments } from '@/hooks/useSiteAssessments'
@@ -131,9 +132,12 @@ export function InvestigatorTab() {
       <Panel
         title="Investigator Report"
         action={
-          <Button variant="outline" size="sm" onClick={downloadCsv}>
-            Download CSV
-          </Button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ReportInfoIcon info={"Per-investigator workload cards showing current week utilization against capacity, visits and assessments logged in the last 30 days, and delegated studies.\n\nPulls from: Investigators, Visits, Assessments, Studies."} />
+            <Button variant="outline" size="sm" onClick={downloadCsv}>
+              Download CSV
+            </Button>
+          </div>
         }
       >
         {cards.length === 0 ? (

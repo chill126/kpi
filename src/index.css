@@ -245,3 +245,42 @@
 .nav-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(255 255 255 / 0.20);
 }
+
+/* HUD native select — overrides bg-white utility on all native <select> elements */
+select {
+  background: oklch(0.13 0.022 238);
+  border: 1px solid rgba(255 255 255 / 0.12);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 13px;
+  height: 34px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+select:focus {
+  outline: none;
+  border-color: rgba(30 120 255 / 0.5);
+  box-shadow: 0 0 0 2px rgba(30 120 255 / 0.15);
+}
+select option {
+  background: oklch(0.13 0.022 238);
+  color: var(--text-primary);
+}
+
+/* Capacity heatmap scrollbar */
+.heatmap-scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255 255 255 / 0.15) transparent;
+}
+.heatmap-scroll::-webkit-scrollbar { height: 6px; }
+.heatmap-scroll::-webkit-scrollbar-track { background: rgba(255 255 255 / 0.04); border-radius: 3px; }
+.heatmap-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255 255 255 / 0.15);
+  border-radius: 3px;
+}
+.heatmap-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255 255 255 / 0.28);
+}

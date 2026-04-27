@@ -1,7 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { updateEnrollmentData } from '@/lib/studies'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import type { EnrollmentData, Study } from '@/types'
 
 interface Props {
@@ -20,6 +18,10 @@ export function EnrollmentTab({ study, canEdit }: Props) {
   }
   const [form, setForm] = useState<EnrollmentData>(data)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setForm(study.enrollmentData ?? { prescreens: 0, screens: 0, randomizations: 0, active: 0, completions: 0 })
+  }, [study.id])
   const dirty = JSON.stringify(form) !== JSON.stringify(data)
 
   function set(field: keyof EnrollmentData, value: string) {
@@ -36,49 +38,104 @@ export function EnrollmentTab({ study, canEdit }: Props) {
   }
 
   const stages: { label: string; key: keyof EnrollmentData; value: number }[] = [
-    { label: 'Prescreens', key: 'prescreens', value: form.prescreens },
-    { label: 'Screens', key: 'screens', value: form.screens },
+    { label: 'Prescreens',     key: 'prescreens',     value: form.prescreens },
+    { label: 'Screens',        key: 'screens',        value: form.screens },
     { label: 'Randomizations', key: 'randomizations', value: form.randomizations },
-    { label: 'Active', key: 'active', value: form.active },
-    { label: 'Completions', key: 'completions', value: form.completions },
+    { label: 'Active',         key: 'active',         value: form.active },
+    { label: 'Completions',    key: 'completions',    value: form.completions },
   ]
 
   const maxValue = Math.max(...stages.map((s) => s.value), 1)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">Enrollment Funnel</h2>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+          Enrollment Funnel
+        </h2>
         {canEdit && dirty && (
-          <Button size="sm" onClick={save} disabled={saving} className="bg-teal-600 hover:bg-teal-700 text-white">
+          <button
+            onClick={save}
+            disabled={saving}
+            style={{
+              height: 32, padding: '0 14px', borderRadius: 8,
+              background: 'var(--accent-primary)', border: 'none',
+              color: '#fff', fontSize: 13, fontWeight: 500,
+              cursor: saving ? 'default' : 'pointer',
+              fontFamily: 'inherit', opacity: saving ? 0.6 : 1,
+            }}
+          >
             {saving ? 'Saving…' : 'Save'}
-          </Button>
+          </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
         {stages.map((stage, idx) => (
-          <div key={stage.key} className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 space-y-2 text-center">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{stage.label}</p>
+          <div
+            key={stage.key}
+            style={{
+              background: 'rgba(255 255 255 / 0.04)',
+              border: '1px solid rgba(255 255 255 / 0.09)',
+              borderRadius: 10,
+              padding: '16px 12px',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            <p style={{
+              margin: 0, fontSize: 10.5, fontWeight: 500,
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+              color: 'var(--text-label)',
+            }}>
+              {stage.label}
+            </p>
+
             {canEdit ? (
-              <Input
+              <input
                 type="number"
                 min="0"
                 value={form[stage.key]}
                 onChange={(e) => set(stage.key, e.target.value)}
-                className="text-center text-2xl font-bold h-12 tabular-nums"
+                style={{
+                  width: '100%', textAlign: 'center',
+                  fontSize: 24, fontWeight: 700, color: 'var(--text-primary)',
+                  background: 'rgba(255 255 255 / 0.06)',
+                  border: '1px solid rgba(255 255 255 / 0.12)',
+                  borderRadius: 8, padding: '8px 4px',
+                  fontVariantNumeric: 'tabular-nums',
+                  fontFamily: 'inherit', outline: 'none',
+                  height: 'auto',
+                  appearance: 'none',
+                  MozAppearance: 'textfield',
+                }}
               />
             ) : (
-              <p className="text-3xl font-bold text-slate-900 dark:text-slate-100 tabular-nums">
+              <p style={{
+                margin: 0, fontSize: 28, fontWeight: 700,
+                color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums',
+              }}>
                 {stage.value}
               </p>
             )}
-            <div
-              className="h-1.5 rounded-full bg-teal-500 mx-auto"
-              style={{ width: `${Math.round((stage.value / maxValue) * 100)}%`, minWidth: stage.value > 0 ? '8px' : '0' }}
-            />
+
+            <div style={{ height: 4, background: 'rgba(255 255 255 / 0.08)', borderRadius: 9999, overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: '100%',
+                  width: `${Math.round((stage.value / maxValue) * 100)}%`,
+                  minWidth: stage.value > 0 ? 6 : 0,
+                  borderRadius: 9999,
+                  background: 'var(--accent-primary)',
+                  transition: 'width 0.3s ease',
+                }}
+              />
+            </div>
+
             {idx > 0 && (
-              <p className="text-xs text-slate-400">
+              <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>
                 {conversionRate(stage.value, stages[idx - 1].value)} from prev
               </p>
             )}

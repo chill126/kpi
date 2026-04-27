@@ -1,5 +1,7 @@
 import { Fragment, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Panel } from '@/components/hud/Panel'
+import { ReportInfoIcon } from '@/components/hud/ReportInfoIcon'
 import { Tile } from '@/components/hud/Tile'
 import { Skeleton } from '@/components/hud/Skeleton'
 import { EmptyState } from '@/components/hud/EmptyState'
@@ -36,6 +38,7 @@ function enrollmentSignal(pct: number): 'good' | 'warn' | 'alert' {
 }
 
 export function SiteSummaryTab() {
+  const navigate = useNavigate()
   const { studies, loading: loadingStudies, error: studiesError } = useStudies()
   const { deviations, loading: loadingDeviations, error: deviationsError } = useAllProtocolDeviations()
   const { visits, loading: loadingVisits, error: visitsError } = useSiteVisits()
@@ -164,38 +167,44 @@ export function SiteSummaryTab() {
           label="Active Studies"
           value={activeStudies.length}
           signal="info"
+          info={"Studies currently enrolling or open at this site.\n\nPulls from: Studies."}
         />
         <Tile
           label="Site Enrolled"
           value={totalTarget === 0 ? '—' : `${enrollPct}%`}
           sub={`${totalEnrolled} / ${totalTarget} participants`}
           signal={enrollSignal}
+          info={"Percentage of total enrollment target reached across all studies at this site.\n\nPulls from: Studies."}
         />
         <Tile
           label="Screen→Rand"
           value={screenToRandValue}
           signal={totalScreens === 0 ? 'neutral' : screenToRandSignal}
+          info={"Percentage of screened participants who reached randomization. Higher is better.\n\nPulls from: Studies."}
         />
         <Tile
           label="Open Deviations"
           value={openDevCount}
           signal={openDevSignal}
+          info={"Protocol deviations currently open — not yet PI-reviewed or closed.\n\nPulls from: Protocol Deviations."}
         />
         <Tile
           label="Avg Utilization"
           value={avgUtilization}
           suffix="%"
           signal={avgUtilizationSignal}
+          info={"Average capacity utilization across all investigators this week.\n\nPulls from: Investigators, Visits, Assessments."}
         />
         <Tile
           label="Milestones Achieved"
           value={totalMilestones === 0 ? '—' : `${milestonesAchieved} / ${totalMilestones}`}
           signal={milestonesSignal}
+          info={"Contract milestones marked as achieved vs. total milestones across all studies.\n\nPulls from: Studies (contract data)."}
         />
       </div>
 
       {/* Enrollment by Study */}
-      <Panel title="Enrollment by Study">
+      <Panel title="Enrollment by Study" action={<ReportInfoIcon info={"High-level snapshot of site health. Shows active study counts, enrollment progress, screen-to-randomization rate, open protocol deviations, investigator utilization, and contract milestones.\n\nPulls from: Studies, Visits, Assessments, Investigators, Protocol Deviations."} />}>
         {studies.length === 0 ? (
           <EmptyState title="No studies" body="No studies have been added yet." />
         ) : (
@@ -274,9 +283,10 @@ export function SiteSummaryTab() {
                         return (
                           <tr
                             key={study.id}
-                            style={{ borderBottom: '1px solid rgba(255 255 255 / 0.05)' }}
+                            onClick={() => navigate(`/studies/${study.id}`)}
+                            style={{ borderBottom: '1px solid rgba(255 255 255 / 0.05)', cursor: 'pointer' }}
                           >
-                            <td style={{ padding: '8px 10px', color: 'var(--text-primary)' }}>
+                            <td style={{ padding: '8px 10px', color: 'var(--accent-primary)' }}>
                               {study.name}
                             </td>
                             <td

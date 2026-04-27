@@ -52,6 +52,10 @@ export function ContractTab({ study, canEdit }: Props) {
 
   const [form, setForm] = useState<SummaryForm>(toSummaryForm(contract))
   const [savingSummary, setSavingSummary] = useState(false)
+
+  useEffect(() => {
+    setForm(toSummaryForm(study.contract))
+  }, [study.id])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<{ milestone: ContractMilestone; index: number } | null>(null)
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null)
@@ -119,20 +123,20 @@ export function ContractTab({ study, canEdit }: Props) {
       {/* Section 1: Contract Summary */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">Contract Summary</h2>
+          <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Contract Summary</h2>
           {canEdit && dirty && (
             <Button
               size="sm"
               onClick={saveSummary}
               disabled={savingSummary}
-              className="bg-teal-600 hover:bg-teal-700 text-white"
+              style={{ background: 'var(--accent-primary)', color: '#fff', border: 'none' }}
             >
               {savingSummary ? 'Saving…' : 'Save Changes'}
             </Button>
           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
+        <div style={{ background: 'rgba(255 255 255 / 0.04)', border: '1px solid rgba(255 255 255 / 0.09)', borderRadius: 10, padding: 16 }}>
           {canEdit ? (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
@@ -199,7 +203,7 @@ export function ContractTab({ study, canEdit }: Props) {
       {/* Section 2: Milestones */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">Milestones</h2>
+          <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Milestones</h2>
           {canEdit && (
             <Button
               variant="outline"
@@ -244,11 +248,11 @@ export function ContractTab({ study, canEdit }: Props) {
                     </td>
                     <td className="px-4 py-3">
                       {m.achieved ? (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+                        <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 9999, background: 'rgba(52 211 153 / 0.15)', color: 'var(--signal-good)', border: '1px solid rgba(52 211 153 / 0.3)' }}>
                           ✓ Achieved
                         </span>
                       ) : (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 9999, background: 'rgba(255 255 255 / 0.06)', color: 'var(--text-muted)', border: '1px solid rgba(255 255 255 / 0.10)' }}>
                           Pending
                         </span>
                       )}
@@ -288,7 +292,7 @@ export function ContractTab({ study, canEdit }: Props) {
       </div>
 
       {/* Section 3: Read-only summary */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
+      <div style={{ background: 'rgba(255 255 255 / 0.04)', border: '1px solid rgba(255 255 255 / 0.09)', borderRadius: 10, padding: 16 }}>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Contract Value</p>
@@ -491,7 +495,7 @@ function MilestoneDialog({ open, onOpenChange, milestone, onSave }: MilestoneDia
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            style={{ background: 'var(--accent-primary)', color: '#fff', border: 'none' }}
           >
             {saving ? 'Saving…' : 'Save'}
           </Button>

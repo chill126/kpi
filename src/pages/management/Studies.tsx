@@ -18,6 +18,7 @@ export function Studies() {
   const [filters, setFilters] = useState<StudyFilterState>({
     status: 'all',
     therapeuticArea: '',
+    hideCompleted: false,
   })
   const [formOpen, setFormOpen] = useState(false)
   const [compareOpen, setCompareOpen] = useState(false)

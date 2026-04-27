@@ -6,5 +6,5 @@ export const FORECAST_CONFIG = {
   SIMULATOR_WEEKS: 26,
   RAMP_CHECKPOINTS: [1, 2, 4, 8] as const,
   ROLLING_AVERAGE_WEEKS: 4,
-  CONTRACT_VALUE_LABEL: 'Estimated contract value (placeholder — update in Phase 4B)',
+  CONTRACT_VALUE_LABEL: 'Estimated contract value ($)',
 } as const

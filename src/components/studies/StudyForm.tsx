@@ -50,6 +50,8 @@ interface FormState {
   contractTotalValue: string
   paidScreenFailRatio: string
   paidScreenFailMax: string
+  primaryCoordinator: string
+  backupCoordinator: string
 }
 
 const EMPTY: FormState = {
@@ -68,6 +70,8 @@ const EMPTY: FormState = {
   contractTotalValue: '',
   paidScreenFailRatio: '',
   paidScreenFailMax: '',
+  primaryCoordinator: '',
+  backupCoordinator: '',
 }
 
 function studyToForm(s: Study): FormState {
@@ -91,11 +95,12 @@ function studyToForm(s: Study): FormState {
     paidScreenFailMax: s.contract?.paidScreenFails?.maxPaid != null
       ? String(s.contract.paidScreenFails.maxPaid)
       : '',
+    primaryCoordinator: s.primaryCoordinator ?? '',
+    backupCoordinator: s.backupCoordinator ?? '',
   }
 }
 
-const selectClass =
-  'w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100'
+const selectClass = 'w-full'
 
 export function StudyForm({ open, onOpenChange, study, investigators, siteId, onSave }: Props) {
   const [form, setForm] = useState<FormState>(
@@ -188,6 +193,8 @@ export function StudyForm({ open, onOpenChange, study, investigators, siteId, on
         statusHistory: study?.statusHistory ?? [],
         ...(contract !== undefined ? { contract } : {}),
         customScreenFailureReasons: customReasons,
+        primaryCoordinator: form.primaryCoordinator.trim(),
+        backupCoordinator: form.backupCoordinator.trim(),
       }
 
       let id: string
@@ -356,6 +363,26 @@ export function StudyForm({ open, onOpenChange, study, investigators, siteId, on
               max="100"
               value={form.perParticipantOverheadPct}
               onChange={(e) => set('perParticipantOverheadPct', e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="sf-primary-coord">Primary Research Coordinator</Label>
+            <Input
+              id="sf-primary-coord"
+              value={form.primaryCoordinator}
+              onChange={(e) => set('primaryCoordinator', e.target.value)}
+              placeholder="e.g. Jane Smith"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="sf-backup-coord">Backup Research Coordinator</Label>
+            <Input
+              id="sf-backup-coord"
+              value={form.backupCoordinator}
+              onChange={(e) => set('backupCoordinator', e.target.value)}
+              placeholder="e.g. John Doe"
             />
           </div>
 

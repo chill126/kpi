@@ -41,7 +41,7 @@ describe('mergeDashboardConfig', () => {
   })
 
   it('adds missing tile IDs with visible:true appended at end', () => {
-    const partial = { tiles: [{ id: 'capacity' as const, visible: true, order: 0 }] }
+    const partial = { tiles: [{ id: 'studies' as const, visible: true, order: 0 }] }
     const result = mergeDashboardConfig(partial)
     expect(result.tiles).toHaveLength(ALL_TILE_IDS.length)
     expect(result.tiles.map(t => t.id)).toContain('today-activity')
@@ -53,8 +53,8 @@ describe('mergeDashboardConfig', () => {
   it('strips unknown tile IDs from stored config', () => {
     const withUnknown = {
       tiles: [
-        { id: 'capacity' as const, visible: false, order: 0 },
-        { id: 'mystery-tile' as unknown as 'capacity', visible: true, order: 1 },
+        { id: 'studies' as const, visible: false, order: 0 },
+        { id: 'mystery-tile' as unknown as 'studies', visible: true, order: 1 },
       ],
     }
     const result = mergeDashboardConfig(withUnknown)
@@ -63,11 +63,11 @@ describe('mergeDashboardConfig', () => {
 
   it('preserves visible:false on stored tiles', () => {
     const partial = {
-      tiles: ALL_TILE_IDS.map((id, i) => ({ id, visible: id === 'alerts' ? false : true, order: i })),
+      tiles: ALL_TILE_IDS.map((id, i) => ({ id, visible: id === 'today-activity' ? false : true, order: i })),
     }
     const result = mergeDashboardConfig(partial)
-    const alerts = result.tiles.find(t => t.id === 'alerts')!
-    expect(alerts.visible).toBe(false)
+    const tile = result.tiles.find(t => t.id === 'today-activity')!
+    expect(tile.visible).toBe(false)
   })
 })
 

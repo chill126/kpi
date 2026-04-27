@@ -44,7 +44,7 @@ const TAB_TRIGGER_CLASS =
   'rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:shadow-none pb-3 px-4 text-sm font-medium'
 
 function todayIso(): string {
-  return new Date().toISOString().split('T')[0]
+  return new Date(Date.now()).toISOString().split('T')[0]
 }
 
 function addDaysIso(isoDate: string, days: number): string {

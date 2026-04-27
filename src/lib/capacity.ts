@@ -112,8 +112,33 @@ export function futureWeekStart(weeksAhead: number): string {
   return thisMonday.toISOString().split('T')[0]
 }
 
+/**
+ * Builds enrollment ramp checkpoints from a simple monthly rate + ramp-up period.
+ * Used by simple-mode enrollment input in the What-If simulator.
+ */
+export function buildRampFromRate(
+  monthlyRate: number,
+  rampUpWeeks: number,
+  targetEnrollment: number,
+): Record<number, number> {
+  if (monthlyRate <= 0) {
+    return Object.fromEntries(FORECAST_CONFIG.RAMP_CHECKPOINTS.map((w) => [w, 0]))
+  }
+  const weeklyRateAtPeak = monthlyRate / 4.33
+  return Object.fromEntries(
+    (FORECAST_CONFIG.RAMP_CHECKPOINTS as readonly number[]).map((checkpoint) => {
+      let cumulative = 0
+      for (let week = 1; week <= checkpoint; week++) {
+        const fraction = rampUpWeeks <= 0 ? 1 : Math.min(1, week / rampUpWeeks)
+        cumulative += fraction * weeklyRateAtPeak
+      }
+      return [checkpoint, Math.min(targetEnrollment, Math.round(cumulative))]
+    }),
+  )
+}
+
 /** Linearly interpolates enrollment ramp between checkpoints. */
-function interpolateRamp(ramp: Record<number, number>, weekFromStart: number): number {
+export function interpolateRamp(ramp: Record<number, number>, weekFromStart: number): number {
   const checkpoints = [1, 2, 4, 8]
   if (weekFromStart <= 1) return ramp[1] ?? 0
   if (weekFromStart >= 8) return ramp[8] ?? 0
@@ -130,10 +155,8 @@ function hypotheticalWeekMinutes(study: HypotheticalStudy, weekFromStart: number
     interpolateRamp(study.enrollmentRamp, weekFromStart),
     study.targetEnrollment,
   )
-  const visitsPerWeek = (study.visitsPerParticipantPerMonth / 4) * participants
-  return Math.round(
-    visitsPerWeek * (study.avgInvestigatorMinutesPerVisit + study.avgAssessmentMinutesPerVisit),
-  )
+  const visitsPerWeek = (study.visitsPerParticipantPerMonth / 4.33) * participants
+  return Math.round(visitsPerWeek * study.avgInvestigatorMinutesPerVisit)
 }
 
 function verdictForPct(pct: number): FeasibilityVerdict {
@@ -209,6 +232,37 @@ export function simulateStudyImpact(
   )
 
   return { byInvestigator, estimatedRevenue, overallVerdict }
+}
+
+/**
+ * Tries start dates from 0 to 20 weeks from today.
+ * Returns the earliest where the hypothetical study is overall feasible.
+ * Returns null if no feasible window is found within the search range.
+ */
+export function findEarliestFeasibleStart(
+  study: HypotheticalStudy,
+  investigators: Investigator[],
+  existingStudies: Study[],
+  visits: Visit[],
+  assessments: Assessment[],
+): { date: string; weeksFromNow: number } | null {
+  const todayMonday = getWeekStart(new Date())
+  for (let w = 0; w <= 20; w++) {
+    const d = new Date(todayMonday + 'T00:00:00Z')
+    d.setUTCDate(d.getUTCDate() + w * 7)
+    const candidate = d.toISOString().split('T')[0]
+    const result = simulateStudyImpact(
+      { ...study, startDate: candidate },
+      investigators,
+      existingStudies,
+      visits,
+      assessments,
+    )
+    if (result.overallVerdict === 'feasible') {
+      return { date: candidate, weeksFromNow: w }
+    }
+  }
+  return null
 }
 
 /**

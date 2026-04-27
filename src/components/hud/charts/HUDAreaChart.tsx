@@ -4,7 +4,7 @@ import { HUDChartDefs } from './defs'
 import { HUDTooltip } from './HUDTooltip'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 
-const gradientNames = ['violet', 'cyan', 'mint', 'amber', 'coral'] as const
+const gradientNames = ['blue', 'cyan', 'mint', 'amber', 'coral'] as const
 
 type Datum = object
 interface Series { key: string; name?: string }

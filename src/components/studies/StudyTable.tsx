@@ -100,10 +100,36 @@ function StudyStatusPill({ study }: { study: Study }) {
 
 function applyFilters(studies: Study[], filters: StudyFilterState): Study[] {
   return studies.filter((s) => {
+    if (filters.hideCompleted && s.status === 'completed') return false
     if (filters.status !== 'all' && s.status !== filters.status) return false
     if (filters.therapeuticArea && !s.therapeuticArea.toLowerCase().includes(filters.therapeuticArea.toLowerCase())) return false
     return true
   })
+}
+
+function HUDCheckbox({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) {
+  return (
+    <button
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onChange}
+      style={{
+        width: 16, height: 16, borderRadius: 4, flexShrink: 0, cursor: 'pointer',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        border: checked ? '1.5px solid var(--accent-primary)' : '1.5px solid rgba(255 255 255 / 0.22)',
+        background: checked ? 'rgba(30 120 255 / 0.25)' : 'rgba(255 255 255 / 0.04)',
+        transition: 'all 120ms',
+        padding: 0,
+      }}
+    >
+      {checked && (
+        <svg width="9" height="7" viewBox="0 0 9 7" fill="none" aria-hidden="true">
+          <path d="M1 3.5L3.5 6L8 1" stroke="var(--accent-primary)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </button>
+  )
 }
 
 interface Props {
@@ -156,12 +182,10 @@ export function StudyTable({ studies, investigators, filters, selectedIds, onSel
               outline: isSelected ? '2px solid var(--accent-primary)' : undefined,
             }}
           >
-            <input
-              type="checkbox"
+            <HUDCheckbox
               checked={isSelected}
               onChange={() => toggleSelect(study.id)}
-              aria-label={`Select ${study.name}`}
-              style={{ width: 16, height: 16, accentColor: 'var(--accent-primary)', flexShrink: 0, cursor: 'pointer' }}
+              label={`Select ${study.name}`}
             />
 
             <div style={{ flex: 1, minWidth: 0 }}>

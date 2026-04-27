@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Panel } from '@/components/hud/Panel'
+import { ReportInfoIcon } from '@/components/hud/ReportInfoIcon'
 import { Tile } from '@/components/hud/Tile'
 import { Skeleton } from '@/components/hud/Skeleton'
 import { EmptyState } from '@/components/hud/EmptyState'
@@ -113,13 +114,13 @@ export function DeviationsTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Section 1 — Tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-        <Tile label="Open" value={openCount} signal={openSignal} />
-        <Tile label="PI Reviewed" value={piReviewedCount} signal="neutral" />
-        <Tile label="Closed" value={closedCount} signal={closedCount > 0 ? 'good' : 'neutral'} />
+        <Tile label="Open" value={openCount} signal={openSignal} info={"Protocol deviations logged but not yet PI-reviewed or closed.\n\nPulls from: Protocol Deviations."} />
+        <Tile label="PI Reviewed" value={piReviewedCount} signal="neutral" info={"Deviations reviewed by the PI but not yet formally closed.\n\nPulls from: Protocol Deviations."} />
+        <Tile label="Closed" value={closedCount} signal={closedCount > 0 ? 'good' : 'neutral'} info={"Protocol deviations that have been fully resolved and closed.\n\nPulls from: Protocol Deviations."} />
       </div>
 
       {/* Section 2 — By Category */}
-      <Panel title="By Category">
+      <Panel title="By Category" action={<ReportInfoIcon info={"Shows protocol deviation counts by status (open, PI-reviewed, closed), broken down by category and study, with an aging tracker for open deviations.\n\nPulls from: Protocol Deviations, Studies."} />}>
         {categoryChartData.length === 0 ? (
           <EmptyState title="No deviations recorded" />
         ) : (

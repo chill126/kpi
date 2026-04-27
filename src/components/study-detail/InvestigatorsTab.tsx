@@ -1,6 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { updateStudy } from '@/lib/studies'
-import { Button } from '@/components/ui/button'
 import type { Investigator, InvestigatorRole, Study, StudyInvestigator } from '@/types'
 import { Trash2 } from 'lucide-react'
 
@@ -12,9 +11,24 @@ interface Props {
 
 const ROLES: InvestigatorRole[] = ['PI', 'Sub-I', 'Provider']
 
+const thStyle: React.CSSProperties = {
+  padding: '10px 16px',
+  textAlign: 'left',
+  fontSize: 10.5,
+  fontWeight: 500,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'var(--text-label)',
+  borderBottom: '1px solid rgba(255 255 255 / 0.08)',
+}
+
 export function InvestigatorsTab({ study, investigators, canEdit }: Props) {
   const [assignments, setAssignments] = useState<StudyInvestigator[]>(study.assignedInvestigators)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setAssignments(study.assignedInvestigators)
+  }, [study.id])
   const dirty = JSON.stringify(assignments) !== JSON.stringify(study.assignedInvestigators)
 
   const invMap = Object.fromEntries(investigators.map((i) => [i.id, i]))
@@ -43,14 +57,18 @@ export function InvestigatorsTab({ study, investigators, canEdit }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">Investigators</h2>
-        <div className="flex items-center gap-2">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+          Investigators
+        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {canEdit && available.length > 0 && (
             <select
-              onChange={(e) => { if (e.target.value) { addInvestigator(e.target.value); e.target.value = '' } }}
-              className="h-8 rounded-md border border-slate-300 bg-white px-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:border-slate-600"
+              onChange={(e) => {
+                if (e.target.value) { addInvestigator(e.target.value); e.target.value = '' }
+              }}
+              style={{ height: 32, fontSize: 12 }}
             >
               <option value="">Add investigator…</option>
               {available.map((inv) => (
@@ -59,53 +77,82 @@ export function InvestigatorsTab({ study, investigators, canEdit }: Props) {
             </select>
           )}
           {canEdit && dirty && (
-            <Button size="sm" onClick={save} disabled={saving} className="bg-teal-600 hover:bg-teal-700 text-white">
+            <button
+              onClick={save}
+              disabled={saving}
+              style={{
+                height: 32, padding: '0 14px', borderRadius: 8,
+                background: 'var(--accent-primary)', border: 'none',
+                color: '#fff', fontSize: 13, fontWeight: 500,
+                cursor: saving ? 'default' : 'pointer',
+                fontFamily: 'inherit', opacity: saving ? 0.6 : 1,
+              }}
+            >
               {saving ? 'Saving…' : 'Save'}
-            </Button>
+            </button>
           )}
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-        <table className="w-full text-sm">
-          <thead className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Credentials</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Role on Study</th>
-              {canEdit && <th className="w-10" />}
+      <div style={{ borderRadius: 10, border: '1px solid rgba(255 255 255 / 0.09)', overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ background: 'rgba(255 255 255 / 0.04)' }}>
+              <th style={thStyle}>Name</th>
+              <th style={thStyle}>Credentials</th>
+              <th style={thStyle}>Role on Study</th>
+              {canEdit && <th style={{ width: 40, borderBottom: '1px solid rgba(255 255 255 / 0.08)' }} />}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+          <tbody>
             {assignments.map((a, idx) => {
               const inv = invMap[a.investigatorId]
               return (
-                <tr key={a.investigatorId} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                  <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">
-                    {inv?.name ?? a.investigatorId}
+                <tr key={a.investigatorId} style={{ borderTop: '1px solid rgba(255 255 255 / 0.05)' }}>
+                  <td style={{ padding: '10px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>
+                    <span>{inv?.name ?? a.investigatorId}</span>
                     {a.investigatorId === study.piId && (
-                      <span className="ml-2 text-xs bg-teal-50 text-teal-700 border border-teal-200 rounded-full px-2 py-0.5">PI</span>
+                      <span style={{
+                        marginLeft: 8, fontSize: 10.5, fontWeight: 500,
+                        padding: '2px 8px', borderRadius: 9999,
+                        background: 'rgba(30 120 255 / 0.15)',
+                        color: 'var(--accent-primary)',
+                        border: '1px solid rgba(30 120 255 / 0.3)',
+                      }}>
+                        PI
+                      </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{inv?.credentials ?? '—'}</td>
-                  <td className="px-4 py-3">
+                  <td style={{ padding: '10px 16px', color: 'var(--text-secondary)' }}>
+                    {inv?.credentials ?? '—'}
+                  </td>
+                  <td style={{ padding: '10px 16px' }}>
                     {canEdit ? (
                       <select
                         value={a.role}
                         onChange={(e) => updateRole(idx, e.target.value as InvestigatorRole)}
-                        className="h-7 rounded border border-slate-200 bg-white px-2 text-xs dark:bg-slate-800 dark:border-slate-700"
+                        disabled={a.investigatorId === study.piId}
+                        style={{ height: 28, fontSize: 12, opacity: a.investigatorId === study.piId ? 0.5 : 1 }}
                       >
                         {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                       </select>
-                    ) : a.role}
+                    ) : (
+                      <span style={{ color: 'var(--text-secondary)' }}>{a.role}</span>
+                    )}
                   </td>
                   {canEdit && (
-                    <td className="px-2">
+                    <td style={{ padding: '0 8px' }}>
                       <button
                         onClick={() => remove(idx)}
                         aria-label={`Remove ${inv?.name ?? a.investigatorId}`}
                         disabled={a.investigatorId === study.piId}
-                        className="text-slate-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                        style={{
+                          background: 'none', border: 'none', padding: 4, cursor: 'pointer',
+                          color: 'var(--text-muted)',
+                          opacity: a.investigatorId === study.piId ? 0.3 : 1,
+                        }}
+                        onMouseEnter={(e) => { if (a.investigatorId !== study.piId) e.currentTarget.style.color = 'var(--signal-alert)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)' }}
                       >
                         <Trash2 size={14} aria-hidden="true" />
                       </button>

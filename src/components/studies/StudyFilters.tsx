@@ -4,6 +4,7 @@ import type { StudyStatus } from '@/types'
 export interface StudyFilterState {
   status: StudyStatus | 'all'
   therapeuticArea: string
+  hideCompleted: boolean
 }
 
 interface Props {
@@ -64,11 +65,30 @@ export function StudyFilters({ filters, onChange }: Props) {
         </div>
       </div>
 
-      {(filters.status !== 'all' || filters.therapeuticArea) && (
+      <button
+        onClick={() => onChange({ ...filters, hideCompleted: !filters.hideCompleted })}
+        style={{
+          height: 34, padding: '0 14px', borderRadius: 99, fontSize: 12,
+          cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-end',
+          border: filters.hideCompleted
+            ? '1px solid rgba(30 120 255 / 0.5)'
+            : '1px solid rgba(255 255 255 / 0.10)',
+          background: filters.hideCompleted
+            ? 'rgba(30 120 255 / 0.15)'
+            : 'rgba(255 255 255 / 0.04)',
+          color: filters.hideCompleted ? 'var(--accent-primary)' : 'var(--text-secondary)',
+          fontWeight: filters.hideCompleted ? 500 : 400,
+          transition: 'all 150ms',
+        }}
+      >
+        Hide completed
+      </button>
+
+      {(filters.status !== 'all' || filters.therapeuticArea || filters.hideCompleted) && (
         <button
-          onClick={() => onChange({ status: 'all', therapeuticArea: '' })}
+          onClick={() => onChange({ status: 'all', therapeuticArea: '', hideCompleted: false })}
           style={{
-            height: 36, padding: '0 12px',
+            height: 34, padding: '0 12px', alignSelf: 'flex-end',
             background: 'none', border: 'none',
             color: 'var(--text-muted)', fontSize: 13,
             cursor: 'pointer', textDecoration: 'underline',

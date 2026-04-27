@@ -1,4 +1,5 @@
 import { Panel } from '@/components/hud/Panel'
+import { ReportInfoIcon } from '@/components/hud/ReportInfoIcon'
 import { Tile } from '@/components/hud/Tile'
 import { Skeleton } from '@/components/hud/Skeleton'
 import { EmptyState } from '@/components/hud/EmptyState'
@@ -127,21 +128,24 @@ export function EnrollmentTab() {
           label="Total Prescreens"
           value={totalPrescreens}
           signal="neutral"
+          info={"Patients who entered the pre-screening process across all studies.\n\nPulls from: Studies."}
         />
         <Tile
           label="Screen→Rand Rate"
           value={screenRandRate}
           signal={screenRandSignal}
+          info={"Percentage of screened participants who went on to be randomized. Higher is better.\n\nPulls from: Studies."}
         />
         <Tile
           label="Active Participants"
           value={totalActive}
           signal={totalActive > 0 ? 'good' : 'neutral'}
+          info={"Participants currently active — enrolled and not yet completed or withdrawn.\n\nPulls from: Studies."}
         />
       </div>
 
       {/* Section 2 — Enrollment Funnel by Study */}
-      <Panel title="Enrollment Funnel by Study">
+      <Panel title="Enrollment Funnel by Study" action={<ReportInfoIcon info={"Tracks the enrollment funnel from prescreens through completions for each study, with screen failure rates per study and a site-wide breakdown of screen failure reasons.\n\nPulls from: Studies, Screen Failures."} />}>
         {sortedStudies.length === 0 ? (
           <EmptyState title="No studies" body="No studies are currently configured." />
         ) : (
@@ -149,7 +153,6 @@ export function EnrollmentTab() {
             <table style={{
               width: '100%',
               borderCollapse: 'collapse',
-              fontFamily: 'JetBrains Mono, monospace',
               fontSize: 12,
               color: 'var(--text-primary)',
             }}>

@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Reports } from '@/pages/management/Reports'
 import type { Investigator } from '@/types'
@@ -45,12 +46,12 @@ beforeEach(() => {
 
 describe('Reports', () => {
   it('renders the page heading', () => {
-    render(<Reports />)
+    render(<MemoryRouter><Reports /></MemoryRouter>)
     expect(screen.getByRole('heading', { name: /reports/i })).toBeInTheDocument()
   })
 
   it('renders all 5 tabs', () => {
-    render(<Reports />)
+    render(<MemoryRouter><Reports /></MemoryRouter>)
     expect(screen.getByRole('tab', { name: /site summary/i })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /enrollment/i })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /deviations/i })).toBeInTheDocument()
@@ -60,14 +61,14 @@ describe('Reports', () => {
 
   it('shows investigator heatmap on Investigator tab', async () => {
     const user = userEvent.setup()
-    render(<Reports />)
+    render(<MemoryRouter><Reports /></MemoryRouter>)
     await user.click(screen.getByRole('tab', { name: /investigator/i }))
     expect(screen.getByText('Dr. Wilson')).toBeInTheDocument()
   })
 
   it('shows Download CSV button on Investigator tab', async () => {
     const user = userEvent.setup()
-    render(<Reports />)
+    render(<MemoryRouter><Reports /></MemoryRouter>)
     await user.click(screen.getByRole('tab', { name: /investigator/i }))
     expect(screen.getByRole('button', { name: /download csv/i })).toBeInTheDocument()
   })
@@ -82,7 +83,7 @@ describe('Reports', () => {
     })
 
     const user = userEvent.setup()
-    render(<Reports />)
+    render(<MemoryRouter><Reports /></MemoryRouter>)
     await user.click(screen.getByRole('tab', { name: /investigator/i }))
     await user.click(screen.getByRole('button', { name: /download csv/i }))
 

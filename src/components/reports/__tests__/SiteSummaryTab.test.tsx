@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SiteSummaryTab } from '@/components/reports/SiteSummaryTab'
 import type { Study, ProtocolDeviation, Visit, Assessment } from '@/types'
@@ -98,7 +99,7 @@ describe('SiteSummaryTab', () => {
     mockUseInvestigators.mockReturnValue({ investigators: [], loading: false, error: null })
     mockUseAssessments.mockReturnValue({ assessments: [], loading: false, error: null })
 
-    render(<SiteSummaryTab />)
+    render(<MemoryRouter><SiteSummaryTab /></MemoryRouter>)
 
     const skeletons = document.querySelectorAll('[aria-hidden="true"]')
     expect(skeletons.length).toBeGreaterThan(0)
@@ -106,7 +107,7 @@ describe('SiteSummaryTab', () => {
 
   it('renders Active Studies tile', () => {
     setAllLoaded([makeStudy({ status: 'enrolling' })])
-    render(<SiteSummaryTab />)
+    render(<MemoryRouter><SiteSummaryTab /></MemoryRouter>)
 
     // Tile renders with aria-label containing the label
     expect(screen.getByRole('group', { name: /active studies/i })).toBeInTheDocument()
@@ -114,7 +115,7 @@ describe('SiteSummaryTab', () => {
 
   it('renders Enrollment by Study panel with study name in table', () => {
     setAllLoaded([makeStudy({ name: 'Alpha Trial' })])
-    render(<SiteSummaryTab />)
+    render(<MemoryRouter><SiteSummaryTab /></MemoryRouter>)
 
     expect(screen.getByRole('region', { name: /enrollment by study/i })).toBeInTheDocument()
     expect(screen.getByText('Alpha Trial')).toBeInTheDocument()
@@ -122,7 +123,7 @@ describe('SiteSummaryTab', () => {
 
   it('shows deviation snapshot panel with empty state when no deviations', () => {
     setAllLoaded()
-    render(<SiteSummaryTab />)
+    render(<MemoryRouter><SiteSummaryTab /></MemoryRouter>)
 
     expect(screen.getByRole('region', { name: /deviation snapshot/i })).toBeInTheDocument()
     expect(screen.getByText(/no deviations recorded/i)).toBeInTheDocument()
@@ -140,7 +141,7 @@ describe('SiteSummaryTab', () => {
       error: null,
     })
 
-    render(<SiteSummaryTab />)
+    render(<MemoryRouter><SiteSummaryTab /></MemoryRouter>)
 
     expect(screen.getByRole('region', { name: /deviation snapshot/i })).toBeInTheDocument()
     // EmptyState should NOT be present

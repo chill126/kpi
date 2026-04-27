@@ -15,13 +15,13 @@ export function HUDChartDefs() {
         <stop offset="100%" stopColor="oklch(0.72 0.17 13 / 0.15)" />
       </linearGradient>
       <linearGradient id="hud-bar-primary" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%"   stopColor="oklch(0.72 0.17 295)" />
-        <stop offset="100%" stopColor="oklch(0.72 0.17 295 / 0.15)" />
+        <stop offset="0%"   stopColor="oklch(0.65 0.26 222)" />
+        <stop offset="100%" stopColor="oklch(0.65 0.26 222 / 0.15)" />
       </linearGradient>
 
       {/* area gradients — series[0..4] */}
       {[
-        ['violet', 'oklch(0.72 0.17 295)'],
+        ['blue',   'oklch(0.65 0.26 222)'],
         ['cyan',   'oklch(0.80 0.12 220)'],
         ['mint',   'oklch(0.78 0.15 162)'],
         ['amber',  'oklch(0.79 0.16 82)'],

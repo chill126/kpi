@@ -12,6 +12,7 @@ import { getWeekStart, computeWeekMetrics } from '@/lib/capacity'
 import { computeCapacityForecast } from '@/lib/capacityForecast'
 
 import { Tile } from '@/components/hud/Tile'
+import { ReportInfoIcon } from '@/components/hud/ReportInfoIcon'
 import { Panel } from '@/components/hud/Panel'
 import { Skeleton } from '@/components/hud/Skeleton'
 import { ErrorState } from '@/components/hud/ErrorState'
@@ -20,7 +21,6 @@ import { HeroSentence } from '@/components/hud/HeroSentence'
 import { HUDTabBar } from '@/components/hud/TabBar'
 import { HUDBarChart } from '@/components/hud/charts/HUDBarChart'
 import { HUDAreaChart } from '@/components/hud/charts/HUDAreaChart'
-import { NearCapacityList } from '@/components/hud/panels/NearCapacityList'
 import { ActiveParticipantsPanel } from '@/components/hud/panels/ActiveParticipantsPanel'
 import type { OverviewTileId, Site, Study } from '@/types'
 
@@ -173,17 +173,6 @@ export function Overview() {
     [piSubIInvestigators, visits, assessments, weekStart],
   )
 
-  const siteCapacityPct = useMemo(() => {
-    if (utilizationData.length === 0) return 0
-    const avg = utilizationData.reduce((s, d) => s + d.utilization, 0) / utilizationData.length
-    return Math.round(avg)
-  }, [utilizationData])
-
-  const alertCount = useMemo(
-    () => utilizationData.filter((d) => d.utilization >= 75).length,
-    [utilizationData],
-  )
-
   const totalParticipants = useMemo(
     () => activeStudies.reduce((s, st) => s + (st.enrollmentData?.active ?? 0), 0),
     [activeStudies],
@@ -210,6 +199,7 @@ export function Overview() {
 
   const enrollmentChartData = useMemo(
     () => activeStudies.map((s) => ({
+      id: s.id,
       name: s.name.length > 18 ? s.name.slice(0, 16) + '…' : s.name,
       enrolled: s.enrollmentData?.randomizations ?? 0,
       target: s.targetEnrollment,
@@ -229,34 +219,28 @@ export function Overview() {
 
   function renderTile(id: OverviewTileId): React.ReactNode {
     switch (id) {
-      case 'capacity':
+      case 'studies': {
+        const enrollingCount = activeStudies.filter((s) => s.status === 'enrolling').length
         return (
           <Tile
-            variant="hero"
-            label="Capacity"
-            value={siteCapacityPct}
-            suffix="%"
-            sub="avg utilization"
-            signal={siteCapacityPct >= 90 ? 'alert' : siteCapacityPct >= 75 ? 'warn' : 'good'}
+            label="Studies"
+            value={studies.length}
+            sub={`${enrollingCount} enrolling`}
+            signal="neutral"
+            info={"Total studies at this site and how many are actively enrolling.\n\nPulls from: Studies."}
+            style={{ height: '100%', boxSizing: 'border-box' }}
           />
         )
-      case 'studies':
-        return <Tile label="Studies" value={activeStudies.length} sub="enrolling or open" signal="neutral" />
-      case 'alerts':
-        return (
-          <Tile
-            label="Alerts"
-            value={alertCount}
-            sub="capacity warnings"
-            signal={alertCount > 0 ? 'alert' : 'good'}
-          />
-        )
+      }
       case 'enrollment':
         return (
           <div
             className="glass"
-            style={{ borderRadius: 14, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10, height: '100%' }}
+            style={{ borderRadius: 14, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10, height: '100%', position: 'relative' }}
           >
+            <div style={{ position: 'absolute', top: 8, right: 8 }}>
+              <ReportInfoIcon info={"Site-wide enrollment snapshot: screened, randomized, active, and completed counts across all active studies.\n\nPulls from: Studies."} />
+            </div>
             <span style={{ fontSize: 10.5, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-label)' }}>
               Enrollment
             </span>
@@ -285,13 +269,15 @@ export function Overview() {
           <button
             aria-label="Today's Activity — open operations"
             onClick={() => navigate('/operations')}
-            style={{ all: 'unset', display: 'block', width: '100%', cursor: 'pointer' }}
+            style={{ all: 'unset', display: 'block', width: '100%', height: '100%', cursor: 'pointer' }}
           >
             <Tile
               label="Today's Activity"
               value={todayActivityCount}
               sub="visits & assessments"
               signal="neutral"
+              info={"Visits and assessments scheduled for today. Click to open the Operations page.\n\nPulls from: Visits, Assessments."}
+              style={{ height: '100%', boxSizing: 'border-box' }}
             />
           </button>
         )
@@ -367,12 +353,14 @@ export function Overview() {
             </div>
           ) : (
             <div
-              style={{ display: 'grid', gridTemplateColumns: `repeat(${visibleTiles.length}, 1fr)`, gap: 14 }}
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}
               role="region"
               aria-label="Key metrics"
             >
               {visibleTiles.map((t) => (
-                <div key={t.id}>{renderTile(t.id)}</div>
+                <div key={t.id} style={t.id === 'enrollment' ? { gridColumn: 'span 2' } : undefined}>
+                  {renderTile(t.id)}
+                </div>
               ))}
             </div>
           )}
@@ -382,7 +370,13 @@ export function Overview() {
               {enrollmentChartData.length === 0 ? (
                 <EmptyState title="No active studies" body="Create a study to start tracking enrollment." />
               ) : (
-                <HUDBarChart data={enrollmentChartData} xKey="name" yKey="enrolled" height={220} />
+                <HUDBarChart
+                  data={enrollmentChartData}
+                  xKey="name"
+                  yKey="enrolled"
+                  height={220}
+                  onBarClick={(d) => { if (d.id) navigate(`/studies/${String(d.id)}`) }}
+                />
               )}
             </Panel>
             <ActiveParticipantsPanel
@@ -413,23 +407,20 @@ export function Overview() {
             )}
           </Panel>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14 }}>
-            <Panel title="Investigator Utilization — This Week">
-              {utilizationData.length === 0 ? (
-                <EmptyState title="No staff found" body="Add a staff member on the Staff page." />
-              ) : (
-                <HUDBarChart
-                  data={utilizationForChart}
-                  xKey="name"
-                  yKey="value"
-                  height={220}
-                  signalByValue
-                  valueFormatter={(v) => `${Math.round(v)}%`}
-                />
-              )}
-            </Panel>
-            <NearCapacityList entries={utilizationData} />
-          </div>
+          <Panel title="Investigator Utilization — This Week">
+            {utilizationData.length === 0 ? (
+              <EmptyState title="No staff found" body="Add a staff member on the Staff page." />
+            ) : (
+              <HUDBarChart
+                data={utilizationForChart}
+                xKey="name"
+                yKey="value"
+                height={220}
+                signalByValue
+                valueFormatter={(v) => `${Math.round(v)}%`}
+              />
+            )}
+          </Panel>
         </div>
       )}
     </div>

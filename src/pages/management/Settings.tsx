@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSite } from '@/hooks/useSite'
 import { useSites } from '@/hooks/useSites'
 import { useSiteUsers } from '@/hooks/useSiteUsers'
 import { useStudies } from '@/hooks/useStudies'
-import { createSite, updateSite } from '@/lib/sites'
-import { updateUser } from '@/lib/users'
+import { createSite, deleteSite, updateSite } from '@/lib/sites'
+import { deleteUser, updateUser } from '@/lib/users'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -35,11 +35,46 @@ const TIMEZONES = [
 
 
 const TILE_DISPLAY: Record<OverviewTileId, { label: string; description: string }> = {
-  'capacity': { label: 'Capacity', description: 'Average site utilization this week' },
-  'studies': { label: 'Studies', description: 'Active enrolling or open studies' },
-  'alerts': { label: 'Alerts', description: 'Investigators at or above capacity threshold' },
-  'enrollment': { label: 'Enrollment', description: 'Randomizations as % of YTD target' },
+  'studies': { label: 'Studies', description: 'Enrolling and open study counts' },
+  'enrollment': { label: 'Enrollment', description: 'Screened, randomized, active, and completed counts' },
   'today-activity': { label: "Today's Activity", description: 'Visits and assessments logged today' },
+}
+
+interface DeleteConfirmDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description: string
+  onConfirm: () => Promise<void>
+}
+
+function DeleteConfirmDialog({ open, onOpenChange, title, description, onConfirm }: DeleteConfirmDialogProps) {
+  const [deleting, setDeleting] = useState(false)
+  async function handleConfirm() {
+    setDeleting(true)
+    try { await onConfirm(); onOpenChange(false) }
+    finally { setDeleting(false) }
+  }
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>{description}</p>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button
+            onClick={() => void handleConfirm()}
+            disabled={deleting}
+            style={{ background: 'oklch(0.55 0.20 25)', border: 'none', color: '#fff' }}
+          >
+            {deleting ? 'Deleting…' : 'Delete'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 interface SiteForm {
@@ -192,6 +227,7 @@ function SiteConfigurationTab() {
   const { sites, loading } = useSites()
   const { siteId: activeSiteId } = useSite()
   const [editSite, setEditSite] = useState<Site | null>(null)
+  const [deleteSiteTarget, setDeleteSiteTarget] = useState<Site | null>(null)
 
   if (loading) {
     return (
@@ -268,13 +304,20 @@ function SiteConfigurationTab() {
                       )}
                     </td>
                     <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditSite(site)}
-                      >
-                        Edit
-                      </Button>
+                      <div style={{ display: 'inline-flex', gap: 6 }}>
+                        <Button size="sm" variant="outline" onClick={() => setEditSite(site)}>
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={site.id === activeSiteId}
+                          onClick={() => setDeleteSiteTarget(site)}
+                          style={{ color: 'oklch(0.70 0.18 25)', borderColor: 'rgba(220 60 40 / 0.3)' }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -290,9 +333,16 @@ function SiteConfigurationTab() {
         <SiteEditDialog
           site={editSite}
           open={editSite !== null}
-          onOpenChange={(open) => {
-            if (!open) setEditSite(null)
-          }}
+          onOpenChange={(open) => { if (!open) setEditSite(null) }}
+        />
+      )}
+      {deleteSiteTarget && (
+        <DeleteConfirmDialog
+          open={deleteSiteTarget !== null}
+          onOpenChange={(open) => { if (!open) setDeleteSiteTarget(null) }}
+          title="Remove Site"
+          description={`Remove "${deleteSiteTarget.name}" from the network? This cannot be undone.`}
+          onConfirm={() => deleteSite(deleteSiteTarget.id)}
         />
       )}
     </div>
@@ -496,6 +546,7 @@ function UserManagementTab() {
   const { users, loading } = useSiteUsers()
   const { studies } = useStudies()
   const [editUser, setEditUser] = useState<AppUser | null>(null)
+  const [deleteUserTarget, setDeleteUserTarget] = useState<AppUser | null>(null)
 
   if (loading) {
     return (
@@ -565,13 +616,19 @@ function UserManagementTab() {
                       {user.assignedStudies.length}
                     </td>
                     <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditUser(user)}
-                      >
-                        Edit
-                      </Button>
+                      <div style={{ display: 'inline-flex', gap: 6 }}>
+                        <Button size="sm" variant="outline" onClick={() => setEditUser(user)}>
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setDeleteUserTarget(user)}
+                          style={{ color: 'oklch(0.70 0.18 25)', borderColor: 'rgba(220 60 40 / 0.3)' }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -592,9 +649,16 @@ function UserManagementTab() {
           user={editUser}
           studies={studies}
           open={editUser !== null}
-          onOpenChange={(open) => {
-            if (!open) setEditUser(null)
-          }}
+          onOpenChange={(open) => { if (!open) setEditUser(null) }}
+        />
+      )}
+      {deleteUserTarget && (
+        <DeleteConfirmDialog
+          open={deleteUserTarget !== null}
+          onOpenChange={(open) => { if (!open) setDeleteUserTarget(null) }}
+          title="Remove User"
+          description={`Remove "${deleteUserTarget.displayName}" from the system? Their Firebase Auth account will remain but they will no longer appear in the app.`}
+          onConfirm={() => deleteUser(deleteUserTarget.uid)}
         />
       )}
     </div>
@@ -645,6 +709,8 @@ function SeedDataTab() {
 function DashboardTab() {
   const { config, saveConfig } = useDashboardConfig()
   const [saving, setSaving] = useState(false)
+  const [dragOver, setDragOver] = useState<number | null>(null)
+  const dragSrc = useRef<number | null>(null)
 
   const sorted = useMemo(
     () => [...config.tiles].sort((a, b) => a.order - b.order),
@@ -664,16 +730,17 @@ function DashboardTab() {
     }
   }
 
-  async function handleMove(fromIdx: number, direction: 'up' | 'down') {
-    if (saving) return
-    const toIdx = direction === 'up' ? fromIdx - 1 : fromIdx + 1
-    if (toIdx < 0 || toIdx >= sorted.length) return
+  async function handleDrop(toIdx: number) {
+    const fromIdx = dragSrc.current
+    setDragOver(null)
+    dragSrc.current = null
+    if (fromIdx === null || fromIdx === toIdx || saving) return
     setSaving(true)
     try {
       const reordered = [...sorted]
-      ;[reordered[fromIdx], reordered[toIdx]] = [reordered[toIdx], reordered[fromIdx]]
-      const newTiles = reordered.map((t, i) => ({ ...t, order: i }))
-      await saveConfig({ tiles: newTiles })
+      const [moved] = reordered.splice(fromIdx, 1)
+      reordered.splice(toIdx, 0, moved)
+      await saveConfig({ tiles: reordered.map((t, i) => ({ ...t, order: i })) })
     } catch (err) {
       console.error('[DashboardTab] Failed to save config:', err)
     } finally {
@@ -696,17 +763,35 @@ function DashboardTab() {
   return (
     <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Panel title="Overview Tile Layout">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--text-muted)' }}>
+          Drag to reorder. Toggle visibility with the checkbox.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {sorted.map((tile, idx) => (
             <div
               key={tile.id}
+              draggable={!saving}
+              onDragStart={() => { dragSrc.current = idx }}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(idx) }}
+              onDragLeave={() => setDragOver(null)}
+              onDrop={() => void handleDrop(idx)}
+              onDragEnd={() => { setDragOver(null); dragSrc.current = null }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '10px 12px', borderRadius: 8,
-                background: 'rgba(255 255 255 / 0.03)',
-                border: '1px solid rgba(255 255 255 / 0.08)',
+                background: dragOver === idx
+                  ? 'rgba(30 120 255 / 0.12)'
+                  : 'rgba(255 255 255 / 0.03)',
+                border: dragOver === idx
+                  ? '1px solid rgba(30 120 255 / 0.4)'
+                  : '1px solid rgba(255 255 255 / 0.08)',
+                transition: 'background 0.1s, border-color 0.1s',
+                cursor: saving ? 'not-allowed' : 'grab',
               }}
             >
+              {/* drag handle */}
+              <span style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1, flexShrink: 0, cursor: 'grab' }} aria-hidden>⠿</span>
+
               <input
                 type="checkbox"
                 id={`tile-toggle-${tile.id}`}
@@ -724,34 +809,6 @@ function DashboardTab() {
                   {TILE_DISPLAY[tile.id].description}
                 </div>
               </label>
-              <div style={{ display: 'flex', gap: 4 }}>
-                <button
-                  aria-label={`Move ${TILE_DISPLAY[tile.id].label} up`}
-                  disabled={saving || idx === 0}
-                  onClick={() => void handleMove(idx, 'up')}
-                  style={{
-                    width: 28, height: 28, borderRadius: 6,
-                    border: '1px solid rgba(255 255 255 / 0.12)',
-                    background: 'rgba(255 255 255 / 0.06)',
-                    color: 'var(--text-secondary)',
-                    cursor: saving || idx === 0 ? 'not-allowed' : 'pointer',
-                    fontSize: 12, opacity: saving || idx === 0 ? 0.4 : 1,
-                  }}
-                >▲</button>
-                <button
-                  aria-label={`Move ${TILE_DISPLAY[tile.id].label} down`}
-                  disabled={saving || idx === sorted.length - 1}
-                  onClick={() => void handleMove(idx, 'down')}
-                  style={{
-                    width: 28, height: 28, borderRadius: 6,
-                    border: '1px solid rgba(255 255 255 / 0.12)',
-                    background: 'rgba(255 255 255 / 0.06)',
-                    color: 'var(--text-secondary)',
-                    cursor: saving || idx === sorted.length - 1 ? 'not-allowed' : 'pointer',
-                    fontSize: 12, opacity: saving || idx === sorted.length - 1 ? 0.4 : 1,
-                  }}
-                >▼</button>
-              </div>
             </div>
           ))}
         </div>

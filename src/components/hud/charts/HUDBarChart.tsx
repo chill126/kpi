@@ -6,19 +6,18 @@ import { HUDChartDefs } from './defs'
 import { HUDTooltip } from './HUDTooltip'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 
-type Datum = object
-
 interface Props {
-  data: Datum[]
+  data: object[]
   xKey: string
   yKey: string
   height?: number
   signalByValue?: boolean
   valueFormatter?: (v: number) => string
+  onBarClick?: (datum: Record<string, unknown>) => void
 }
 
 export function HUDBarChart({
-  data, xKey, yKey, height = 220, signalByValue = false, valueFormatter,
+  data, xKey, yKey, height = 220, signalByValue = false, valueFormatter, onBarClick,
 }: Props) {
   const reduced = usePrefersReducedMotion()
   return (
@@ -49,6 +48,9 @@ export function HUDBarChart({
           radius={[4, 4, 2, 2]}
           isAnimationActive={!reduced}
           fill="url(#hud-bar-primary)"
+          cursor={onBarClick ? 'pointer' : undefined}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onClick={onBarClick ? (entry: any) => onBarClick(entry as Record<string, unknown>) : undefined}
         >
           {signalByValue && data.map((d, i) => {
             const v = Number((d as Record<string, unknown>)[yKey])

@@ -10,7 +10,7 @@ describe('heroLine', () => {
   })
   it('flags single near-cap', () => {
     const r = heroLine([60, 80])
-    expect(r.suffix).toMatch(/1 near capacity/)
+    expect(r.suffix).toMatch(/1 investigator near capacity/)
     expect(r.emphasisSignal).toBe('good')
   })
   it('says running hot at 3+ near-cap', () => {

@@ -54,17 +54,15 @@ export function WorkloadPlanner() {
   const { visits } = useSiteVisits()
   const { assessments } = useSiteAssessments()
 
-  const weekStarts = useMemo(() => buildWeekRange(BACK_WEEKS, AHEAD_WEEKS), [])
+  const weekStarts = buildWeekRange(BACK_WEEKS, AHEAD_WEEKS)
 
-  const currentWeekStr = useMemo(() => {
-    const today = new Date()
-    const day = today.getDay()
-    const diff = day === 0 ? -6 : 1 - day
-    const monday = new Date(today)
-    monday.setDate(today.getDate() + diff)
-    monday.setHours(0, 0, 0, 0)
-    return localDateStr(monday)
-  }, [])
+  const today = new Date()
+  const _day = today.getDay()
+  const _diff = _day === 0 ? -6 : 1 - _day
+  const _monday = new Date(today)
+  _monday.setDate(today.getDate() + _diff)
+  _monday.setHours(0, 0, 0, 0)
+  const currentWeekStr = localDateStr(_monday)
 
   const grid = useMemo(
     () =>
@@ -121,8 +119,8 @@ export function WorkloadPlanner() {
             body="Add investigators to see the capacity heatmap."
           />
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="heatmap-scroll">
+            <table style={{ borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
                   <th
@@ -130,12 +128,17 @@ export function WorkloadPlanner() {
                       padding: '0 12px 10px 0',
                       textAlign: 'left',
                       width: 160,
+                      minWidth: 160,
                       fontSize: 10.5,
                       fontWeight: 500,
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
                       color: 'var(--text-label)',
                       borderBottom: '1px solid rgba(255 255 255 / 0.08)',
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 10,
+                      background: 'oklch(0.10 0.018 238)',
                     }}
                   >
                     Investigator
@@ -149,7 +152,8 @@ export function WorkloadPlanner() {
                         style={{
                           padding: '0 4px 10px',
                           textAlign: 'center',
-                          width: 64,
+                          width: 50,
+                          minWidth: 50,
                           fontSize: 10.5,
                           color: current ? 'var(--accent-primary)' : isPast ? 'var(--text-muted)' : 'var(--text-label)',
                           fontWeight: current ? 700 : 500,
@@ -171,7 +175,7 @@ export function WorkloadPlanner() {
               <tbody>
                 {grid.map(({ investigator: inv, weeks }) => (
                   <tr key={inv.id} style={{ borderTop: '1px solid rgba(255 255 255 / 0.05)' }}>
-                    <td style={{ padding: '8px 12px 8px 0' }}>
+                    <td style={{ padding: '8px 12px 8px 0', position: 'sticky', left: 0, zIndex: 5, background: 'oklch(0.10 0.018 238)' }}>
                       <p style={{ margin: 0, fontWeight: 500, fontSize: 13, color: 'var(--text-primary)' }}>
                         {inv.name}
                       </p>

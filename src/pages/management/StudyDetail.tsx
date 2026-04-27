@@ -13,6 +13,7 @@ import { DelegationLogTab } from '@/components/study-detail/DelegationLogTab'
 import { ContractTab } from '@/components/study-detail/ContractTab'
 import { DeviationsTab } from '@/components/study-detail/DeviationsTab'
 import { ProtocolTab } from '@/components/study-detail/ProtocolTab'
+import { StudyTeamTab } from '@/components/study-detail/StudyTeamTab'
 import { ChevronLeft } from 'lucide-react'
 
 const BASE_TABS = [
@@ -23,6 +24,7 @@ const BASE_TABS = [
   { value: 'enrollment',         label: 'Enrollment' },
   { value: 'delegation-log',     label: 'Delegation Log' },
   { value: 'deviations',         label: 'Deviations' },
+  { value: 'study-team',         label: 'Study Team' },
 ]
 
 const CONTRACT_TAB = { value: 'contract', label: 'Contract' }
@@ -93,6 +95,7 @@ export function StudyDetail() {
           {activeTab === 'enrollment'         && <EnrollmentTab study={study} canEdit={canEdit} />}
           {activeTab === 'delegation-log'     && <DelegationLogTab studyId={study.id} investigators={investigators} canEdit={canEdit} />}
           {activeTab === 'deviations'         && <DeviationsTab studyId={study.id} canManage={canEdit} />}
+          {activeTab === 'study-team'  && <StudyTeamTab study={study} canEdit={canEdit} />}
           {activeTab === 'contract' && canEdit && <ContractTab study={study} canEdit={canEdit} />}
         </div>
       </div>

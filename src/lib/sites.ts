@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, getDoc, onSnapshot, query, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, query, updateDoc } from 'firebase/firestore'
 import { db, auth } from './firebase'
 import { writeAuditLog } from './monitoring'
 import type { Site } from '@/types'
@@ -49,6 +49,17 @@ export async function createSite(data: Omit<Site, 'id'>): Promise<string> {
     }).catch(console.error)
   }
   return ref.id
+}
+
+export async function deleteSite(siteId: string): Promise<void> {
+  await deleteDoc(doc(db, 'sites', siteId))
+  const user = auth.currentUser
+  if (user) {
+    writeAuditLog(user.uid, user.email ?? '', 'site.delete', {
+      targetCollection: 'sites',
+      targetId: siteId,
+    }).catch(console.error)
+  }
 }
 
 export function subscribeAllSites(

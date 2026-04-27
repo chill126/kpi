@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   query,
@@ -37,6 +38,17 @@ export function subscribeUser(
     (snap) => onData(snap.exists() ? toAppUser(snap.id, snap.data()) : null),
     onError,
   )
+}
+
+export async function deleteUser(uid: string): Promise<void> {
+  await deleteDoc(doc(db, 'users', uid))
+  const user = auth.currentUser
+  if (user) {
+    writeAuditLog(user.uid, user.email ?? '', 'user.delete', {
+      targetCollection: 'users',
+      targetId: uid,
+    }).catch(console.error)
+  }
 }
 
 export async function updateUser(

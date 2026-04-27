@@ -75,11 +75,9 @@ const mockSite: Site = {
 
 const allVisibleConfig = {
   tiles: [
-    { id: 'capacity' as const, visible: true, order: 0 },
-    { id: 'studies' as const, visible: true, order: 1 },
-    { id: 'alerts' as const, visible: true, order: 2 },
-    { id: 'enrollment' as const, visible: true, order: 3 },
-    { id: 'today-activity' as const, visible: true, order: 4 },
+    { id: 'studies' as const, visible: true, order: 0 },
+    { id: 'enrollment' as const, visible: true, order: 1 },
+    { id: 'today-activity' as const, visible: true, order: 2 },
   ],
 }
 
@@ -110,11 +108,9 @@ describe('Overview — My Dashboard tab', () => {
     expect(screen.getByText(/good morning/i)).toBeInTheDocument()
   })
 
-  it('renders all five configurable tiles when all visible', () => {
+  it('renders all three configurable tiles when all visible', () => {
     render(<Overview />)
-    expect(screen.getAllByText(/capacity/i)[0]).toBeInTheDocument()
     expect(screen.getAllByText(/studies/i)[0]).toBeInTheDocument()
-    expect(screen.getAllByText(/alerts/i)[0]).toBeInTheDocument()
     expect(screen.getAllByText(/enrollment/i)[0]).toBeInTheDocument()
     expect(screen.getAllByText(/today.s activity/i)[0]).toBeInTheDocument()
   })
@@ -123,13 +119,13 @@ describe('Overview — My Dashboard tab', () => {
     vi.mocked(dashboardConfigModule.useDashboardConfig).mockReturnValue({
       config: {
         tiles: allVisibleConfig.tiles.map(t =>
-          t.id === 'alerts' ? { ...t, visible: false } : t,
+          t.id === 'today-activity' ? { ...t, visible: false } : t,
         ),
       },
       saveConfig: vi.fn(),
     })
     render(<Overview />)
-    expect(screen.queryByText('Alerts')).not.toBeInTheDocument()
+    expect(screen.queryByText("Today's Activity")).not.toBeInTheDocument()
   })
 
   it('shows empty-config message when all tiles hidden', () => {

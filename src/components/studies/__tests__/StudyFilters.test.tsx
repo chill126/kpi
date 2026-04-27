@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { StudyFilters, type StudyFilterState } from '@/components/studies/StudyFilters'
 
-const defaultFilters: StudyFilterState = { status: 'all', therapeuticArea: '' }
+const defaultFilters: StudyFilterState = { status: 'all', therapeuticArea: '', hideCompleted: false }
 
 describe('StudyFilters', () => {
   beforeEach(() => {

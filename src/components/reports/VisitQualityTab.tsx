@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Panel } from '@/components/hud/Panel'
+import { ReportInfoIcon } from '@/components/hud/ReportInfoIcon'
 import { Tile } from '@/components/hud/Tile'
 import { Skeleton } from '@/components/hud/Skeleton'
 import { EmptyState } from '@/components/hud/EmptyState'
@@ -261,21 +262,24 @@ export function VisitQualityTab() {
           label="Completion Rate"
           value={hasHistory ? `${Math.round(completionPct)}%` : '—'}
           signal={hasHistory ? completionSignal(completionPct) : 'neutral'}
+          info={"Percentage of non-scheduled visits that were completed vs. total attempted.\n\nPulls from: Visits."}
         />
         <Tile
           label="Missed Rate"
           value={hasHistory ? `${Math.round(missedPct)}%` : '—'}
           signal={hasHistory ? missedSignal(missedPct) : 'neutral'}
+          info={"Percentage of visits marked as missed (participant did not attend).\n\nPulls from: Visits."}
         />
         <Tile
           label="No-Show Rate"
           value={hasHistory ? `${Math.round(noShowPct)}%` : '—'}
           signal={hasHistory ? missedSignal(noShowPct) : 'neutral'}
+          info={"Percentage of visits where the participant did not attend without prior notice.\n\nPulls from: Visits."}
         />
       </div>
 
       {/* Section 2 — By study */}
-      <Panel title="Visit Quality by Study">
+      <Panel title="Visit Quality by Study" action={<ReportInfoIcon info={"Analyzes visit completion, missed, and no-show rates by study and investigator. Also compares scheduled vs. actual visit durations to flag time estimation issues.\n\nPulls from: Visits, Studies, Investigators."} />}>
         {studyRows.length === 0 ? (
           <EmptyState title="No visit history yet" />
         ) : (
@@ -311,8 +315,8 @@ export function VisitQualityTab() {
         )}
       </Panel>
 
-      {/* Section 3 — By investigator */}
-      <Panel title="Visit Quality by Investigator">
+      {/* Section 3 — By staff member */}
+      <Panel title="Visit Quality by Staff Member">
         {investigatorRows.length === 0 ? (
           <EmptyState title="No visit history yet" />
         ) : (
